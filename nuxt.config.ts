@@ -31,12 +31,16 @@ export default defineNuxtConfig({
     families: [
       { name: 'Inter', provider: 'google' },
       { name: 'Sora', provider: 'google', weights: [400, 600, 700, 800] },
+      { name: 'Space Mono', provider: 'google', weights: [400, 700] },
     ],
   },
 
   runtimeConfig: {
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    resendApiKey: process.env.RESEND_API_KEY,
+    resendFrom: process.env.RESEND_FROM || 'ILYTAT Inquiries <noreply@ilytat.com>',
+    notificationEmail: process.env.NOTIFICATION_EMAIL,
     public: {
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
       firebaseApiKey: process.env.FIREBASE_API_KEY,
@@ -46,6 +50,7 @@ export default defineNuxtConfig({
       firebaseMessagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
       firebaseAppId: process.env.FIREBASE_APP_ID,
       siteUrl: process.env.SITE_URL || 'http://localhost:3000',
+      plausibleDomain: process.env.PLAUSIBLE_DOMAIN || '',
     },
   },
 
@@ -57,24 +62,31 @@ export default defineNuxtConfig({
 
   app: {
     head: {
-      title: 'ILYTAT Sites — Websites & Marketing for Local Businesses',
+      title: 'ILYTAT — Professional Websites for Local Business',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
           name: 'description',
-          content:
-            'Professional websites, fliers, QR codes, and marketing materials designed specifically for small and local businesses.',
+          content: 'Custom websites built for local businesses in Illinois. You own everything. Managed hosting from $50/mo.',
         },
-        { property: 'og:title', content: 'ILYTAT Sites — Built for Local Business' },
+        { property: 'og:title', content: 'ILYTAT — Professional Websites for Local Business' },
         {
           property: 'og:description',
-          content: 'Get a stunning website and marketing materials without the agency price tag.',
+          content: 'Websites built for local businesses. One flat build price. $50/month for everything else.',
         },
         { property: 'og:type', content: 'website' },
-        { name: 'theme-color', content: '#0f172a' },
+        { property: 'og:image', content: 'https://media.ilytat.com/logo.png' },
+        { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'theme-color', content: '#0f0f11' },
       ],
-      link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+      link: [
+        { rel: 'icon', type: 'image/png', href: 'https://media.ilytat.com/logo.png' },
+      ],
+      // Plausible analytics — only injected when PLAUSIBLE_DOMAIN is set in .env
+      script: process.env.PLAUSIBLE_DOMAIN
+        ? [{ src: 'https://plausible.io/js/script.js', defer: true, 'data-domain': process.env.PLAUSIBLE_DOMAIN }]
+        : [],
     },
     pageTransition: { name: 'page', mode: 'out-in' },
   },

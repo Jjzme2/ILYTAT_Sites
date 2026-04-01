@@ -20,9 +20,52 @@ export default defineEventHandler(async (event) => {
     createdAt: new Date().toISOString(),
   }
 
+  // 1. Save to Firestore
   await firestoreRequest('POST', 'inquiries', {
     fields: toFirestoreFields(inquiry),
   })
+
+  // 2. Send email notification via Resend (fire-and-forget — form success is not blocked by email)
+  const config = useRuntimeConfig()
+  if (config.resendApiKey && config.notificationEmail) {
+    const html = `
+      <div style="font-family:sans-serif;max-width:520px;margin:0 auto;">
+        <h2 style="color:#f5c518;margin-bottom:4px;">New inquiry</h2>
+        <p style="color:#888;margin-top:0;font-size:13px;">${new Date().toLocaleString('en-US', { timeZone: 'America/Chicago' })} CT</p>
+        <table style="width:100%;border-collapse:collapse;margin-top:16px;">
+          <tr><td style="padding:8px 0;color:#aaa;width:120px;">Name</td><td style="padding:8px 0;">${data.name}</td></tr>
+          <tr><td style="padding:8px 0;color:#aaa;">Business</td><td style="padding:8px 0;">${data.businessName}</td></tr>
+          <tr><td style="padding:8px 0;color:#aaa;">Email</td><td style="padding:8px 0;"><a href="mailto:${data.email}">${data.email}</a></td></tr>
+          ${data.phone ? `<tr><td style="padding:8px 0;color:#aaa;">Phone</td><td style="padding:8px 0;"><a href="tel:${data.phone}">${data.phone}</a></td></tr>` : ''}
+          <tr><td style="padding:8px 0;color:#aaa;">Package</td><td style="padding:8px 0;">${data.service || 'Not specified'}</td></tr>
+        </table>
+        <div style="margin-top:20px;padding:16px;background:#f9f9f9;border-radius:6px;">
+          <p style="margin:0;white-space:pre-wrap;color:#333;">${data.message}</p>
+        </div>
+        <p style="margin-top:24px;font-size:12px;color:#aaa;">Sent from ilytat.com contact form</p>
+      </div>
+    `
+
+    try {
+      await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${config.resendApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: config.resendFrom,
+          to: [config.notificationEmail],
+          subject: `New inquiry: ${data.name} — ${data.businessName}`,
+          html,
+          reply_to: data.email,
+        }),
+      })
+    }
+    catch {
+      // Email failure is silent — inquiry is already saved in Firestore
+    }
+  }
 
   return { success: true }
 })
