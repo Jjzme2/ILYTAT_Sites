@@ -123,6 +123,440 @@
 
 /* Focus styles */
 *:focus-visible {
-  outline: 2px solid #f97316;
+  outline: 2px solid #f5c518;
   outline-offset: 2px;
+}
+
+/* ── Keyframes ──────────────────────────────────────────────────────────── */
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.6; transform: translate(-50%, -50%) scale(1); }
+  50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.12); }
+}
+
+@keyframes scroll-line {
+  0%   { transform: scaleY(0); transform-origin: top;    opacity: 0; }
+  40%  { transform: scaleY(1); transform-origin: top;    opacity: 1; }
+  60%  { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
+  100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+}
+
+/* ── Scroll reveal (composable sets data-reveal, JS adds .is-revealed) ── */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+[data-reveal].is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* ── Grain fixed overlay ────────────────────────────────────────────────── */
+.grain {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  opacity: 0.028;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 256px 256px;
+}
+
+/* ── Eyebrow label ──────────────────────────────────────────────────────── */
+.eyebrow {
+  font-family: 'Space Mono', monospace;
+  font-size: 10.5px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #f5c518;
+  opacity: 0.85;
+  margin-bottom: 14px;
+  display: block;
+}
+
+/* ── Primary / ghost buttons ────────────────────────────────────────────── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0f0f11;
+  background: #f5c518;
+  padding: 13px 30px;
+  border-radius: 6px;
+  text-decoration: none;
+  letter-spacing: 0.1px;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 16px rgba(245, 197, 24, 0.25);
+}
+.btn-primary:hover {
+  background: #d4a912;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 24px rgba(245, 197, 24, 0.35);
+}
+.btn-primary--lg {
+  font-size: 16px;
+  padding: 16px 40px;
+  border-radius: 8px;
+}
+.btn-ghost {
+  display: inline-flex;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 500;
+  color: #8e8ba0;
+  padding: 13px 24px;
+  border-radius: 6px;
+  text-decoration: none;
+  border: 1px solid #2a2a32;
+  transition: border-color 0.2s, color 0.2s, transform 0.15s;
+}
+.btn-ghost:hover {
+  border-color: rgba(245, 197, 24, 0.5);
+  color: #f5c518;
+  transform: translateY(-2px);
+}
+
+/* ── Hero background layers ─────────────────────────────────────────────── */
+.hero-grid {
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(245, 197, 24, 0.06) 1px, transparent 1px);
+  background-size: 30px 30px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 40%, black 20%, transparent 80%);
+  pointer-events: none;
+}
+.hero-glow {
+  position: absolute;
+  pointer-events: none;
+}
+.hero-glow--center {
+  width: 640px;
+  height: 640px;
+  left: 50%;
+  top: 40%;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(245, 197, 24, 0.07), transparent 65%);
+  animation: pulse 7s ease-in-out infinite;
+}
+.hero-glow--bottom {
+  bottom: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 960px;
+  height: 300px;
+  background: radial-gradient(ellipse, rgba(240, 148, 32, 0.05), transparent 65%);
+}
+
+/* ── Hero gradient text (line 2) ────────────────────────────────────────── */
+.hero-gradient-text {
+  background: linear-gradient(110deg, #f5c518 30%, #f09420 90%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* ── Hero scroll indicator ──────────────────────────────────────────────── */
+.hero-scroll-line {
+  width: 1px;
+  height: 36px;
+  background: linear-gradient(to bottom, #68667a, transparent);
+  animation: scroll-line 1.8s ease-in-out infinite;
+}
+
+/* ── Nav scrolled state ─────────────────────────────────────────────────── */
+.nav-scrolled {
+  background: rgba(15, 15, 17, 0.9) !important;
+  backdrop-filter: blur(18px) !important;
+  -webkit-backdrop-filter: blur(18px) !important;
+  border-color: #1e1e26 !important;
+  padding-top: 14px !important;
+  padding-bottom: 14px !important;
+}
+
+/* ── Pricing section gradient mesh ─────────────────────────────────────── */
+.pricing-bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 55% 40% at 20% 30%, rgba(245, 197, 24, 0.07), transparent 65%),
+    radial-gradient(ellipse 45% 35% at 80% 70%, rgba(240, 148, 32, 0.05), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgba(245, 197, 24, 0.04), transparent 70%),
+    #141417;
+  pointer-events: none;
+}
+
+/* ── Price card — featured variant ─────────────────────────────────────── */
+.price-card-featured {
+  background: rgba(245, 197, 24, 0.055) !important;
+  border-color: rgba(245, 197, 24, 0.28) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(245, 197, 24, 0.15),
+    0 0 0 1px rgba(245, 197, 24, 0.1),
+    0 20px 60px rgba(245, 197, 24, 0.08),
+    0 4px 20px rgba(0, 0, 0, 0.4) !important;
+}
+.price-card-featured:hover {
+  border-color: rgba(245, 197, 24, 0.45) !important;
+  transform: translateY(-4px);
+  box-shadow:
+    inset 0 1px 0 rgba(245, 197, 24, 0.2),
+    0 0 0 1px rgba(245, 197, 24, 0.18),
+    0 24px 72px rgba(245, 197, 24, 0.12),
+    0 4px 24px rgba(0, 0, 0, 0.5) !important;
+}
+
+/* ── Featured badge ─────────────────────────────────────────────────────── */
+.featured-badge {
+  position: absolute;
+  top: -12px;
+  left: 28px;
+  background: linear-gradient(110deg, #f5c518, #f09420);
+  color: #0f0f11;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 4px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+/* ── Tier features list (→ arrow pseudo) ────────────────────────────────── */
+.tier-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px;
+}
+.tier-features li {
+  font-size: 13.5px;
+  color: #f0ece6;
+  padding: 5px 0 5px 20px;
+  position: relative;
+  line-height: 1.55;
+}
+.tier-features li::before {
+  content: '→';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  color: #f5c518;
+  font-size: 11px;
+}
+
+/* ── Price CTA button ───────────────────────────────────────────────────── */
+.price-cta {
+  display: block;
+  width: 100%;
+  text-align: center;
+  padding: 13px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid #2a2a32;
+  background: transparent;
+  color: #f0ece6;
+  transition: border-color 0.2s, color 0.2s, box-shadow 0.2s;
+}
+.price-cta:hover {
+  border-color: rgba(245, 197, 24, 0.5);
+  color: #f5c518;
+}
+.price-cta-featured {
+  background: linear-gradient(110deg, #f5c518, #f09420);
+  border-color: transparent;
+  color: #0f0f11;
+  box-shadow: 0 2px 12px rgba(245, 197, 24, 0.25);
+}
+.price-cta-featured:hover {
+  filter: brightness(0.92);
+  color: #0f0f11;
+  box-shadow: 0 4px 20px rgba(245, 197, 24, 0.35);
+}
+
+/* ── FAQ accordion (details/summary) ───────────────────────────────────── */
+.faq-item {
+  border: 1px solid #2a2a32;
+  border-radius: 12px;
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.faq-item[open] {
+  border-color: rgba(245, 197, 24, 0.22);
+}
+.faq-item:hover .faq-q {
+  color: #f5c518;
+}
+.faq-q {
+  padding: 20px 24px;
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+  color: #f0ece6;
+  list-style: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  user-select: none;
+  transition: color 0.15s;
+}
+.faq-q::-webkit-details-marker { display: none; }
+.faq-q::after {
+  content: '+';
+  font-size: 20px;
+  font-weight: 300;
+  color: #f5c518;
+  flex-shrink: 0;
+  margin-left: 16px;
+  transition: transform 0.2s;
+  line-height: 1;
+}
+.faq-item[open] .faq-q::after { transform: rotate(45deg); }
+.faq-a {
+  padding: 0 24px 20px;
+  font-size: 14.5px;
+  color: #b8b4ae;
+  line-height: 1.8;
+}
+
+/* ── Form field groups ──────────────────────────────────────────────────── */
+.fgroup {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.fgroup label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #68667a;
+  letter-spacing: 0.2px;
+}
+.fgroup input,
+.fgroup textarea {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 11px 14px;
+  color: #f0ece6;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  outline: none;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.fgroup input:focus,
+.fgroup textarea:focus {
+  border-color: #f5c518;
+  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.07);
+}
+.fgroup input::placeholder,
+.fgroup textarea::placeholder {
+  color: rgba(104, 102, 122, 0.55);
+}
+.fgroup textarea { resize: vertical; }
+
+/* ── Select wrapper ─────────────────────────────────────────────────────── */
+.select-wrap { position: relative; }
+.select-wrap select {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  padding: 11px 36px 11px 14px;
+  color: #f0ece6;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  appearance: none;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.select-wrap select:focus {
+  border-color: #f5c518;
+  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.07);
+}
+.select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #68667a;
+  pointer-events: none;
+}
+
+/* ── Submit button ──────────────────────────────────────────────────────── */
+.submit-btn {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(110deg, #f5c518, #f09420);
+  color: #0f0f11;
+  border: none;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 2px 16px rgba(245, 197, 24, 0.2);
+  margin-top: 4px;
+}
+.submit-btn:hover:not(:disabled) {
+  filter: brightness(0.9);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 24px rgba(245, 197, 24, 0.32);
+}
+.submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── Contact promises — Vue deep selector for icon color ────────────────── */
+.contact-promises li :deep(svg) {
+  color: #f5c518;
+  flex-shrink: 0;
+}
+
+/* ── CTA amber band — dark button on gold background ────────────────────── */
+.cta-amber-btn {
+  display: inline-flex;
+  align-items: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #f5c518;
+  background: #0a0a0c;
+  padding: 16px 40px;
+  border-radius: 8px;
+  text-decoration: none;
+  letter-spacing: 0.1px;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.25);
+}
+.cta-amber-btn:hover {
+  background: #111115;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+
+/* ── Service editorial row hover (left border reveal) ───────────────────── */
+.service-row {
+  position: relative;
+  transition: background 0.2s ease;
+}
+.service-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 12px;
+  bottom: 12px;
+  width: 2px;
+  border-radius: 2px;
+  background: linear-gradient(to bottom, #f5c518, #f09420);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+.service-row:hover::before {
+  opacity: 1;
 }

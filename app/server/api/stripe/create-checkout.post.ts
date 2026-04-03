@@ -54,7 +54,7 @@ export default defineEventHandler(async (event) => {
       businessName: data.businessName || '',
       notes: data.notes || '',
     },
-    success_url: `${config.public.siteUrl}/order/success?session_id={CHECKOUT_SESSION_ID}`,
+    success_url: `${config.public.siteUrl}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
     cancel_url: `${config.public.siteUrl}/services/${data.serviceId}`,
     allow_promotion_codes: true,
     billing_address_collection: 'required',

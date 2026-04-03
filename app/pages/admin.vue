@@ -1,11 +1,4 @@
 <script setup lang="ts">
-definePageMeta({ layout: false })
-
-useHead({
-  title: 'Admin — ILYTAT',
-  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
-})
-
 import {
   useFirebaseAuth,
   useFirebaseApp,
@@ -26,6 +19,13 @@ import {
   query,
   serverTimestamp,
 } from 'firebase/firestore'
+
+definePageMeta({ layout: false })
+
+useHead({
+  title: 'Admin — ILYTAT',
+  meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+})
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const user = ref<User | null>(null)
@@ -279,7 +279,8 @@ async function loadAll() {
       <header class="dash-header">
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
-          <button v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries']" :key="tab"
+          <button
+v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries']" :key="tab"
             class="dash-tab" :class="{ active: activeTab === tab }"
             @click="activeTab = (tab as typeof activeTab)">
             {{ tab }}
@@ -303,7 +304,8 @@ async function loadAll() {
               <p v-if="p.url" class="record-url"><a :href="p.url" target="_blank">{{ p.url }}</a></p>
             </div>
             <div class="record-actions">
-              <button class="badge-btn" :class="p.visible ? 'badge-active' : 'badge-off'"
+              <button
+class="badge-btn" :class="p.visible ? 'badge-active' : 'badge-off'"
                 @click="toggleProjectVisible(p)">
                 {{ p.visible ? 'Visible' : 'Hidden' }}
               </button>
@@ -372,7 +374,8 @@ async function loadAll() {
               </p>
             </div>
             <div class="record-actions">
-              <button class="badge-btn" :class="p.active ? 'badge-active' : 'badge-off'"
+              <button
+class="badge-btn" :class="p.active ? 'badge-active' : 'badge-off'"
                 @click="togglePromoActive(p)">
                 {{ p.active ? 'Active' : 'Inactive' }}
               </button>
@@ -420,7 +423,8 @@ async function loadAll() {
               <p class="record-body">"{{ t.quote }}"</p>
             </div>
             <div class="record-actions">
-              <button class="badge-btn" :class="t.visible ? 'badge-active' : 'badge-off'"
+              <button
+class="badge-btn" :class="t.visible ? 'badge-active' : 'badge-off'"
                 @click="toggleTestimonialVisible(t)">
                 {{ t.visible ? 'Visible' : 'Hidden' }}
               </button>
@@ -443,7 +447,8 @@ async function loadAll() {
           </div>
           <div class="fgroup">
             <label>Quote</label>
-            <textarea v-model="newTestimonial.quote" rows="3"
+            <textarea
+v-model="newTestimonial.quote" rows="3"
               placeholder="I had a professional site up in less than a week…" required />
           </div>
           <div class="form-row">
@@ -471,7 +476,8 @@ async function loadAll() {
 
         <div class="record-list">
           <div v-if="!inquiries.length" class="empty-state">No inquiries yet.</div>
-          <div v-for="inq in inquiries" :key="inq.id" class="record-card"
+          <div
+v-for="inq in inquiries" :key="inq.id" class="record-card"
             :class="{ 'record-card--new': inq.status === 'new' }">
             <div class="record-main">
               <p class="record-title">
@@ -488,7 +494,8 @@ async function loadAll() {
             </div>
             <div class="record-actions">
               <a :href="`mailto:${inq.email}`" class="action-link">Reply →</a>
-              <button v-if="inq.status === 'new'" class="badge-btn badge-off"
+              <button
+v-if="inq.status === 'new'" class="badge-btn badge-off"
                 @click="markInquiryRead(inq.id)">Mark read</button>
             </div>
           </div>
