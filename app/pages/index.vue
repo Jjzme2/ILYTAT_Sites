@@ -237,6 +237,15 @@ const faqs = [
   },
 ]
 
+// ── Phone (obfuscated — assembled client-side to avoid scraper harvest) ────
+// Char codes for '7086271854'
+const _ph = [55, 48, 56, 54, 50, 55, 49, 56, 53, 52]
+const phoneHref = computed(() => `tel:+1${String.fromCharCode(..._ph)}`)
+const phoneDisplay = computed(() => {
+  const n = String.fromCharCode(..._ph)
+  return `(${n.slice(0, 3)}) ${n.slice(3, 6)}-${n.slice(6)}`
+})
+
 // ── Contact form ────────────────────────────────────────────────────────────
 const form = reactive({ name: '', businessName: '', email: '', phone: '', service: '', billingPreference: 'monthly', message: '' })
 const submitted = ref(false)
@@ -402,10 +411,10 @@ async function handleSubmit() {
         </header>
 
         <div class="relative mt-8">
-          <!-- Ambient line connecting the dots -->
-          <div class="absolute top-[28px] left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-[rgba(245,197,24,0.3)] to-transparent lg:hidden" aria-hidden="true"/>
+          <!-- Ambient line connecting the dots (desktop only) -->
+          <div class="hidden lg:block absolute top-[28px] left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-[rgba(245,197,24,0.3)] to-transparent" aria-hidden="true"/>
 
-          <div class="grid grid-cols-3 gap-8 lg:grid-cols-1 sm:gap-8">
+          <div class="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
             <div
               v-for="(step, i) in steps"
               :key="step.n"
@@ -464,11 +473,11 @@ async function handleSubmit() {
 
         <p v-if="checkoutError" class="text-center text-[13px] text-red-400 mb-4">{{ checkoutError }}</p>
 
-        <div class="grid grid-cols-3 gap-5 items-start lg:grid-cols-2 sm:grid-cols-1">
+        <div class="grid grid-cols-1 gap-5 items-start sm:grid-cols-2 lg:grid-cols-3">
           <div
             v-for="(pkg, i) in packages"
             :key="pkg.name"
-            class="glass-card rounded-[18px] px-7 py-9 relative transition-[border-color,box-shadow,transform] duration-[250ms] hover:border-[rgba(245,197,24,0.2)] hover:-translate-y-[3px]"
+            class="glass-card rounded-[18px] px-5 py-7 sm:px-7 sm:py-9 relative transition-[border-color,box-shadow,transform] duration-[250ms] hover:border-[rgba(245,197,24,0.2)] hover:-translate-y-[3px]"
             :class="pkg.featured ? 'price-card-featured' : 'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_40px_rgba(0,0,0,0.45)]'"
             data-reveal
             :data-reveal-delay="i * 100"
@@ -479,7 +488,7 @@ async function handleSubmit() {
             <p class="font-mono text-[11px] text-[#68667a] uppercase tracking-[1.5px] mb-4">{{ pkg.name }}</p>
 
             <div class="flex items-baseline gap-2 mb-1.5">
-              <span class="font-display text-[48px] font-extrabold tracking-[-3px] leading-none text-[#f0ece6]">{{ pkg.price }}</span>
+              <span class="font-display text-[38px] sm:text-[48px] font-extrabold tracking-[-2px] sm:tracking-[-3px] leading-none text-[#f0ece6]">{{ pkg.price }}</span>
               <span class="text-[13px] text-[#68667a] tracking-[0.2px]">{{ pkg.note }}</span>
             </div>
 
@@ -585,14 +594,14 @@ async function handleSubmit() {
 
     <!-- ── ABOUT ──────────────────────────────────────────────────────────────── -->
     <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
-      <div class="grid grid-cols-[1fr_1fr] gap-24 items-start lg:grid-cols-1 lg:gap-14 sm:gap-8" data-reveal>
+      <div class="grid grid-cols-1 gap-12 items-start lg:grid-cols-[1fr_1fr] lg:gap-24" data-reveal>
         <!-- Left: Philosophy Blockquote -->
-        <div class="sticky top-32 lg:static">
-          <blockquote class="font-display text-[clamp(28px,3.5vw,40px)] font-bold tracking-[-1.5px] text-[#f0ece6] leading-[1.2] border-l-[3px] border-[#f5c518] pl-8 mb-10">
+        <div class="lg:sticky lg:top-32">
+          <blockquote class="font-display text-[clamp(22px,3.5vw,40px)] font-bold tracking-[-1px] lg:tracking-[-1.5px] text-[#f0ece6] leading-[1.2] border-l-[3px] border-[#f5c518] pl-6 lg:pl-8 mb-8 lg:mb-10">
             "I believe everyone should have a way to voice who they are and what they do. The internet is the best way to do that."
           </blockquote>
           
-          <div class="flex items-center gap-5 pl-8 lg:pl-0 border-t border-white/[0.08] lg:border-t-0 pt-8 lg:pt-0">
+          <div class="flex items-center gap-5 border-t border-white/[0.08] lg:border-t-0 pt-8 lg:pt-0">
             <div class="w-[60px] h-[60px] rounded-full border border-[rgba(245,197,24,0.3)] bg-[#1a1a1f] flex items-center justify-center text-[rgba(245,197,24,0.5)] font-display font-bold shadow-[0_0_20px_rgba(245,197,24,0.05)]">
               <!-- TODO: replace with <img src="/your-photo.jpg" alt="JJ" class="w-full h-full object-cover rounded-full"> -->
               JJ
@@ -645,7 +654,9 @@ async function handleSubmit() {
 
           <div class="flex items-center gap-2 mt-8 text-[14px]">
             <UIcon name="i-heroicons-phone" class="w-4 h-4 text-[#f5c518] flex-shrink-0" />
-            <a href="tel:+17086271854" class="text-[#f5c518] font-semibold no-underline hover:underline transition-colors">(708) 627-1854</a>
+            <ClientOnly>
+              <a :href="phoneHref" class="text-[#f5c518] font-semibold no-underline hover:underline transition-colors">{{ phoneDisplay }}</a>
+            </ClientOnly>
             <span class="text-[#68667a] ml-1">· text or call</span>
           </div>
         </div>
@@ -692,7 +703,7 @@ async function handleSubmit() {
 
     <!-- ── CONTACT ────────────────────────────────────────────────────────────── -->
     <section id="contact" class="border-t border-[#1e1e26] bg-[#141417] px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
-      <div class="max-w-[1080px] mx-auto grid grid-cols-[380px_1fr] gap-20 items-start lg:grid-cols-1 lg:gap-12">
+      <div class="max-w-[1080px] mx-auto grid grid-cols-1 gap-12 items-start lg:grid-cols-[380px_1fr] lg:gap-20">
 
         <!-- Left: context -->
         <div data-reveal>
@@ -737,7 +748,7 @@ async function handleSubmit() {
 
           <!-- Form -->
           <form v-else class="flex flex-col gap-4" @submit.prevent="handleSubmit">
-            <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-1">
+            <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
               <div class="fgroup">
                 <label>Your Name</label>
                 <input v-model="form.name" type="text" placeholder="Jane Smith" minlength="2" required>
@@ -747,7 +758,7 @@ async function handleSubmit() {
                 <input v-model="form.businessName" type="text" placeholder="Jane's Bakery" required>
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-1">
+            <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
               <div class="fgroup">
                 <label>Email <span class="text-[#f5c518]">*</span></label>
                 <input v-model="form.email" type="email" placeholder="jane@email.com" required>
@@ -757,7 +768,7 @@ async function handleSubmit() {
                 <input v-model="form.phone" type="tel" placeholder="(815) 555-1234">
               </div>
             </div>
-            <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-1">
+            <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
               <div class="fgroup">
                 <label>Package Interest</label>
                 <div class="select-wrap">
@@ -810,7 +821,9 @@ async function handleSubmit() {
         <span class="text-[11.5px] text-[#68667a]">Websites for local businesses · Manteno, IL</span>
         <span class="text-[12px] text-[#68667a]">
           Built by JJ ·
-          <a href="tel:+17086271854" class="text-[#8e8ba0] no-underline transition-colors duration-150 hover:text-[#f5c518]">(708) 627-1854</a>
+          <ClientOnly>
+            <a :href="phoneHref" class="text-[#8e8ba0] no-underline transition-colors duration-150 hover:text-[#f5c518]">{{ phoneDisplay }}</a>
+          </ClientOnly>
         </span>
       </div>
       <div class="flex flex-col items-end gap-1.5 md:items-start">
