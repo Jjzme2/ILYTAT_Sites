@@ -149,6 +149,33 @@ const packages = [
   },
 ]
 
+// ── Checkout ──────────────────────────────────────────────────────────────────
+const billingCycle = ref<'monthly' | 'yearly'>('monthly')
+const checkoutLoading = ref<string | null>(null) // holds the package name being loaded
+const checkoutError = ref('')
+
+async function startCheckout(pkg: typeof packages[number]) {
+  checkoutError.value = ''
+  checkoutLoading.value = pkg.name
+  try {
+    const { url } = await $fetch<{ url: string }>('/api/stripe/create-checkout', {
+      method: 'POST',
+      body: {
+        packageName: pkg.name,
+        serviceName: 'Website',
+        billingCycle: billingCycle.value,
+      },
+    })
+    if (url) window.location.href = url
+  }
+  catch {
+    checkoutError.value = 'Something went wrong — please try again or contact us directly.'
+  }
+  finally {
+    checkoutLoading.value = null
+  }
+}
+
 // ── FAQ ───────────────────────────────────────────────────────────────────────
 const faqs = [
   {
@@ -363,7 +390,7 @@ async function handleSubmit() {
       <div class="pricing-bg" aria-hidden="true" />
 
       <div class="relative max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
-        <header class="text-center mb-14" data-reveal>
+        <header class="text-center mb-10" data-reveal>
           <p class="eyebrow">Pricing</p>
           <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
             One build. One monthly rate.
@@ -372,6 +399,28 @@ async function handleSubmit() {
             Pick your package — then {{ monthlyRate }}/month covers everything else.
           </p>
         </header>
+
+        <!-- Billing toggle -->
+        <div class="flex items-center justify-center gap-3 mb-10" data-reveal>
+          <span class="text-[13px]" :class="billingCycle === 'monthly' ? 'text-[#f0ece6] font-semibold' : 'text-[#68667a]'">Monthly</span>
+          <button
+            class="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none"
+            :class="billingCycle === 'yearly' ? 'bg-[#f5c518]' : 'bg-[#2a2a32]'"
+            :aria-label="billingCycle === 'yearly' ? 'Switch to monthly' : 'Switch to yearly'"
+            @click="billingCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly'"
+          >
+            <span
+              class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+              :class="billingCycle === 'yearly' ? 'translate-x-5' : 'translate-x-0'"
+            />
+          </button>
+          <span class="text-[13px]" :class="billingCycle === 'yearly' ? 'text-[#f0ece6] font-semibold' : 'text-[#68667a]'">
+            Yearly
+            <span class="ml-1.5 font-mono text-[10px] font-bold text-[#0f0f11] bg-[#f5c518] px-1.5 py-0.5 rounded-sm uppercase tracking-[0.5px]">2 months free</span>
+          </span>
+        </div>
+
+        <p v-if="checkoutError" class="text-center text-[13px] text-red-400 mb-4">{{ checkoutError }}</p>
 
         <div class="grid grid-cols-3 gap-5 items-start lg:grid-cols-2 sm:grid-cols-1">
           <div
@@ -393,8 +442,9 @@ async function handleSubmit() {
             </div>
 
             <div class="flex items-baseline gap-2 mb-5 pb-5 border-b border-white/[0.06] flex-wrap">
-              <span class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">{{ monthlyRate }}/mo <span class="text-[#68667a] font-normal text-[11px]">or 2 months free with Yearly</span></span>
-              <span class="text-[11px] text-[#68667a] leading-snug">First month free &mdash; we handle hosting, SSL &amp; your domain</span>
+              <span v-if="billingCycle === 'monthly'" class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">$50/mo hosting</span>
+              <span v-else class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">$500/yr hosting <span class="text-[#68667a] font-normal text-[11px]">· 2 months free</span></span>
+              <span class="text-[11px] text-[#68667a] leading-snug w-full">First 30 days free &mdash; hosting, SSL &amp; domain included</span>
             </div>
 
             <p class="text-[12.5px] text-[#f5c518]/70 mb-6 leading-snug">Best for: {{ pkg.best }}</p>
@@ -403,14 +453,18 @@ async function handleSubmit() {
               <li v-for="f in pkg.features" :key="f">{{ f }}</li>
             </ul>
 
-            <a
-              href="#contact"
-              class="price-cta"
+            <button
+              class="price-cta w-full"
               :class="{ 'price-cta-featured': pkg.featured }"
-              @click="form.service = pkg.name + ' — ' + pkg.price"
+              :disabled="checkoutLoading !== null"
+              @click="startCheckout(pkg)"
             >
-              Get Started
-            </a>
+              <span v-if="checkoutLoading === pkg.name" class="flex items-center justify-center gap-2">
+                <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg>
+                Redirecting…
+              </span>
+              <span v-else>Buy Now</span>
+            </button>
           </div>
         </div>
 

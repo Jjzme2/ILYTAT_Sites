@@ -33,6 +33,30 @@ const loginPassword = ref('')
 const loginError = ref('')
 const loginLoading = ref(false)
 
+// Global error banner — any failed write/read surfaces here
+const adminError = ref('')
+function showError(msg: string) {
+  adminError.value = msg
+  setTimeout(() => { adminError.value = '' }, 8000)
+}
+
+// ── Firestore health check ──────────────────────────────────────────────────
+const healthResult = ref<null | Record<string, unknown>>(null)
+const healthLoading = ref(false)
+async function runHealthCheck() {
+  healthLoading.value = true
+  healthResult.value = null
+  try {
+    healthResult.value = await $fetch('/api/admin/health')
+  }
+  catch (e: unknown) {
+    healthResult.value = { ok: false, tokenError: e instanceof Error ? e.message : String(e) }
+  }
+  finally {
+    healthLoading.value = false
+  }
+}
+
 onMounted(() => {
   const auth = useFirebaseAuth()
   onAuthStateChanged(auth, (u) => {
@@ -67,7 +91,7 @@ function db() {
 }
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
-const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries'>('portfolio')
+const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'health'>('portfolio')
 
 // ── Portfolio ─────────────────────────────────────────────────────────────────
 interface Project {
@@ -86,8 +110,13 @@ const newProject = reactive({ title: '', description: '', industry: '', url: '',
 const savingProject = ref(false)
 
 async function loadProjects() {
-  const snap = await getDocs(query(collection(db(), 'projects'), orderBy('order')))
-  projects.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Project))
+  try {
+    const snap = await getDocs(query(collection(db(), 'projects'), orderBy('order')))
+    projects.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Project))
+  }
+  catch (e: unknown) {
+    showError(`Failed to load projects: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 async function addProject() {
@@ -105,20 +134,33 @@ async function addProject() {
     Object.assign(newProject, { title: '', description: '', industry: '', url: '', imageUrl: '', order: 99, visible: true })
     await loadProjects()
   }
+  catch (e: unknown) {
+    showError(`Failed to save project: ${e instanceof Error ? e.message : String(e)}`)
+  }
   finally {
     savingProject.value = false
   }
 }
 
 async function toggleProjectVisible(p: Project) {
-  await updateDoc(doc(db(), 'projects', p.id), { visible: !p.visible })
-  await loadProjects()
+  try {
+    await updateDoc(doc(db(), 'projects', p.id), { visible: !p.visible })
+    await loadProjects()
+  }
+  catch (e: unknown) {
+    showError(`Failed to update project: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 async function deleteProject(id: string) {
   if (!confirm('Delete this project?')) return
-  await deleteDoc(doc(db(), 'projects', id))
-  await loadProjects()
+  try {
+    await deleteDoc(doc(db(), 'projects', id))
+    await loadProjects()
+  }
+  catch (e: unknown) {
+    showError(`Failed to delete project: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 // ── Promotions ────────────────────────────────────────────────────────────────
@@ -136,8 +178,13 @@ const newPromo = reactive({ message: '', ctaText: '', ctaUrl: '', expiresAt: '' 
 const savingPromo = ref(false)
 
 async function loadPromotions() {
-  const snap = await getDocs(collection(db(), 'promotions'))
-  promotions.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Promotion))
+  try {
+    const snap = await getDocs(collection(db(), 'promotions'))
+    promotions.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Promotion))
+  }
+  catch (e: unknown) {
+    showError(`Failed to load promotions: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 async function addPromotion() {
@@ -153,20 +200,33 @@ async function addPromotion() {
     Object.assign(newPromo, { message: '', ctaText: '', ctaUrl: '', expiresAt: '' })
     await loadPromotions()
   }
+  catch (e: unknown) {
+    showError(`Failed to save promotion: ${e instanceof Error ? e.message : String(e)}`)
+  }
   finally {
     savingPromo.value = false
   }
 }
 
 async function togglePromoActive(p: Promotion) {
-  await updateDoc(doc(db(), 'promotions', p.id), { active: !p.active })
-  await loadPromotions()
+  try {
+    await updateDoc(doc(db(), 'promotions', p.id), { active: !p.active })
+    await loadPromotions()
+  }
+  catch (e: unknown) {
+    showError(`Failed to update promotion: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 async function deletePromotion(id: string) {
   if (!confirm('Delete this promotion?')) return
-  await deleteDoc(doc(db(), 'promotions', id))
-  await loadPromotions()
+  try {
+    await deleteDoc(doc(db(), 'promotions', id))
+    await loadPromotions()
+  }
+  catch (e: unknown) {
+    showError(`Failed to delete promotion: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 // ── Testimonials ──────────────────────────────────────────────────────────────
@@ -184,8 +244,13 @@ const newTestimonial = reactive({ name: '', businessName: '', quote: '', order: 
 const savingTestimonial = ref(false)
 
 async function loadTestimonials() {
-  const snap = await getDocs(query(collection(db(), 'testimonials'), orderBy('order')))
-  testimonials.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial))
+  try {
+    const snap = await getDocs(query(collection(db(), 'testimonials'), orderBy('order')))
+    testimonials.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial))
+  }
+  catch (e: unknown) {
+    showError(`Failed to load testimonials: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 async function addTestimonial() {
@@ -200,6 +265,9 @@ async function addTestimonial() {
     })
     Object.assign(newTestimonial, { name: '', businessName: '', quote: '', order: 99, visible: true })
     await loadTestimonials()
+  }
+  catch (e: unknown) {
+    showError(`Failed to save testimonial: ${e instanceof Error ? e.message : String(e)}`)
   }
   finally {
     savingTestimonial.value = false
@@ -233,15 +301,25 @@ interface Inquiry {
 const inquiries = ref<Inquiry[]>([])
 
 async function loadInquiries() {
-  const snap = await getDocs(collection(db(), 'inquiries'))
-  inquiries.value = snap.docs
-    .map(d => ({ id: d.id, ...d.data() } as Inquiry))
-    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  try {
+    const snap = await getDocs(collection(db(), 'inquiries'))
+    inquiries.value = snap.docs
+      .map(d => ({ id: d.id, ...d.data() } as Inquiry))
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+  }
+  catch (e: unknown) {
+    showError(`Failed to load inquiries: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 async function markInquiryRead(id: string) {
-  await updateDoc(doc(db(), 'inquiries', id), { status: 'read' })
-  await loadInquiries()
+  try {
+    await updateDoc(doc(db(), 'inquiries', id), { status: 'read' })
+    await loadInquiries()
+  }
+  catch (e: unknown) {
+    showError(`Failed to update inquiry: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 // ── Load all on auth ──────────────────────────────────────────────────────────
@@ -279,14 +357,29 @@ async function loadAll() {
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
           <button
-v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries']" :key="tab"
-            class="dash-tab" :class="{ active: activeTab === tab }"
+            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'health']" :key="tab"
+            class="dash-tab" :class="{ active: activeTab === (tab as typeof activeTab) }"
             @click="activeTab = (tab as typeof activeTab)">
             {{ tab }}
           </button>
         </nav>
         <button class="logout-btn" @click="logout">Sign out</button>
       </header>
+
+      <!-- Global error banner -->
+      <div v-if="adminError" style="background:#f87171;color:#fff;padding:10px 20px;font-size:13px;font-family:monospace;white-space:pre-wrap;position:sticky;top:0;z-index:100;">
+        ⚠ {{ adminError }}
+      </div>
+
+      <!-- ── HEALTH tab ── -->
+      <section v-if="(activeTab as string) === 'health'" class="dash-section">
+        <h2 class="dash-title">Firestore Health Check</h2>
+        <p class="dash-hint">Tests service account auth, a round-trip write/read, and read access for every collection.</p>
+        <button class="submit-btn" style="margin-bottom:20px" :disabled="healthLoading" @click="runHealthCheck">
+          {{ healthLoading ? 'Running…' : 'Run Health Check' }}
+        </button>
+        <div v-if="healthResult" style="font-family:monospace;font-size:12px;background:#111;color:#e5e5e5;padding:20px;border-radius:8px;white-space:pre-wrap;overflow-x:auto;">{{ JSON.stringify(healthResult, null, 2) }}</div>
+      </section>
 
       <!-- ── PORTFOLIO tab ── -->
       <section v-if="activeTab === 'portfolio'" class="dash-section">
