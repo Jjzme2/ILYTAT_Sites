@@ -38,6 +38,11 @@ export default defineNuxtConfig({
   runtimeConfig: {
     stripeSecretKey: process.env.STRIPE_SECRET_KEY,
     stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
+    stripePriceStarterBuild: process.env.STRIPE_PRICE_STARTER_BUILD,
+    stripePriceProfessionalBuild: process.env.STRIPE_PRICE_PROFESSIONAL_BUILD,
+    stripePricePremiumBuild: process.env.STRIPE_PRICE_PREMIUM_BUILD,
+    stripePriceHostingMonthly: process.env.STRIPE_PRICE_HOSTING_MONTHLY,
+    stripePriceHostingYearly: process.env.STRIPE_PRICE_HOSTING_YEARLY,
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || 'ILYTAT Inquiries <noreply@ilytat.com>',
     notificationEmail: process.env.NOTIFICATION_EMAIL,
