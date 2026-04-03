@@ -91,7 +91,7 @@ function db() {
 }
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
-const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'health'>('portfolio')
+const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health'>('portfolio')
 
 // ── Portfolio ─────────────────────────────────────────────────────────────────
 interface Project {
@@ -326,6 +326,39 @@ async function markInquiryRead(id: string) {
 async function loadAll() {
   await Promise.all([loadProjects(), loadPromotions(), loadTestimonials(), loadInquiries()])
 }
+
+// ── Analytics ─────────────────────────────────────────────────────────────────
+interface AnalyticsSummary {
+  total: number
+  allCounts: Record<string, number>
+  day30Counts: Record<string, number>
+  day7Counts: Record<string, number>
+  funnel: { pricing_viewed: number; checkout_initiated: number; checkout_abandoned: number; checkout_success: number }
+  conversionRate: number | null
+  packageBreakdown: Record<string, number>
+  recent: Array<{ id: string; event: string; properties: Record<string, unknown>; sessionId: string; createdAt: string }>
+  error?: string
+}
+
+const analytics = ref<AnalyticsSummary | null>(null)
+const analyticsLoading = ref(false)
+
+async function loadAnalytics() {
+  analyticsLoading.value = true
+  try {
+    analytics.value = await $fetch<AnalyticsSummary>('/api/analytics/summary')
+  }
+  catch (e: unknown) {
+    showError(`Analytics load failed: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  finally {
+    analyticsLoading.value = false
+  }
+}
+
+watch(activeTab, (tab) => {
+  if (tab === 'analytics' && !analytics.value) loadAnalytics()
+})
 </script>
 
 <template>
@@ -357,7 +390,7 @@ async function loadAll() {
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
           <button
-            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'health']" :key="tab"
+            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'health']" :key="tab"
             class="dash-tab" :class="{ active: activeTab === (tab as typeof activeTab) }"
             @click="activeTab = (tab as typeof activeTab)">
             {{ tab }}
@@ -371,8 +404,135 @@ async function loadAll() {
         ⚠ {{ adminError }}
       </div>
 
+      <!-- ── ANALYTICS tab ── -->
+      <section v-if="activeTab === 'analytics'" class="dash-section">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
+          <h2 class="dash-title" style="margin:0">Analytics</h2>
+          <button class="submit-btn" style="padding:6px 14px;font-size:12px;" :disabled="analyticsLoading" @click="loadAnalytics">
+            {{ analyticsLoading ? 'Loading…' : 'Refresh' }}
+          </button>
+        </div>
+
+        <div v-if="analyticsLoading && !analytics" style="color:#8e8ba0;font-size:13px;">Loading analytics…</div>
+
+        <div v-else-if="analytics">
+          <!-- Error from API -->
+          <div v-if="analytics.error" style="background:#f87171;color:#fff;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:20px;">
+            ⚠ {{ analytics.error }}
+          </div>
+
+          <!-- ── Summary cards ── -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px;">
+            <div class="record-card" style="text-align:center;padding:16px 12px;">
+              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.funnel.checkout_success }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Paid checkouts<br><span style="font-size:10px;">(last 30 days)</span></p>
+            </div>
+            <div class="record-card" style="text-align:center;padding:16px 12px;">
+              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.funnel.checkout_initiated }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Checkout clicks<br><span style="font-size:10px;">(last 30 days)</span></p>
+            </div>
+            <div class="record-card" style="text-align:center;padding:16px 12px;">
+              <p style="font-size:28px;font-weight:700;margin:0;" :style="{ color: analytics.conversionRate !== null && analytics.conversionRate >= 50 ? '#4ade80' : '#f97316' }">
+                {{ analytics.conversionRate !== null ? analytics.conversionRate + '%' : '—' }}
+              </p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Conversion rate<br><span style="font-size:10px;">(initiated → paid)</span></p>
+            </div>
+            <div class="record-card" style="text-align:center;padding:16px 12px;">
+              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.day30Counts['contact_submit'] || 0 }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Contact submits<br><span style="font-size:10px;">(last 30 days)</span></p>
+            </div>
+            <div class="record-card" style="text-align:center;padding:16px 12px;">
+              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.funnel.pricing_viewed }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Pricing views<br><span style="font-size:10px;">(last 30 days)</span></p>
+            </div>
+            <div class="record-card" style="text-align:center;padding:16px 12px;">
+              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.total }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Total events<br><span style="font-size:10px;">(all time)</span></p>
+            </div>
+          </div>
+
+          <!-- ── Checkout funnel ── -->
+          <div class="record-card" style="margin-bottom:20px;">
+            <p class="dash-hint" style="font-weight:600;margin-bottom:14px;">Checkout funnel (last 30 days)</p>
+            <div style="display:flex;gap:0;overflow:hidden;border-radius:6px;">
+              <div
+                v-for="(step, i) in [
+                  { label: 'Pricing viewed', key: 'pricing_viewed' },
+                  { label: 'Buy Now clicked', key: 'checkout_initiated' },
+                  { label: 'Abandoned', key: 'checkout_abandoned' },
+                  { label: 'Paid', key: 'checkout_success' },
+                ]"
+                :key="step.key"
+                style="flex:1;padding:12px 10px;text-align:center;font-size:12px;border-right:1px solid rgba(255,255,255,0.05);"
+                :style="{ background: i === 3 ? 'rgba(74,222,128,0.12)' : i === 2 ? 'rgba(249,115,22,0.1)' : 'rgba(245,197,24,0.07)' }"
+              >
+                <p style="font-size:22px;font-weight:700;margin:0;" :style="{ color: i === 3 ? '#4ade80' : i === 2 ? '#f97316' : '#f5c518' }">
+                  {{ analytics.funnel[step.key as keyof typeof analytics.funnel] }}
+                </p>
+                <p style="color:#8e8ba0;margin:4px 0 0;line-height:1.3;">{{ step.label }}</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Package breakdown ── -->
+          <div v-if="Object.keys(analytics.packageBreakdown).length" class="record-card" style="margin-bottom:20px;">
+            <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">Package interest (all-time checkout clicks)</p>
+            <div style="display:flex;flex-direction:column;gap:8px;">
+              <div
+                v-for="[pkg, count] in Object.entries(analytics.packageBreakdown).sort((a,b) => (b[1] as number) - (a[1] as number))"
+                :key="pkg"
+                style="display:flex;align-items:center;gap:10px;"
+              >
+                <span style="width:90px;font-size:13px;font-weight:600;">{{ pkg }}</span>
+                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:4px;height:20px;overflow:hidden;">
+                  <div
+                    style="height:100%;background:#f5c518;border-radius:4px;transition:width 0.4s;"
+                    :style="{ width: Math.round((count as number) / Math.max(...Object.values(analytics.packageBreakdown) as number[]) * 100) + '%' }"
+                  />
+                </div>
+                <span style="font-size:13px;color:#8e8ba0;width:24px;text-align:right;">{{ count }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ── Event counts (last 7 days) ── -->
+          <div class="record-card" style="margin-bottom:20px;">
+            <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">All events — last 7 days</p>
+            <div v-if="Object.keys(analytics.day7Counts).length" style="display:flex;flex-direction:column;gap:4px;">
+              <div
+                v-for="[evt, cnt] in Object.entries(analytics.day7Counts).sort((a,b) => (b[1] as number) - (a[1] as number))"
+                :key="evt"
+                style="display:flex;justify-content:space-between;padding:6px 10px;border-radius:4px;background:rgba(255,255,255,0.03);font-size:13px;"
+              >
+                <span style="font-family:monospace;color:#f0ece6;">{{ evt }}</span>
+                <span style="color:#f5c518;font-weight:600;">{{ cnt }}</span>
+              </div>
+            </div>
+            <p v-else style="color:#68667a;font-size:13px;">No events in the last 7 days.</p>
+          </div>
+
+          <!-- ── Recent events feed ── -->
+          <div class="record-card">
+            <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">Recent events (last 60)</p>
+            <div style="display:flex;flex-direction:column;gap:2px;max-height:480px;overflow-y:auto;">
+              <div
+                v-for="e in analytics.recent"
+                :key="e.id"
+                style="display:grid;grid-template-columns:140px 180px 1fr;gap:8px;padding:7px 10px;border-radius:4px;background:rgba(255,255,255,0.02);font-size:12px;align-items:start;"
+              >
+                <span style="color:#68667a;font-family:monospace;">{{ new Date(e.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) }}</span>
+                <span style="font-family:monospace;color:#f5c518;font-weight:600;">{{ e.event }}</span>
+                <span style="color:#8e8ba0;word-break:break-all;">{{ Object.keys(e.properties).length ? JSON.stringify(e.properties) : '' }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p v-else style="color:#8e8ba0;font-size:13px;">Click Refresh to load analytics data.</p>
+      </section>
+
       <!-- ── HEALTH tab ── -->
-      <section v-if="(activeTab as string) === 'health'" class="dash-section">
+      <section v-if="activeTab === 'health'" class="dash-section">
         <h2 class="dash-title">Firestore Health Check</h2>
         <p class="dash-hint">Tests service account auth, a round-trip write/read, and read access for every collection.</p>
         <button class="submit-btn" style="margin-bottom:20px" :disabled="healthLoading" @click="runHealthCheck">

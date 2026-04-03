@@ -74,7 +74,8 @@ export default defineEventHandler(async (event) => {
       notes:        data.notes || '',
     },
     success_url: `${config.public.siteUrl}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url:  `${config.public.siteUrl}/#pricing`,
+    // cancel carries context so the frontend can fire a checkout_abandoned analytics event
+    cancel_url:  `${config.public.siteUrl}/#pricing?checkout=cancelled&pkg=${encodeURIComponent(data.packageName)}&cycle=${data.billingCycle}`,
     allow_promotion_codes:       true,
     billing_address_collection:  'required',
   })

@@ -11,6 +11,12 @@ useHead({
 const route = useRoute()
 const sessionId = route.query.session_id as string
 
+const { track } = useAnalytics()
+onMounted(() => {
+  // Fire once — confirms the customer completed checkout and landed here
+  track('checkout_success', { stripeSessionId: sessionId || '' })
+})
+
 useReveal()
 
 // The link to the Tally.so or Fillout form goes here. 

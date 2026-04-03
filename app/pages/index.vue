@@ -39,12 +39,43 @@ const { data: projects } = await useFetch('/api/projects')
 const { data: promotion } = await useFetch('/api/promotion')
 const { data: testimonials } = await useFetch('/api/testimonials')
 
+// ── Analytics ──────────────────────────────────────────────────────────────
+const { track } = useAnalytics()
+
 // ── Scroll state (transparent nav → opaque) ────────────────────────────────
 const scrolled = ref(false)
 onMounted(() => {
   const onScroll = () => { scrolled.value = window.scrollY > 56 }
   window.addEventListener('scroll', onScroll, { passive: true })
   onUnmounted(() => window.removeEventListener('scroll', onScroll))
+
+  // Detect abandoned Stripe checkout (cancel URL carries ?checkout=cancelled)
+  const params = new URLSearchParams(window.location.search)
+  if (params.get('checkout') === 'cancelled') {
+    track('checkout_abandoned', {
+      packageName:  params.get('pkg')   || '',
+      billingCycle: params.get('cycle') || '',
+    })
+    // Clean up URL without reloading
+    const clean = window.location.pathname + window.location.hash.replace(/\?.*/, '')
+    window.history.replaceState({}, '', clean)
+  }
+
+  // Fire pricing_viewed once when the pricing section scrolls into view
+  const pricingSection = document.getElementById('pricing')
+  if (pricingSection) {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          track('pricing_viewed')
+          observer.disconnect()
+        }
+      },
+      { threshold: 0.2 },
+    )
+    observer.observe(pricingSection)
+    onUnmounted(() => observer.disconnect())
+  }
 })
 
 // ── Scroll reveal ──────────────────────────────────────────────────────────
@@ -154,9 +185,14 @@ const billingCycle = ref<'monthly' | 'yearly'>('monthly')
 const checkoutLoading = ref<string | null>(null) // holds the package name being loaded
 const checkoutError = ref('')
 
+watch(billingCycle, (to) => {
+  track('billing_toggle', { to })
+})
+
 async function startCheckout(pkg: typeof packages[number]) {
   checkoutError.value = ''
   checkoutLoading.value = pkg.name
+  track('checkout_initiated', { packageName: pkg.name, billingCycle: billingCycle.value })
   try {
     const { url } = await $fetch<{ url: string }>('/api/stripe/create-checkout', {
       method: 'POST',
@@ -170,6 +206,7 @@ async function startCheckout(pkg: typeof packages[number]) {
   }
   catch {
     checkoutError.value = 'Something went wrong — please try again or contact us directly.'
+    track('checkout_error', { packageName: pkg.name, billingCycle: billingCycle.value })
   }
   finally {
     checkoutLoading.value = null
@@ -223,9 +260,14 @@ async function handleSubmit() {
       },
     })
     submitted.value = true
+    track('contact_submit', {
+      service:          form.service || 'Not specified',
+      billingPreference: form.billingPreference,
+    })
   }
   catch {
     submitError.value = 'Something went wrong — please try again or reach out directly.'
+    track('contact_error')
   }
   finally {
     submitting.value = false
@@ -280,8 +322,8 @@ async function handleSubmit() {
         </p>
 
         <div class="flex items-center justify-center gap-3 flex-wrap [animation:fade-up_0.8s_0.42s_ease_both]">
-          <a href="#contact" class="btn-primary">Get a Free Quote</a>
-          <a href="#pricing" class="btn-ghost">See Pricing</a>
+          <a href="#contact" class="btn-primary" @click="track('cta_click', { label: 'Get a Free Quote', location: 'hero' })">Get a Free Quote</a>
+          <a href="#pricing" class="btn-ghost" @click="track('cta_click', { label: 'See Pricing', location: 'hero' })">See Pricing</a>
         </div>
       </div>
 
@@ -644,7 +686,7 @@ async function handleSubmit() {
         <p class="text-[16px] text-[#0f0f11]/70 font-medium mb-10 max-w-[500px] mx-auto">
           Tell us about your business and we'll get back to you within 24 hours.
         </p>
-        <a href="#contact" class="cta-amber-btn">Start the Conversation</a>
+        <a href="#contact" class="cta-amber-btn" @click="track('cta_click', { label: 'Start the Conversation', location: 'cta_band' })">Start the Conversation</a>
       </div>
     </div>
 
