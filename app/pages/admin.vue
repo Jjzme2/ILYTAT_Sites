@@ -602,6 +602,14 @@ h1 {
 }
 .logout-btn:hover { border-color: #f5c518; color: #f5c518; }
 
+@media (max-width: 640px) {
+  .login-screen { padding: 48px 20px; }
+  .dash-header { padding: 12px 16px; gap: 12px; flex-wrap: wrap; }
+  .dash-tab { padding: 6px 10px; font-size: 12px; }
+  .logout-btn { padding: 6px 10px; font-size: 12px; }
+  .dash-section { padding: 24px 16px 48px; }
+}
+
 /* ── Section ── */
 .dash-section {
   max-width: 840px;

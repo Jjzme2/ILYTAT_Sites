@@ -218,7 +218,7 @@ async function handleSubmit() {
 
     <!-- ── NAV ──────────────────────────────────────────────────────────────── -->
     <nav
-      class="fixed top-0 left-0 right-0 z-[90] flex justify-between items-center px-12 py-5 transition-[background,border-color,padding] duration-[400ms] ease-in-out border-b border-transparent md:px-6"
+      class="fixed top-0 left-0 right-0 z-[90] flex justify-between items-center px-12 py-5 transition-[background,border-color,padding] duration-[400ms] ease-in-out border-b border-transparent md:px-6 sm:px-4"
       :class="{ 'nav-scrolled': scrolled }"
     >
       <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-8 w-auto object-contain">
@@ -228,7 +228,7 @@ async function handleSubmit() {
     </nav>
 
     <!-- ── HERO ──────────────────────────────────────────────────────────────── -->
-    <section class="relative min-h-screen flex flex-col items-center justify-center px-12 pt-[120px] pb-20 overflow-hidden md:px-6 md:pt-[100px] md:pb-16">
+    <section class="relative min-h-screen flex flex-col items-center justify-center px-12 pt-[120px] pb-20 overflow-hidden md:px-6 md:pt-[100px] md:pb-16 sm:px-4 sm:pt-[88px] sm:pb-12">
       <div class="hero-grid" aria-hidden="true" />
       <div class="hero-glow hero-glow--center" aria-hidden="true" />
       <div class="hero-glow hero-glow--bottom" aria-hidden="true" />
@@ -284,7 +284,7 @@ async function handleSubmit() {
     </div>
 
     <!-- ── SERVICES ───────────────────────────────────────────────────────────── -->
-    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16">
+    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
       <header class="text-center mb-14" data-reveal>
         <p class="eyebrow">What We Build</p>
         <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
@@ -303,7 +303,7 @@ async function handleSubmit() {
           @click="form.service = svc.title"
         >
           <div class="flex items-start gap-12 sm:gap-6">
-            <span class="font-display text-[56px] font-extrabold text-[#f5c518] opacity-[0.08] leading-none group-hover:opacity-100 transition-opacity duration-300 md:text-[40px]">
+            <span class="font-display text-[56px] font-extrabold text-[#f5c518] opacity-[0.08] leading-none group-hover:opacity-100 transition-opacity duration-300 md:text-[40px] sm:text-[30px]">
               0{{ i + 1 }}
             </span>
             <div class="flex flex-col gap-2 mt-1">
@@ -321,7 +321,7 @@ async function handleSubmit() {
 
     <!-- ── PROCESS ────────────────────────────────────────────────────────────── -->
     <section class="bg-[#141417] border-t border-b border-[#1e1e26] py-[88px] sm:py-16">
-      <div class="max-w-[1080px] mx-auto px-12 md:px-6">
+      <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
         <header class="text-center mb-14" data-reveal>
           <p class="eyebrow">How It Works</p>
           <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
@@ -336,7 +336,7 @@ async function handleSubmit() {
           <!-- Ambient line connecting the dots -->
           <div class="absolute top-[28px] left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-[rgba(245,197,24,0.3)] to-transparent lg:hidden" aria-hidden="true"/>
 
-          <div class="grid grid-cols-3 gap-8 lg:grid-cols-1 sm:gap-12">
+          <div class="grid grid-cols-3 gap-8 lg:grid-cols-1 sm:gap-8">
             <div
               v-for="(step, i) in steps"
               :key="step.n"
@@ -362,7 +362,7 @@ async function handleSubmit() {
     <section id="pricing" class="relative overflow-hidden">
       <div class="pricing-bg" aria-hidden="true" />
 
-      <div class="relative max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16">
+      <div class="relative max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
         <header class="text-center mb-14" data-reveal>
           <p class="eyebrow">Pricing</p>
           <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
@@ -421,7 +421,7 @@ async function handleSubmit() {
     </section>
 
     <!-- ── PORTFOLIO ──────────────────────────────────────────────────────────── -->
-    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16">
+    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
       <header class="text-center mb-14" data-reveal>
         <p class="eyebrow">Recent Work</p>
         <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
@@ -463,7 +463,7 @@ async function handleSubmit() {
     </section>
 
     <!-- ── TESTIMONIALS ───────────────────────────────────────────────────────── -->
-    <section v-if="testimonials && testimonials.length" class="max-w-[1080px] mx-auto px-12 pb-[88px] md:px-6 md:pb-16">
+    <section v-if="testimonials && testimonials.length" class="max-w-[1080px] mx-auto px-12 pb-[88px] md:px-6 md:pb-16 sm:px-4 sm:pb-14">
       <header class="text-center mb-14" data-reveal>
         <p class="eyebrow">What Clients Say</p>
         <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
@@ -488,8 +488,8 @@ async function handleSubmit() {
     </section>
 
     <!-- ── ABOUT ──────────────────────────────────────────────────────────────── -->
-    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16">
-      <div class="grid grid-cols-[1fr_1fr] gap-24 items-start lg:grid-cols-1 lg:gap-14" data-reveal>
+    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
+      <div class="grid grid-cols-[1fr_1fr] gap-24 items-start lg:grid-cols-1 lg:gap-14 sm:gap-8" data-reveal>
         <!-- Left: Philosophy Blockquote -->
         <div class="sticky top-32 lg:static">
           <blockquote class="font-display text-[clamp(28px,3.5vw,40px)] font-bold tracking-[-1.5px] text-[#f0ece6] leading-[1.2] border-l-[3px] border-[#f5c518] pl-8 mb-10">
@@ -558,7 +558,7 @@ async function handleSubmit() {
 
     <!-- ── FAQ ───────────────────────────────────────────────────────────────── -->
     <section class="py-[80px] sm:py-16">
-      <div class="max-w-[1080px] mx-auto px-12 md:px-6">
+      <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
         <header class="text-center mb-14" data-reveal>
           <p class="eyebrow">Common Questions</p>
           <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
@@ -582,7 +582,7 @@ async function handleSubmit() {
     </section>
 
     <!-- ── CTA BAND ───────────────────────────────────────────────────────────── -->
-    <div class="relative mx-12 my-[88px] rounded-[16px] overflow-hidden bg-[#f5c518] text-[#0f0f11] md:mx-6 md:my-16 sm:rounded-[14px]" data-reveal>
+    <div class="relative mx-12 my-[88px] rounded-[16px] overflow-hidden bg-[#f5c518] text-[#0f0f11] md:mx-6 md:my-16 sm:mx-4 sm:my-12 sm:rounded-[14px]" data-reveal>
       <div class="relative z-[1] text-center px-12 py-[80px] sm:px-6 sm:py-16">
         <h2 class="font-display text-[clamp(28px,4vw,48px)] font-extrabold tracking-[-2px] mb-4 leading-[1.1]">
           Ready to look as good online<br>as you do in person?
@@ -595,7 +595,7 @@ async function handleSubmit() {
     </div>
 
     <!-- ── CONTACT ────────────────────────────────────────────────────────────── -->
-    <section id="contact" class="border-t border-[#1e1e26] bg-[#141417] px-12 py-[88px] md:px-6 md:py-16">
+    <section id="contact" class="border-t border-[#1e1e26] bg-[#141417] px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
       <div class="max-w-[1080px] mx-auto grid grid-cols-[380px_1fr] gap-20 items-start lg:grid-cols-1 lg:gap-12">
 
         <!-- Left: context -->
@@ -708,7 +708,7 @@ async function handleSubmit() {
     </section>
 
     <!-- ── FOOTER ─────────────────────────────────────────────────────────────── -->
-    <footer class="px-12 py-7 border-t border-[#1e1e26] flex justify-between items-center flex-wrap gap-3 bg-[#0f0f11] md:px-6 md:flex-col md:items-start">
+    <footer class="px-12 py-7 border-t border-[#1e1e26] flex justify-between items-center flex-wrap gap-3 bg-[#0f0f11] md:px-6 md:flex-col md:items-start sm:px-4">
       <div class="flex flex-col gap-[3px]">
         <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-6 w-auto object-contain mb-1">
         <span class="text-[11.5px] text-[#68667a]">Websites for local businesses · Manteno, IL</span>

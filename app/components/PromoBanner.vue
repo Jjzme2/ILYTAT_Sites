@@ -93,6 +93,10 @@ function dismiss() {
 }
 .promo-close:hover { opacity: 1; }
 
+@media (max-width: 640px) {
+  .promo-banner { padding: 10px 40px 10px 12px; gap: 10px; font-size: 12.5px; }
+}
+
 .banner-enter-active,
 .banner-leave-active {
   transition: all 0.3s ease;

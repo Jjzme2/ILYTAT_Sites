@@ -253,6 +253,15 @@
   background: radial-gradient(ellipse, rgba(240, 148, 32, 0.05), transparent 65%);
 }
 
+@media (max-width: 768px) {
+  .hero-glow--center { width: 420px; height: 420px; }
+  .hero-glow--bottom { width: 700px; height: 220px; }
+}
+@media (max-width: 480px) {
+  .hero-glow--center { width: 300px; height: 300px; }
+  .hero-glow--bottom { width: 420px; height: 160px; }
+}
+
 /* ── Hero gradient text (line 2) ────────────────────────────────────────── */
 .hero-gradient-text {
   background: linear-gradient(110deg, #f5c518 30%, #f09420 90%);

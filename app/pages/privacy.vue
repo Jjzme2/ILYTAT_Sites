@@ -83,6 +83,11 @@ useHead({
   border-bottom: 1px solid #2a2a32;
 }
 
+@media (max-width: 640px) {
+  .privacy-nav { padding: 16px 20px; }
+  .privacy-body { margin: 40px auto; }
+}
+
 .logo {
   font-family: 'Space Mono', monospace;
   font-weight: 700;
