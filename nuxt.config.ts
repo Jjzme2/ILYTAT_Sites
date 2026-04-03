@@ -19,6 +19,7 @@ export default defineNuxtConfig({
     '@nuxt/image',
     '@nuxt/eslint',
     '@pinia/nuxt',
+    '@vercel/analytics',
   ],
 
   css: [resolve(__dirname, 'assets/css/main.css')],
