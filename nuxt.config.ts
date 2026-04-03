@@ -59,7 +59,7 @@ export default defineNuxtConfig({
   serverDir: 'app/server',
 
   nitro: {
-    preset: 'node-server',
+    preset: process.env.VERCEL ? 'vercel' : 'node-server',
   },
 
   app: {
