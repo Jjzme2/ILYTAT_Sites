@@ -28,9 +28,14 @@ export default defineEventHandler(async (event) => {
   }
 
   // 1. Save to Firestore
-  await firestoreRequest('POST', 'inquiries', {
-    fields: toFirestoreFields(inquiry),
-  })
+  try {
+    await firestoreRequest('POST', 'inquiries', {
+      fields: toFirestoreFields(inquiry),
+    })
+  } catch (err: any) {
+    console.error('[Contact API] Failed to save inquiry:', err.message);
+    throw createError({ statusCode: 500, message: 'Internal server error while saving message. Please try again later.' });
+  }
 
   // 2. Send email notification via Resend (fire-and-forget — form success is not blocked by email)
   const config = useRuntimeConfig()

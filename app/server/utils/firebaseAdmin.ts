@@ -13,9 +13,33 @@ async function getAccessToken(): Promise<string> {
 
   const config = useRuntimeConfig();
   const clientEmail = config.firebaseClientEmail;
-  const privateKey = (config.firebasePrivateKey || '').replace(/\\n/g, '\n');
+  let privateKey = config.firebasePrivateKey || '';
+
+  // Clean the private key — in prod environments it often has surrounding quotes or missing linebreaks
+  if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+    privateKey = privateKey.slice(1, -1);
+  } else if (privateKey.startsWith("'") && privateKey.endsWith("'")) {
+    privateKey = privateKey.slice(1, -1);
+  }
+  
+  // Replace explicit "\n" literal characters with actual linebreaks
+  privateKey = privateKey.replace(/\\n/g, '\n');
+
+  // If there are still no actual linebreaks but it contains BEGIN and END, try to reformat
+  if (!privateKey.includes('\n')) {
+    const beginStr = "-----BEGIN PRIVATE KEY-----";
+    const endStr = "-----END PRIVATE KEY-----";
+    if (privateKey.includes(beginStr) && privateKey.includes(endStr)) {
+      const core = privateKey
+        .substring(privateKey.indexOf(beginStr) + beginStr.length, privateKey.indexOf(endStr))
+        .replace(/\s+/g, '');
+      const lines = core.match(/.{1,64}/g) || [];
+      privateKey = `${beginStr}\n${lines.join('\n')}\n${endStr}\n`;
+    }
+  }
 
   if (!clientEmail || !privateKey) {
+    console.error('[Firebase] Missing FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY in environment');
     throw new Error('Missing FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY in environment');
   }
 
@@ -53,6 +77,7 @@ async function getAccessToken(): Promise<string> {
 
   const tokenData = await tokenRes.json();
   if (!tokenRes.ok || !tokenData.access_token) {
+    console.error('[Firebase] Failed to generate Google OAuth token:', tokenData);
     throw new Error(`Failed to generate Google OAuth token: ${JSON.stringify(tokenData)}`);
   }
 
@@ -83,12 +108,21 @@ export async function firestoreRequest(
     body: body ? JSON.stringify(body) : undefined,
   })
 
-  if (!res.ok) {
-    const err = await res.text()
-    throw new Error(`Firestore error: ${res.status} ${err}`)
+  let data;
+  try {
+    data = await res.json();
+  } catch (err) {
+    const text = await res.text().catch(() => '');
+    console.error(`[Firebase] Non-JSON response from Firestore: ${text}`);
+    throw new Error(`Firestore expected JSON but got text: ${res.status}`);
   }
 
-  return res.json()
+  if (!res.ok) {
+    console.error(`[Firebase] Firestore API error (${res.status}):`, JSON.stringify(data, null, 2));
+    throw new Error(`Firestore error: ${res.status} ${JSON.stringify(data)}`);
+  }
+
+  return data;
 }
 
 // Convert Firestore REST format to plain objects
