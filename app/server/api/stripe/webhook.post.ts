@@ -15,7 +15,7 @@ export default defineEventHandler(async (event) => {
   let stripeEvent
   try {
     stripeEvent = stripe.webhooks.constructEvent(body, sig, config.stripeWebhookSecret)
-  } catch (_err) {
+  } catch {
     throw createError({ statusCode: 400, message: `Webhook signature verification failed` })
   }
 

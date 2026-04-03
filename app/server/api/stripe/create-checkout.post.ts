@@ -11,6 +11,7 @@ const schema = z.object({
   customerEmail: z.string().email().optional(),
   businessName: z.string().optional(),
   notes: z.string().optional(),
+  billingCycle: z.enum(['monthly', 'yearly']).optional().default('monthly')
 })
 
 export default defineEventHandler(async (event) => {
@@ -24,9 +25,12 @@ export default defineEventHandler(async (event) => {
     return { free: true, redirect: `/tools/qr-code` }
   }
 
+  const maintenanceAmount = data.billingCycle === 'yearly' ? 50000 : 5000;
+  const maintenanceInterval = data.billingCycle === 'yearly' ? 'year' : 'month';
+
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
-    mode: 'payment',
+    mode: 'subscription',
     line_items: [
       {
         price_data: {
@@ -34,7 +38,7 @@ export default defineEventHandler(async (event) => {
           unit_amount: data.price * 100, // convert to cents
           product_data: {
             name: `${data.serviceName} — ${data.packageName}`,
-            description: `ILYTAT Sites: ${data.serviceName} - ${data.packageName} package`,
+            description: `ILYTAT Sites: ${data.serviceName} - ${data.packageName} upfront build fee`,
             metadata: {
               serviceId: data.serviceId,
               packageId: data.packageId,
@@ -43,7 +47,22 @@ export default defineEventHandler(async (event) => {
         },
         quantity: 1,
       },
+      {
+        price_data: {
+          currency: 'usd',
+          unit_amount: maintenanceAmount,
+          recurring: { interval: maintenanceInterval },
+          product_data: {
+            name: `Managed Hosting & Maintenance (${data.billingCycle})`,
+            description: `Hosting, SSL, domain, and updates`,
+          },
+        },
+        quantity: 1,
+      }
     ],
+    subscription_data: {
+      trial_period_days: 30,
+    },
     customer_email: data.customerEmail,
     metadata: {
       serviceId: data.serviceId,

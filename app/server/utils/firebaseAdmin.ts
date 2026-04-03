@@ -1,5 +1,67 @@
-// Server-side Firestore access using REST API
-// (avoids needing firebase-admin in edge/serverless environments)
+import crypto from 'node:crypto'
+
+// Server-side Firestore access using REST API and Service Account JWT
+// (avoids needing firebase-admin in edge/serverless environments while bypassing blocked API Key rules)
+
+let cachedToken: string | null = null;
+let tokenExpiresAt: number = 0;
+
+async function getAccessToken(): Promise<string> {
+  if (cachedToken && Date.now() < tokenExpiresAt) {
+    return cachedToken;
+  }
+
+  const config = useRuntimeConfig();
+  const clientEmail = config.firebaseClientEmail;
+  const privateKey = (config.firebasePrivateKey || '').replace(/\\n/g, '\n');
+
+  if (!clientEmail || !privateKey) {
+    throw new Error('Missing FIREBASE_CLIENT_EMAIL or FIREBASE_PRIVATE_KEY in environment');
+  }
+
+  const iat = Math.floor(Date.now() / 1000);
+  const exp = iat + 3600;
+  
+  const header = { alg: 'RS256', typ: 'JWT' };
+  const claimSet = {
+    iss: clientEmail,
+    sub: clientEmail,
+    aud: 'https://oauth2.googleapis.com/token',
+    iat,
+    exp,
+    scope: 'https://www.googleapis.com/auth/datastore'
+  };
+
+  const encodedHeader = Buffer.from(JSON.stringify(header)).toString('base64url');
+  const encodedClaimSet = Buffer.from(JSON.stringify(claimSet)).toString('base64url');
+  const signatureInput = `${encodedHeader}.${encodedClaimSet}`;
+
+  const sign = crypto.createSign('RSA-SHA256');
+  sign.update(signatureInput);
+  const signature = sign.sign(privateKey).toString('base64url');
+
+  const jwt = `${signatureInput}.${signature}`;
+
+  const tokenRes = await fetch('https://oauth2.googleapis.com/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+      assertion: jwt
+    })
+  });
+
+  const tokenData = await tokenRes.json();
+  if (!tokenRes.ok || !tokenData.access_token) {
+    throw new Error(`Failed to generate Google OAuth token: ${JSON.stringify(tokenData)}`);
+  }
+
+  cachedToken = tokenData.access_token;
+  // Expire 5 minutes early
+  tokenExpiresAt = Date.now() + (tokenData.expires_in - 300) * 1000;
+
+  return cachedToken;
+}
 
 export async function firestoreRequest(
   method: 'GET' | 'POST' | 'PATCH' | 'DELETE',
@@ -8,13 +70,16 @@ export async function firestoreRequest(
 ) {
   const config = useRuntimeConfig()
   const projectId = config.public.firebaseProjectId
-  const apiKey = config.public.firebaseApiKey
-
-  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}?key=${apiKey}`
+  
+  const token = await getAccessToken()
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents/${path}`
 
   const res = await fetch(url, {
     method,
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    },
     body: body ? JSON.stringify(body) : undefined,
   })
 

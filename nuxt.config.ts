@@ -41,6 +41,8 @@ export default defineNuxtConfig({
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || 'ILYTAT Inquiries <noreply@ilytat.com>',
     notificationEmail: process.env.NOTIFICATION_EMAIL,
+    firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY,
     public: {
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
       firebaseApiKey: process.env.FIREBASE_API_KEY,

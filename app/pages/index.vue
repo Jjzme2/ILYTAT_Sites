@@ -174,7 +174,7 @@ const faqs = [
 ]
 
 // ── Contact form ────────────────────────────────────────────────────────────
-const form = reactive({ name: '', businessName: '', email: '', phone: '', service: '', message: '' })
+const form = reactive({ name: '', businessName: '', email: '', phone: '', service: '', billingPreference: 'monthly', message: '' })
 const submitted = ref(false)
 const submitting = ref(false)
 const submitError = ref('')
@@ -191,6 +191,7 @@ async function handleSubmit() {
         email: form.email,
         phone: form.phone || undefined,
         service: form.service || 'Not specified',
+        billingPreference: form.billingPreference,
         message: form.message,
       },
     })
@@ -392,7 +393,7 @@ async function handleSubmit() {
             </div>
 
             <div class="flex items-baseline gap-2 mb-5 pb-5 border-b border-white/[0.06] flex-wrap">
-              <span class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">{{ monthlyRate }}/mo</span>
+              <span class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">{{ monthlyRate }}/mo <span class="text-[#68667a] font-normal text-[11px]">or 2 months free with Yearly</span></span>
               <span class="text-[11px] text-[#68667a] leading-snug">First month free &mdash; we handle hosting, SSL &amp; your domain</span>
             </div>
 
@@ -643,7 +644,7 @@ async function handleSubmit() {
             <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-1">
               <div class="fgroup">
                 <label>Your Name</label>
-                <input v-model="form.name" type="text" placeholder="Jane Smith" required>
+                <input v-model="form.name" type="text" placeholder="Jane Smith" minlength="2" required>
               </div>
               <div class="fgroup">
                 <label>Business Name</label>
@@ -660,17 +661,29 @@ async function handleSubmit() {
                 <input v-model="form.phone" type="tel" placeholder="(815) 555-1234">
               </div>
             </div>
-            <div class="fgroup">
-              <label>Package Interest</label>
-              <div class="select-wrap">
-                <select v-model="form.service">
-                  <option value="">Select a package…</option>
-                  <option value="Starter — $299">Starter — $299</option>
-                  <option value="Professional — $499">Professional — $499</option>
-                  <option value="Premium — $799">Premium — $799</option>
-                  <option value="Not sure yet">Not sure yet</option>
-                </select>
-                <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />
+            <div class="grid grid-cols-2 gap-3.5 sm:grid-cols-1">
+              <div class="fgroup">
+                <label>Package Interest</label>
+                <div class="select-wrap">
+                  <select v-model="form.service">
+                    <option value="">Select a package…</option>
+                    <option value="Starter — $299">Starter — $299</option>
+                    <option value="Professional — $499">Professional — $499</option>
+                    <option value="Premium — $799">Premium — $799</option>
+                    <option value="Not sure yet">Not sure yet</option>
+                  </select>
+                  <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />
+                </div>
+              </div>
+              <div v-if="form.service && form.service !== 'Not sure yet'" class="fgroup">
+                <label>Billing Preference</label>
+                <div class="select-wrap">
+                  <select v-model="form.billingPreference">
+                    <option value="monthly">Monthly ($50/mo)</option>
+                    <option value="yearly">Yearly ($500/yr) - Save $100</option>
+                  </select>
+                  <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />
+                </div>
               </div>
             </div>
             <div class="fgroup">
@@ -679,6 +692,7 @@ async function handleSubmit() {
                 v-model="form.message"
                 rows="5"
                 placeholder="What do you do? Do you have an existing website? What matters most to you?"
+                minlength="10"
                 required
               />
             </div>

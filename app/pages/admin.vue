@@ -17,7 +17,6 @@ import {
   doc,
   orderBy,
   query,
-  serverTimestamp,
 } from 'firebase/firestore'
 
 definePageMeta({ layout: false })
