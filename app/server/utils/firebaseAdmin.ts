@@ -125,6 +125,65 @@ export async function firestoreRequest(
   return data;
 }
 
+/**
+ * Run a structured query against a top-level collection.
+ * Supports a single field filter (e.g. createdAt >= since) + ordering + limit.
+ * Returns plain objects with an `id` field added.
+ */
+export async function firestoreRunQuery(opts: {
+  collectionId: string
+  whereField:   string
+  whereOp:      'GREATER_THAN_OR_EQUAL' | 'LESS_THAN_OR_EQUAL' | 'EQUAL' | 'GREATER_THAN'
+  whereValue:   string | number | boolean
+  orderByField: string
+  orderByDir?:  'ASCENDING' | 'DESCENDING'
+  limit?:       number
+}): Promise<Array<Record<string, unknown>>> {
+  const config    = useRuntimeConfig()
+  const projectId = config.public.firebaseProjectId
+  const token     = await getAccessToken()
+
+  const body = {
+    structuredQuery: {
+      from: [{ collectionId: opts.collectionId }],
+      where: {
+        fieldFilter: {
+          field: { fieldPath: opts.whereField },
+          op:    opts.whereOp,
+          value: typeof opts.whereValue === 'string'
+            ? { stringValue:  opts.whereValue }
+            : typeof opts.whereValue === 'number'
+              ? { doubleValue: opts.whereValue }
+              : { booleanValue: opts.whereValue },
+        },
+      },
+      orderBy: [{ field: { fieldPath: opts.orderByField }, direction: opts.orderByDir ?? 'DESCENDING' }],
+      limit: opts.limit ?? 500,
+    },
+  }
+
+  const url = `https://firestore.googleapis.com/v1/projects/${projectId}/databases/(default)/documents:runQuery`
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify(body),
+  })
+
+  if (!res.ok) {
+    const err = await res.text().catch(() => res.statusText)
+    throw new Error(`Firestore runQuery error: ${res.status} ${err}`)
+  }
+
+  const rows: Array<{ document?: { name: string; fields: Record<string, unknown> } }> = await res.json()
+
+  return rows
+    .filter(r => r.document)
+    .map(r => ({
+      id: r.document!.name.split('/').pop() as string,
+      ...fromFirestoreFields(r.document!.fields),
+    }))
+}
+
 // Convert Firestore REST format to plain objects
 export function fromFirestoreFields(fields: Record<string, unknown>): Record<string, unknown> {
   const result: Record<string, unknown> = {}

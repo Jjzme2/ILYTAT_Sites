@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { useStripe } from '~/server/utils/stripe'
+import { log } from '~/server/utils/logger'
 
 const PACKAGE_PRICE_MAP: Record<string, (config: ReturnType<typeof useRuntimeConfig>) => string | undefined> = {
   starter:      (c) => c.stripePriceStarterBuild as string | undefined,
@@ -46,7 +47,9 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 500, message: `Hosting price ID not configured for billing cycle: ${data.billingCycle}` })
   }
 
-  const session = await stripe.checkout.sessions.create({
+  let session
+  try {
+    session = await stripe.checkout.sessions.create({
     payment_method_types: ['card'],
     mode: 'subscription',
     // Build fee (one-time) — charged immediately at checkout.
@@ -76,8 +79,23 @@ export default defineEventHandler(async (event) => {
     success_url: `${config.public.siteUrl}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
     // cancel carries context so the frontend can fire a checkout_abandoned analytics event
     cancel_url:  `${config.public.siteUrl}/#pricing?checkout=cancelled&pkg=${encodeURIComponent(data.packageName)}&cycle=${data.billingCycle}`,
-    allow_promotion_codes:       true,
-    billing_address_collection:  'required',
+      allow_promotion_codes:       true,
+      billing_address_collection:  'required',
+    })
+  }
+  catch (err: unknown) {
+    await log('error', 'stripe', 'Failed to create checkout session', {
+      packageName: data.packageName,
+      billingCycle: data.billingCycle,
+      error: err instanceof Error ? err.message : String(err),
+    })
+    throw createError({ statusCode: 500, message: 'Failed to create checkout session' })
+  }
+
+  await log('info', 'stripe', 'Checkout session created', {
+    packageName:  data.packageName,
+    billingCycle: data.billingCycle,
+    sessionId:    session.id,
   })
 
   return { url: session.url, sessionId: session.id }

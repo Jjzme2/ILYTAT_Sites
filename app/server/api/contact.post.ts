@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { firestoreRequest, toFirestoreFields } from '~/server/utils/firebaseAdmin'
+import { log } from '~/server/utils/logger'
 
 const schema = z.object({
   name: z.string().min(2),
@@ -32,10 +33,21 @@ export default defineEventHandler(async (event) => {
     await firestoreRequest('POST', 'inquiries', {
       fields: toFirestoreFields(inquiry),
     })
-  } catch (err: any) {
-    console.error('[Contact API] Failed to save inquiry:', err.message);
-    throw createError({ statusCode: 500, message: 'Internal server error while saving message. Please try again later.' });
   }
+  catch (err: unknown) {
+    await log('error', 'firestore', 'Failed to save inquiry', {
+      name: data.name,
+      email: data.email,
+      error: err instanceof Error ? err.message : String(err),
+    })
+    throw createError({ statusCode: 500, message: 'Internal server error while saving message. Please try again later.' })
+  }
+
+  await log('info', 'contact', 'New inquiry received', {
+    name:         data.name,
+    businessName: data.businessName,
+    service:      data.service || 'Not specified',
+  })
 
   // 2. Send email notification via Resend (fire-and-forget — form success is not blocked by email)
   const config = useRuntimeConfig()
@@ -75,8 +87,11 @@ export default defineEventHandler(async (event) => {
         }),
       })
     }
-    catch {
-      // Email failure is silent — inquiry is already saved in Firestore
+    catch (e) {
+      await log('error', 'email', 'Inquiry notification email failed', {
+        name:  data.name,
+        error: e instanceof Error ? e.message : String(e),
+      })
     }
   }
 

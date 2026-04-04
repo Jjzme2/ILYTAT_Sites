@@ -91,7 +91,7 @@ function db() {
 }
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
-const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs'>('portfolio')
+const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs'>('portfolio')
 
 // ── Internal Docs ─────────────────────────────────────────────────────────────
 interface DocEntry { key: string; name: string; lastModified?: string }
@@ -400,7 +400,52 @@ async function loadAnalytics() {
 watch(activeTab, (tab) => {
   if (tab === 'analytics' && !analytics.value) loadAnalytics()
   if (tab === 'docs' && !internalDocs.value.length) loadDocs()
+  if (tab === 'logs' && !appLogs.value.length) loadLogs()
 })
+
+// ── App Logs ──────────────────────────────────────────────────────────────────
+interface AppLog {
+  id:        string
+  level:     string
+  area:      string
+  message:   string
+  data:      string | null
+  priority:  number
+  createdAt: string
+}
+
+const appLogs       = ref<AppLog[]>([])
+const logsLoading   = ref(false)
+const logsFilter    = ref<'all' | 'critical' | 'error' | 'warn' | 'info'>('all')
+
+const LEVEL_COLOR: Record<string, string> = {
+  critical: '#dc2626',
+  error:    '#ea580c',
+  warn:     '#d97706',
+  info:     '#6b7280',
+}
+
+const filteredLogs = computed(() =>
+  logsFilter.value === 'all'
+    ? appLogs.value
+    : appLogs.value.filter(l => l.level === logsFilter.value),
+)
+
+async function loadLogs() {
+  logsLoading.value = true
+  try {
+    const snap = await getDocs(
+      query(collection(db(), 'logs'), orderBy('createdAt', 'desc')),
+    )
+    appLogs.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppLog))
+  }
+  catch (e: unknown) {
+    showError(`Failed to load logs: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  finally {
+    logsLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -432,7 +477,7 @@ watch(activeTab, (tab) => {
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
           <button
-            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'health', 'docs']" :key="tab"
+            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'logs', 'health', 'docs']" :key="tab"
             class="dash-tab" :class="{ active: activeTab === (tab as typeof activeTab) }"
             @click="activeTab = (tab as typeof activeTab)">
             {{ tab }}
@@ -571,6 +616,60 @@ watch(activeTab, (tab) => {
         </div>
 
         <p v-else style="color:#8e8ba0;font-size:13px;">Click Refresh to load analytics data.</p>
+      </section>
+
+      <!-- ── LOGS tab ── -->
+      <section v-if="activeTab === 'logs'" class="dash-section" style="max-width:1000px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
+          <h2 class="dash-title" style="margin:0;">App Logs</h2>
+          <button class="submit-btn" style="padding:6px 14px;font-size:12px;" :disabled="logsLoading" @click="loadLogs">
+            {{ logsLoading ? 'Loading…' : 'Refresh' }}
+          </button>
+          <!-- Level filter -->
+          <div style="display:flex;gap:4px;margin-left:auto;">
+            <button
+              v-for="lvl in ['all','critical','error','warn','info']" :key="lvl"
+              style="padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;border:1px solid transparent;transition:all .15s;"
+              :style="{
+                background: logsFilter === lvl ? 'rgba(245,197,24,0.15)' : 'rgba(255,255,255,0.03)',
+                borderColor: logsFilter === lvl ? 'rgba(245,197,24,0.4)' : '#2a2a32',
+                color: logsFilter === lvl ? '#f5c518' : '#68667a',
+              }"
+              @click="logsFilter = (lvl as typeof logsFilter)"
+            >{{ lvl }}</button>
+          </div>
+        </div>
+        <p class="dash-hint">Structured log entries written by all server-side handlers. Sorted newest first.</p>
+
+        <div v-if="logsLoading && !appLogs.length" style="color:#8e8ba0;font-size:13px;">Loading logs…</div>
+
+        <div v-else-if="!filteredLogs.length" class="empty-state">
+          {{ appLogs.length ? 'No logs match the selected filter.' : 'No logs yet — they appear here once the app starts writing them.' }}
+        </div>
+
+        <div v-else style="display:flex;flex-direction:column;gap:2px;">
+          <div
+            v-for="entry in filteredLogs" :key="entry.id"
+            style="display:grid;grid-template-columns:130px 90px 90px 1fr;gap:8px;padding:8px 12px;border-radius:6px;background:#1a1a1f;border:1px solid #2a2a32;font-size:12px;align-items:start;"
+          >
+            <!-- Timestamp -->
+            <span style="color:#68667a;font-family:monospace;font-size:11px;">
+              {{ new Date(entry.createdAt).toLocaleString('en-US', { timeZone:'America/Chicago', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' }) }}
+            </span>
+            <!-- Level badge -->
+            <span
+              style="display:inline-block;padding:2px 8px;border-radius:3px;font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;text-align:center;"
+              :style="{ background: LEVEL_COLOR[entry.level] + '22', color: LEVEL_COLOR[entry.level], border: '1px solid ' + LEVEL_COLOR[entry.level] + '44' }"
+            >{{ entry.level }}</span>
+            <!-- Area -->
+            <span style="font-family:monospace;color:#8e8ba0;font-size:11px;">[{{ entry.area }}]</span>
+            <!-- Message + data -->
+            <div>
+              <span style="color:#f0ece6;">{{ entry.message }}</span>
+              <span v-if="entry.data" style="display:block;margin-top:3px;font-family:monospace;font-size:10px;color:#68667a;word-break:break-all;">{{ entry.data }}</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ── HEALTH tab ── -->

@@ -48,6 +48,7 @@ export default defineNuxtConfig({
     resendFrom: process.env.RESEND_FROM || 'ILYTAT Inquiries <noreply@ilytat.com>',
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || '',
     notificationEmail: process.env.NOTIFICATION_EMAIL,
+    cronSecret: process.env.CRON_SECRET,
     firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY,
     r2AccountId: process.env.R2_ACCOUNT_ID,
@@ -71,6 +72,9 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: process.env.VERCEL ? 'vercel' : 'node-server',
+    externals: {
+      inline: ['@aws-sdk/client-s3'],
+    },
   },
 
   app: {

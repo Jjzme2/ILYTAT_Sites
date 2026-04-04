@@ -1,5 +1,6 @@
 import { useStripe } from '~/server/utils/stripe'
 import { firestoreRequest, toFirestoreFields } from '~/server/utils/firebaseAdmin'
+import { log } from '~/server/utils/logger'
 
 // ── Per-package deliverables ───────────────────────────────────────────────
 const PACKAGE_DELIVERABLES: Record<string, string[]> = {
@@ -80,8 +81,12 @@ export default defineEventHandler(async (event) => {
   let stripeEvent
   try {
     stripeEvent = stripe.webhooks.constructEvent(body, sig, config.stripeWebhookSecret)
-  } catch {
-    throw createError({ statusCode: 400, message: `Webhook signature verification failed` })
+  }
+  catch (err: unknown) {
+    await log('critical', 'stripe', 'Webhook signature verification failed — possible spoofing attempt', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+    throw createError({ statusCode: 400, message: 'Webhook signature verification failed' })
   }
 
   switch (stripeEvent.type) {
@@ -109,8 +114,23 @@ export default defineEventHandler(async (event) => {
         updatedAt: new Date().toISOString(),
       }
 
-      await firestoreRequest('POST', 'orders', {
-        fields: toFirestoreFields(order),
+      try {
+        await firestoreRequest('POST', 'orders', { fields: toFirestoreFields(order) })
+      }
+      catch (err: unknown) {
+        await log('error', 'firestore', 'Failed to save order', {
+          sessionId: session.id,
+          packageName: order.packageName,
+          error: err instanceof Error ? err.message : String(err),
+        })
+      }
+
+      await log('info', 'stripe', 'Purchase completed', {
+        packageName:   order.packageName,
+        customerEmail: order.customerEmail,
+        customerName:  order.customerName,
+        amount:        order.amount,
+        sessionId:     session.id,
       })
 
       // ── Email notifications via Resend (fire-and-forget) ──────────────────
@@ -172,7 +192,12 @@ export default defineEventHandler(async (event) => {
               replyTo: config.notificationEmail || 'jj@ilytat.com',
             })
           }
-          catch (e) { console.error('[webhook] customer confirmation email failed:', e) }
+          catch (e) {
+            await log('error', 'email', 'Customer confirmation email failed', {
+              customerEmail,
+              error: e instanceof Error ? e.message : String(e),
+            })
+          }
         }
 
         // 2. Owner action checklist — everything that needs to go out
@@ -260,7 +285,12 @@ export default defineEventHandler(async (event) => {
               replyTo: customerEmail || undefined,
             })
           }
-          catch (e) { console.error('[webhook] owner notification email failed:', e) }
+          catch (e) {
+            await log('error', 'email', 'Owner purchase notification email failed', {
+              packageLabel,
+              error: e instanceof Error ? e.message : String(e),
+            })
+          }
         }
       }
 
@@ -271,6 +301,14 @@ export default defineEventHandler(async (event) => {
       const pi = stripeEvent.data.object
       const errorMessage = pi.last_payment_error?.message || 'Unknown error'
       const errorCode = pi.last_payment_error?.code || ''
+
+      await log('critical', 'stripe', 'Payment failed', {
+        paymentIntentId: pi.id,
+        amount:          (pi.amount || 0) / 100,
+        customerEmail:   pi.receipt_email || '',
+        errorCode,
+        errorMessage,
+      })
 
       // Persist to Firestore so no failure is lost
       await firestoreRequest('POST', 'payment_failures', {
@@ -309,13 +347,17 @@ export default defineEventHandler(async (event) => {
             html,
           })
         }
-        catch (e) { console.error('[webhook] payment failed notification email failed:', e) }
+        catch (e) {
+          await log('error', 'email', 'Payment failure notification email failed', {
+            paymentIntentId: pi.id,
+            error: e instanceof Error ? e.message : String(e),
+          })
+        }
       }
 
       break
     }
 
-    // Fires ~7 days before the 30-day trial ends — heads-up for both owner and customer
     case 'customer.subscription.trial_will_end': {
       if (!config.resendApiKey) break
 
@@ -337,6 +379,12 @@ export default defineEventHandler(async (event) => {
         }
         catch { /* non-fatal */ }
       }
+
+      await log('info', 'stripe', 'Subscription trial ending soon', {
+        subscriptionId: sub.id,
+        trialEnd,
+        customerEmail,
+      })
 
       // Owner heads-up
       if (config.notificationEmail) {
