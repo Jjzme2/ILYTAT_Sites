@@ -20,6 +20,7 @@ export default defineNuxtConfig({
     '@nuxt/eslint',
     '@pinia/nuxt',
     '@vercel/analytics',
+    '@vercel/speed-insights',
   ],
 
   css: [resolve(__dirname, 'assets/css/main.css')],
