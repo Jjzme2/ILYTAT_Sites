@@ -49,6 +49,10 @@ export default defineNuxtConfig({
     notificationEmail: process.env.NOTIFICATION_EMAIL,
     firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY,
+    r2AccountId: process.env.R2_ACCOUNT_ID,
+    r2AccessKeyId: process.env.R2_ACCESS_KEY_ID,
+    r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    r2BucketName: process.env.R2_BUCKET_NAME || 'ilytat-internal',
     public: {
       stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
       firebaseApiKey: process.env.FIREBASE_API_KEY,
@@ -76,12 +80,12 @@ export default defineNuxtConfig({
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
           name: 'description',
-          content: 'Custom websites built for local businesses in Illinois. You own everything. Managed hosting from $50/mo.',
+          content: 'Custom websites built for local businesses in Illinois. You own everything. Managed hosting from $89/mo.',
         },
         { property: 'og:title', content: 'ILYTAT — Professional Websites for Local Business' },
         {
           property: 'og:description',
-          content: 'Websites built for local businesses. One flat build price. $50/month for everything else.',
+          content: 'Websites built for local businesses. One flat build price. $89/month for everything else.',
         },
         { property: 'og:type', content: 'website' },
         { property: 'og:image', content: 'https://media.ilytat.com/logo.png' },

@@ -6,7 +6,7 @@ useHead({
   meta: [
     {
       name: 'description',
-      content: 'Custom websites built for local businesses in Illinois. You own everything. Managed hosting from $50/mo.',
+      content: 'Custom websites built for local businesses in Illinois. You own everything. Managed hosting from $89/mo.',
     },
     { property: 'og:image', content: 'https://media.ilytat.com/logo.png' },
   ],
@@ -27,7 +27,7 @@ useHead({
           addressCountry: 'US',
         },
         areaServed: { '@type': 'State', name: 'Illinois' },
-        priceRange: '$299–$799',
+        priceRange: '$499–$1,499',
         serviceType: 'Web Design',
       }),
     },
@@ -85,7 +85,7 @@ useReveal()
 const pillars = [
   { icon: 'i-heroicons-lock-closed', title: 'You own your site', body: 'Every file, every line of code is yours. We just keep it running.' },
   { icon: 'i-heroicons-currency-dollar', title: 'Simple, clear pricing', body: 'One build price. One flat monthly rate. Nothing hidden, nothing variable.' },
-  { icon: 'i-heroicons-shield-check', title: 'Fully managed', body: 'Hosting, SSL, domain, and updates — all handled for $50/mo.' },
+  { icon: 'i-heroicons-shield-check', title: 'Fully managed', body: 'Hosting, SSL, domain, and updates — all handled for $89/mo.' },
   { icon: 'i-heroicons-arrow-path', title: 'Revisions included', body: 'Every package includes rounds of feedback before we close.' },
 ]
 
@@ -124,58 +124,67 @@ const steps = [
   {
     n: '03',
     title: 'Your site goes live — and stays live',
-    body: 'We launch your site and handle everything technical from there. Hosting, SSL, domain renewal, and small updates are covered for $50/month. First month is free.',
+    body: 'We launch your site and handle everything technical from there. Hosting, SSL, domain renewal, and small updates are covered for $89/month. First month is free.',
   },
 ]
 
 // ── Website build packages ─────────────────────────────────────────────────
-// All packages include managed hosting at $50/month starting month 2.
+// All packages include managed hosting at $89/month starting month 2.
 // To update the monthly rate, change `monthlyRate` here — it flows everywhere.
-const monthlyRate = '$50'
+const monthlyRate = '$89'
 
 const packages = [
   {
     name: 'Starter',
-    price: '$299',
+    price: '$499',
     note: 'one-time build',
     best: 'New businesses that need a presence fast',
     features: [
-      'Single-page site',
+      'Single-page site (scrolling sections)',
       'Mobile responsive design',
-      'Contact form',
+      'Contact form (email delivery)',
       'Google Maps embed',
-      'We work until you love it',
+      'Social media links',
+      'Basic SEO (title, meta, sitemap)',
+      '1 round of revisions',
     ],
+    delivery: '1–2 weeks',
     featured: false,
   },
   {
     name: 'Professional',
-    price: '$499',
+    price: '$999',
     note: 'one-time build',
     best: 'Businesses ready to convert visitors into customers',
     features: [
-      'Up to 5 pages',
+      'Up to 5 pages (Home, About, Services, Gallery, Contact)',
       'Mobile responsive design',
-      'Contact & quote request forms',
-      'Photo gallery / service lists',
-      'Basic SEO setup',
-      'We work until you love it',
+      'Contact + quote request forms',
+      'Photo gallery / portfolio section',
+      'Full SEO setup (schema, sitemap, meta, alt tags)',
+      'Google Business Profile optimization',
+      'Social media integration',
+      '2 rounds of revisions',
     ],
+    delivery: '2–3 weeks',
     featured: true,
   },
   {
     name: 'Premium',
-    price: '$799',
+    price: '$1,499',
     note: 'one-time build',
     best: 'Established businesses that need full functionality',
     features: [
       'Up to 10 pages',
       'Everything in Professional',
-      'Booking / scheduling widget integration',
-      'Menu or detailed service catalog',
-      'Analytics dashboard setup',
-      'We work until you love it',
+      'Booking / scheduling integration',
+      'Menu or service catalog system',
+      'Analytics dashboard (Google Analytics)',
+      'Third-party integrations (Square, Toast, etc.)',
+      'Speed optimization (Core Web Vitals)',
+      '3 rounds of revisions',
     ],
+    delivery: '3–5 weeks',
     featured: false,
   },
 ]
@@ -217,7 +226,7 @@ async function startCheckout(pkg: typeof packages[number]) {
 const faqs = [
   {
     q: 'Do I need to already have a domain?',
-    a: 'No — domain registration and management are included in the $50/month plan. If you already own a domain, we\'ll point it to your new site at no extra cost.',
+    a: 'No — domain registration and management are included in the $89/month plan. If you already own a domain, we\'ll point it to your new site at no extra cost.',
   },
   {
     q: 'What platform will my site be built on?',
@@ -225,7 +234,7 @@ const faqs = [
   },
   {
     q: 'What happens if I need changes after the site is delivered?',
-    a: 'Small updates — text edits, photo swaps, hours changes — are covered under the $50/month plan. Larger additions like new pages or features are quoted separately at fair rates.',
+    a: 'Small updates — text edits, photo swaps, hours changes — are covered under the $89/month plan. Larger additions like new pages or features are quoted separately at fair rates.',
   },
   {
     q: 'Will you help me set up Google Business Profile?',
@@ -467,7 +476,7 @@ async function handleSubmit() {
           </button>
           <span class="text-[13px]" :class="billingCycle === 'yearly' ? 'text-[#f0ece6] font-semibold' : 'text-[#68667a]'">
             Yearly
-            <span class="ml-1.5 font-mono text-[10px] font-bold text-[#0f0f11] bg-[#f5c518] px-1.5 py-0.5 rounded-sm uppercase tracking-[0.5px]">2 months free</span>
+            <span class="ml-1.5 font-mono text-[10px] font-bold text-[#0f0f11] bg-[#f5c518] px-1.5 py-0.5 rounded-sm uppercase tracking-[0.5px]">Save 25%</span>
           </span>
         </div>
 
@@ -493,8 +502,8 @@ async function handleSubmit() {
             </div>
 
             <div class="flex items-baseline gap-2 mb-5 pb-5 border-b border-white/[0.06] flex-wrap">
-              <span v-if="billingCycle === 'monthly'" class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">$50/mo hosting</span>
-              <span v-else class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">$500/yr hosting <span class="text-[#68667a] font-normal text-[11px]">· 2 months free</span></span>
+              <span v-if="billingCycle === 'monthly'" class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">$89/mo hosting</span>
+              <span v-else class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">$799/yr hosting <span class="text-[#68667a] font-normal text-[11px]">· save $269/yr</span></span>
               <span class="text-[11px] text-[#68667a] leading-snug w-full">First 30 days free &mdash; hosting, SSL &amp; domain included</span>
             </div>
 
@@ -503,6 +512,10 @@ async function handleSubmit() {
             <ul class="tier-features">
               <li v-for="f in pkg.features" :key="f">{{ f }}</li>
             </ul>
+
+            <p class="font-mono text-[10px] tracking-[1px] text-[#68667a] uppercase mt-5 mb-5 border-t border-white/[0.06] pt-4">
+              Delivered in {{ pkg.delivery }}
+            </p>
 
             <button
               class="price-cta w-full"
@@ -640,7 +653,7 @@ async function handleSubmit() {
             </li>
             <li class="flex gap-4 text-[14.5px] text-[#f0ece6]/80 leading-[1.7]">
               <span class="text-[#f5c518] font-mono font-bold mt-[-2px] flex-shrink-0">02</span>
-              <span><strong class="text-[#f0ece6] font-semibold">Simple Hosting:</strong> I handle the technical heavy lifting — security, speed, and maintenance — for a flat $50/month.</span>
+              <span><strong class="text-[#f0ece6] font-semibold">Simple Hosting:</strong> I handle the technical heavy lifting — security, speed, and maintenance — for a flat $89/month.</span>
             </li>
             <li class="flex gap-4 text-[14.5px] text-[#f0ece6]/80 leading-[1.7]">
               <span class="text-[#f5c518] font-mono font-bold mt-[-2px] flex-shrink-0">03</span>
@@ -774,9 +787,9 @@ async function handleSubmit() {
                 <div class="select-wrap">
                   <select v-model="form.service">
                     <option value="">Select a package…</option>
-                    <option value="Starter — $299">Starter — $299</option>
-                    <option value="Professional — $499">Professional — $499</option>
-                    <option value="Premium — $799">Premium — $799</option>
+                    <option value="Starter — $499">Starter — $499</option>
+                    <option value="Professional — $999">Professional — $999</option>
+                    <option value="Premium — $1,499">Premium — $1,499</option>
                     <option value="Not sure yet">Not sure yet</option>
                   </select>
                   <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />
@@ -786,8 +799,8 @@ async function handleSubmit() {
                 <label>Billing Preference</label>
                 <div class="select-wrap">
                   <select v-model="form.billingPreference">
-                    <option value="monthly">Monthly ($50/mo)</option>
-                    <option value="yearly">Yearly ($500/yr) - Save $100</option>
+                    <option value="monthly">Monthly ($89/mo)</option>
+                    <option value="yearly">Yearly ($799/yr) - Save $269</option>
                   </select>
                   <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />
                 </div>

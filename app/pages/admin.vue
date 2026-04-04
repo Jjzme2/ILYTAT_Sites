@@ -91,7 +91,48 @@ function db() {
 }
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
-const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health'>('portfolio')
+const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs'>('portfolio')
+
+// ── Internal Docs ─────────────────────────────────────────────────────────────
+interface DocEntry { key: string; name: string; lastModified?: string }
+
+const internalDocs = ref<DocEntry[]>([])
+const docsLoading = ref(false)
+const selectedDocKey = ref<string | null>(null)
+const docContent = ref<string | null>(null)
+const docContentLoading = ref(false)
+
+async function loadDocs() {
+  docsLoading.value = true
+  try {
+    internalDocs.value = await $fetch<DocEntry[]>('/api/admin/docs')
+    if (internalDocs.value.length && !selectedDocKey.value) {
+      await selectDoc(internalDocs.value[0].key)
+    }
+  }
+  catch (e: unknown) {
+    showError(`Failed to load docs: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  finally {
+    docsLoading.value = false
+  }
+}
+
+async function selectDoc(key: string) {
+  selectedDocKey.value = key
+  docContent.value = null
+  docContentLoading.value = true
+  try {
+    const res = await $fetch<{ html: string }>(`/api/admin/docs/content?key=${encodeURIComponent(key)}`)
+    docContent.value = res.html
+  }
+  catch (e: unknown) {
+    showError(`Failed to load document: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  finally {
+    docContentLoading.value = false
+  }
+}
 
 // ── Portfolio ─────────────────────────────────────────────────────────────────
 interface Project {
@@ -358,6 +399,7 @@ async function loadAnalytics() {
 
 watch(activeTab, (tab) => {
   if (tab === 'analytics' && !analytics.value) loadAnalytics()
+  if (tab === 'docs' && !internalDocs.value.length) loadDocs()
 })
 </script>
 
@@ -390,7 +432,7 @@ watch(activeTab, (tab) => {
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
           <button
-            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'health']" :key="tab"
+            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'health', 'docs']" :key="tab"
             class="dash-tab" :class="{ active: activeTab === (tab as typeof activeTab) }"
             @click="activeTab = (tab as typeof activeTab)">
             {{ tab }}
@@ -719,6 +761,59 @@ v-model="newTestimonial.quote" rows="3"
             {{ savingTestimonial ? 'Saving…' : 'Add Testimonial' }}
           </button>
         </form>
+      </section>
+
+      <!-- ── DOCS tab ── -->
+      <section v-if="activeTab === 'docs'" class="dash-section" style="max-width: 1200px;">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 6px;">
+          <h2 class="dash-title" style="margin: 0;">Internal Documents</h2>
+          <button class="submit-btn" style="padding: 6px 14px; font-size: 12px;" :disabled="docsLoading" @click="loadDocs">
+            {{ docsLoading ? 'Loading…' : 'Refresh' }}
+          </button>
+        </div>
+        <p class="dash-hint">Documents stored under <code>docs/</code> in the R2 internal bucket. Upload new files there to add them here.</p>
+
+        <div v-if="docsLoading && !internalDocs.length" style="color: #8e8ba0; font-size: 13px;">Loading documents…</div>
+
+        <div v-else-if="!internalDocs.length" class="empty-state">
+          No documents found. Upload HTML files to <code>docs/</code> in the R2 bucket.
+        </div>
+
+        <div v-else style="display: flex; gap: 20px; height: calc(100vh - 240px); min-height: 500px;">
+          <!-- Doc list -->
+          <div style="width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px;">
+            <div
+              v-for="docItem in internalDocs"
+              :key="docItem.key"
+              style="padding: 10px 14px; cursor: pointer; border-radius: 6px; font-size: 13px; border: 1px solid transparent; transition: all 0.15s;"
+              :style="{
+                background: selectedDocKey === docItem.key ? 'rgba(245,197,24,0.1)' : 'rgba(255,255,255,0.02)',
+                borderColor: selectedDocKey === docItem.key ? 'rgba(245,197,24,0.3)' : '#2a2a32',
+                color: selectedDocKey === docItem.key ? '#f5c518' : '#8e8ba0',
+              }"
+              @click="selectDoc(docItem.key)"
+            >
+              {{ docItem.name }}
+            </div>
+          </div>
+
+          <!-- Iframe viewer -->
+          <div style="flex: 1; border: 1px solid #2a2a32; border-radius: 10px; overflow: hidden; position: relative;">
+            <div v-if="docContentLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #141417; color: #8e8ba0; font-size: 13px;">
+              Loading document…
+            </div>
+            <iframe
+              v-else-if="docContent"
+              :srcdoc="docContent"
+              sandbox="allow-same-origin allow-scripts"
+              style="width: 100%; height: 100%; border: none;"
+              title="Internal document viewer"
+            />
+            <div v-else style="display: flex; align-items: center; justify-content: center; height: 100%; color: #68667a; font-size: 13px;">
+              Select a document to view
+            </div>
+          </div>
+        </div>
       </section>
 
       <!-- ── INQUIRIES tab ── -->
