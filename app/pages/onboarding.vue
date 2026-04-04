@@ -19,17 +19,8 @@ onMounted(() => {
 
 useReveal()
 
-// The link to the Tally.so or Fillout form goes here. 
-// You can pass the session_id to the form via URL parameters 
-// so you can link the finalized assets to the correct Stripe order.
-const formUrl = `https://tally.so/r/YOUR_FORM_ID?session_id=${sessionId || ''}`
-
-// ── Developer Instructions ──────────────────────────────────────────────────
-// To use Tally.so or Fillout for Single-Point Asset Collection:
-// 1. Create a free form asking for Business Name, Competitors, Colors, etc.
-// 2. Add an "Upload File" block for logos, menus, or photos.
-// 3. Connect the form integration to Google Drive to route files neatly to your workspace.
-// 4. Copy the embed URL from the form builder and paste it in `formUrl` above.
+// Pass the Stripe session_id so form responses can be linked to the correct order.
+const formUrl = `https://tally.so/r/A7D9Ay?session_id=${sessionId || ''}`
 </script>
 
 <template>

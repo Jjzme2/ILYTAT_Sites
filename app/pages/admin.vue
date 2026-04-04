@@ -541,7 +541,7 @@ async function loadLogs() {
           <!-- ── Checkout funnel ── -->
           <div class="record-card" style="margin-bottom:20px;">
             <p class="dash-hint" style="font-weight:600;margin-bottom:14px;">Checkout funnel (last 30 days)</p>
-            <div style="display:flex;gap:0;overflow:hidden;border-radius:6px;">
+            <div class="funnel-container">
               <div
                 v-for="(step, i) in [
                   { label: 'Pricing viewed', key: 'pricing_viewed' },
@@ -605,7 +605,7 @@ async function loadLogs() {
               <div
                 v-for="e in analytics.recent"
                 :key="e.id"
-                style="display:grid;grid-template-columns:140px 180px 1fr;gap:8px;padding:7px 10px;border-radius:4px;background:rgba(255,255,255,0.02);font-size:12px;align-items:start;"
+                class="analytics-event-row"
               >
                 <span style="color:#68667a;font-family:monospace;">{{ new Date(e.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) }}</span>
                 <span style="font-family:monospace;color:#f5c518;font-weight:600;">{{ e.event }}</span>
@@ -650,7 +650,7 @@ async function loadLogs() {
         <div v-else style="display:flex;flex-direction:column;gap:2px;">
           <div
             v-for="entry in filteredLogs" :key="entry.id"
-            style="display:grid;grid-template-columns:130px 90px 90px 1fr;gap:8px;padding:8px 12px;border-radius:6px;background:#1a1a1f;border:1px solid #2a2a32;font-size:12px;align-items:start;"
+            class="log-entry"
           >
             <!-- Timestamp -->
             <span style="color:#68667a;font-family:monospace;font-size:11px;">
@@ -878,9 +878,9 @@ v-model="newTestimonial.quote" rows="3"
           No documents found. Upload HTML files to <code>docs/</code> in the R2 bucket.
         </div>
 
-        <div v-else style="display: flex; gap: 20px; height: calc(100vh - 240px); min-height: 500px;">
+        <div v-else class="docs-layout">
           <!-- Doc list -->
-          <div style="width: 200px; flex-shrink: 0; display: flex; flex-direction: column; gap: 4px;">
+          <div class="docs-sidebar">
             <div
               v-for="docItem in internalDocs"
               :key="docItem.key"
@@ -919,6 +919,17 @@ v-model="newTestimonial.quote" rows="3"
       <section v-if="activeTab === 'inquiries'" class="dash-section">
         <h2>Inquiries</h2>
         <p class="dash-hint">All contact form submissions, newest first.</p>
+
+        <!-- Onboarding form quick access -->
+        <div class="onboarding-card">
+          <div>
+            <p style="font-weight:600;margin:0 0 4px;font-size:14px;">Client Onboarding Form</p>
+            <p style="font-size:12px;color:#8e8ba0;margin:0;">Send this to new clients to collect their requirements, branding assets, and preferences.</p>
+          </div>
+          <a href="https://tally.so/r/A7D9Ay" target="_blank" rel="noopener noreferrer" class="submit-btn onboarding-btn">
+            Open Form ↗
+          </a>
+        </div>
 
         <div class="record-list">
           <div v-if="!inquiries.length" class="empty-state">No inquiries yet.</div>
@@ -1015,7 +1026,11 @@ h1 {
   display: flex;
   gap: 4px;
   flex: 1;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
 }
+.dash-tabs::-webkit-scrollbar { display: none; }
 
 .dash-tab {
   padding: 7px 16px;
@@ -1027,6 +1042,8 @@ h1 {
   font-size: 13px;
   text-transform: capitalize;
   transition: all 0.15s;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .dash-tab.active {
@@ -1051,10 +1068,14 @@ h1 {
 
 @media (max-width: 640px) {
   .login-screen { padding: 48px 20px; }
-  .dash-header { padding: 12px 16px; gap: 12px; flex-wrap: wrap; }
-  .dash-tab { padding: 6px 10px; font-size: 12px; }
-  .logout-btn { padding: 6px 10px; font-size: 12px; }
+  .dash-header { padding: 10px 16px; gap: 6px 12px; flex-wrap: wrap; }
+  .dash-tabs { order: 10; width: 100%; flex: none; }
+  .logout-btn { margin-left: auto; padding: 6px 10px; font-size: 12px; }
+  .dash-tab { padding: 5px 10px; font-size: 12px; }
   .dash-section { padding: 24px 16px 48px; }
+  /* Stack record cards vertically on mobile */
+  .record-card { flex-direction: column; }
+  .record-actions { flex-direction: row; flex-wrap: wrap; align-items: center; }
 }
 
 /* ── Section ── */
@@ -1264,6 +1285,76 @@ textarea { resize: vertical; }
   color: #ef4444;
 }
 
+/* ── Log entries ── */
+.log-entry {
+  display: grid;
+  grid-template-columns: 130px 90px 90px 1fr;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 6px;
+  background: #1a1a1f;
+  border: 1px solid #2a2a32;
+  font-size: 12px;
+  align-items: start;
+}
+
+/* ── Analytics event rows ── */
+.analytics-event-row {
+  display: grid;
+  grid-template-columns: 140px 180px 1fr;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.02);
+  font-size: 12px;
+  align-items: start;
+}
+
+/* ── Checkout funnel ── */
+.funnel-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  overflow: hidden;
+  border-radius: 6px;
+}
+
+/* ── Docs split layout ── */
+.docs-layout {
+  display: flex;
+  gap: 20px;
+  height: calc(100vh - 240px);
+  min-height: 500px;
+}
+
+.docs-sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+/* ── Onboarding card ── */
+.onboarding-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 20px;
+  background: rgba(245, 197, 24, 0.07);
+  border: 1px solid rgba(245, 197, 24, 0.25);
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+
+.onboarding-btn {
+  text-decoration: none;
+  padding: 10px 20px;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 code {
   font-family: 'Space Mono', monospace;
   font-size: 12px;
@@ -1274,9 +1365,13 @@ code {
 }
 
 @media (max-width: 640px) {
-  .dash-header { padding: 12px 16px; gap: 12px; }
   .dash-tabs { gap: 2px; }
-  .dash-tab { padding: 6px 10px; font-size: 12px; }
   .form-row { grid-template-columns: 1fr; }
+  .log-entry { grid-template-columns: 1fr 1fr; }
+  .analytics-event-row { grid-template-columns: 1fr; gap: 2px; }
+  .funnel-container { grid-template-columns: 1fr 1fr; }
+  .docs-layout { flex-direction: column; height: auto; min-height: 0; }
+  .docs-sidebar { width: 100% !important; flex-direction: row !important; overflow-x: auto; }
+  .onboarding-card { flex-direction: column; align-items: flex-start; }
 }
 </style>
