@@ -46,6 +46,7 @@ export default defineNuxtConfig({
     stripePriceHostingYearly: process.env.STRIPE_PRICE_HOSTING_YEARLY,
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || 'ILYTAT Inquiries <noreply@ilytat.com>',
+    resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || '',
     notificationEmail: process.env.NOTIFICATION_EMAIL,
     firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY,

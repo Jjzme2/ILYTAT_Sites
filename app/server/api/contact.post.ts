@@ -50,7 +50,7 @@ export default defineEventHandler(async (event) => {
           <tr><td style="padding:8px 0;color:#aaa;">Email</td><td style="padding:8px 0;"><a href="mailto:${data.email}">${data.email}</a></td></tr>
           ${data.phone ? `<tr><td style="padding:8px 0;color:#aaa;">Phone</td><td style="padding:8px 0;"><a href="tel:${data.phone}">${data.phone}</a></td></tr>` : ''}
           <tr><td style="padding:8px 0;color:#aaa;">Package</td><td style="padding:8px 0;">${data.service || 'Not specified'}</td></tr>
-          ${data.billingPreference ? `<tr><td style="padding:8px 0;color:#aaa;">Billing Option</td><td style="padding:8px 0;">${data.billingPreference === 'yearly' ? 'Yearly ($500/yr)' : 'Monthly ($50/mo)'}</td></tr>` : ''}
+          ${data.billingPreference ? `<tr><td style="padding:8px 0;color:#aaa;">Billing Option</td><td style="padding:8px 0;">${data.billingPreference === 'yearly' ? 'Yearly ($799/yr)' : 'Monthly ($89/mo)'}</td></tr>` : ''}
         </table>
         <div style="margin-top:20px;padding:16px;background:#f9f9f9;border-radius:6px;">
           <p style="margin:0;white-space:pre-wrap;color:#333;">${data.message}</p>

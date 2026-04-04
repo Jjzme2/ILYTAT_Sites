@@ -44,21 +44,26 @@ async function sendEmail(config: ReturnType<typeof useRuntimeConfig>, opts: {
   subject: string
   html: string
   replyTo?: string
+  from?: string
 }) {
-  await fetch('https://api.resend.com/emails', {
+  const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${config.resendApiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
-      from: config.resendFrom,
+      from: opts.from ?? config.resendFrom,
       to: [opts.to],
       subject: opts.subject,
       html: opts.html,
       reply_to: opts.replyTo,
     }),
   })
+  if (!res.ok) {
+    const detail = await res.text().catch(() => res.statusText)
+    throw new Error(`Resend ${res.status}: ${detail}`)
+  }
 }
 
 export default defineEventHandler(async (event) => {
@@ -167,7 +172,7 @@ export default defineEventHandler(async (event) => {
               replyTo: config.notificationEmail || 'jj@ilytat.com',
             })
           }
-          catch { /* Email failure is silent — order is saved in Firestore */ }
+          catch (e) { console.error('[webhook] customer confirmation email failed:', e) }
         }
 
         // 2. Owner action checklist — everything that needs to go out
@@ -251,10 +256,11 @@ export default defineEventHandler(async (event) => {
               to: config.notificationEmail,
               subject: `🛒 New order — ${packageLabel} · ${order.customerName || customerEmail} (${amount})`,
               html: ownerHtml,
+              from: (config.resendInvoiceFrom as string) || config.resendFrom,
               replyTo: customerEmail || undefined,
             })
           }
-          catch { /* Email failure is silent */ }
+          catch (e) { console.error('[webhook] owner notification email failed:', e) }
         }
       }
 
@@ -303,7 +309,7 @@ export default defineEventHandler(async (event) => {
             html,
           })
         }
-        catch { /* Email failure is silent — failure is already saved in Firestore */ }
+        catch (e) { console.error('[webhook] payment failed notification email failed:', e) }
       }
 
       break
