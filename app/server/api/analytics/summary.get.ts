@@ -10,6 +10,7 @@
  */
 
 import { firestoreRequest, fromFirestoreFields } from '~/server/utils/firebaseAdmin'
+import { requireAdmin } from '~/server/utils/verifyAdmin'
 
 interface RawEvent {
   id: string
@@ -25,7 +26,8 @@ interface ParsedEvent extends Omit<RawEvent, 'props'> {
   properties: Record<string, unknown>
 }
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
   try {
     // Firestore REST list — pageSize 300 (API max), newest first via orderBy
     const res = await firestoreRequest('GET', 'analytics_events?pageSize=300&orderBy=createdAt%20desc')

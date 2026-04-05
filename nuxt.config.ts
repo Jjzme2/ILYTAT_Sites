@@ -50,6 +50,7 @@ export default defineNuxtConfig({
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || '',
     notificationEmail: process.env.NOTIFICATION_EMAIL,
     cronSecret: process.env.CRON_SECRET,
+    adminEmails: process.env.ADMIN_EMAILS || 'admin@ilytat.com',
     firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY,
     r2AccountId: process.env.R2_ACCOUNT_ID,

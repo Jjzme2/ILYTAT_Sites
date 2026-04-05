@@ -7,6 +7,7 @@
  */
 
 import { firestoreRequest, toFirestoreFields, fromFirestoreFields } from '~/server/utils/firebaseAdmin'
+import { requireAdmin } from '~/server/utils/verifyAdmin'
 
 interface CollectionResult {
   collection: string
@@ -15,7 +16,8 @@ interface CollectionResult {
   error?: string
 }
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
   const config = useRuntimeConfig()
   const results: CollectionResult[] = []
   let tokenOk = false

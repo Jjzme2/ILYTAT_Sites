@@ -14,7 +14,7 @@ export function useAnalytics() {
     if (typeof sessionStorage === 'undefined') return ''
     let id = sessionStorage.getItem('_ilytat_sid')
     if (!id) {
-      id = Date.now().toString(36) + Math.random().toString(36).slice(2)
+      id = crypto.randomUUID()
       sessionStorage.setItem('_ilytat_sid', id)
     }
     return id

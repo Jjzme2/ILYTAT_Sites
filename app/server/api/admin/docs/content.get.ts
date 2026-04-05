@@ -6,8 +6,10 @@
  */
 
 import { getR2Doc } from '~/server/utils/r2'
+import { requireAdmin } from '~/server/utils/verifyAdmin'
 
 export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
   const { key } = getQuery(event)
   if (!key || typeof key !== 'string') {
     throw createError({ statusCode: 400, message: '`key` query param is required' })

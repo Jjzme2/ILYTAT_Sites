@@ -47,7 +47,7 @@ async function runHealthCheck() {
   healthLoading.value = true
   healthResult.value = null
   try {
-    healthResult.value = await $fetch('/api/admin/health')
+    healthResult.value = await $fetch('/api/admin/health', { headers: await getAdminHeaders() })
   }
   catch (e: unknown) {
     healthResult.value = { ok: false, tokenError: e instanceof Error ? e.message : String(e) }
@@ -63,6 +63,11 @@ onMounted(() => {
     user.value = u
     if (u) loadAll()
   })
+  window.addEventListener('keydown', onGlobalKeydown)
+})
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', onGlobalKeydown)
 })
 
 async function login() {
@@ -90,6 +95,15 @@ function db() {
   return getFirestore(useFirebaseApp())
 }
 
+// ── Admin fetch helper ────────────────────────────────────────────────────────
+// Attaches the current user's Firebase ID token to requests so protected
+// admin API routes can verify the caller is authenticated.
+async function getAdminHeaders(): Promise<Record<string, string>> {
+  const auth = useFirebaseAuth()
+  const token = await auth.currentUser?.getIdToken()
+  return token ? { Authorization: `Bearer ${token}` } : {}
+}
+
 // ── Tab state ─────────────────────────────────────────────────────────────────
 const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs'>('portfolio')
 
@@ -105,7 +119,7 @@ const docContentLoading = ref(false)
 async function loadDocs() {
   docsLoading.value = true
   try {
-    internalDocs.value = await $fetch<DocEntry[]>('/api/admin/docs')
+    internalDocs.value = await $fetch<DocEntry[]>('/api/admin/docs', { headers: await getAdminHeaders() })
     if (internalDocs.value.length && !selectedDocKey.value) {
       await selectDoc(internalDocs.value[0].key)
     }
@@ -123,7 +137,7 @@ async function selectDoc(key: string) {
   docContent.value = null
   docContentLoading.value = true
   try {
-    const res = await $fetch<{ html: string }>(`/api/admin/docs/content?key=${encodeURIComponent(key)}`)
+    const res = await $fetch<{ html: string }>(`/api/admin/docs/content?key=${encodeURIComponent(key)}`, { headers: await getAdminHeaders() })
     docContent.value = res.html
   }
   catch (e: unknown) {
@@ -149,6 +163,67 @@ interface Project {
 const projects = ref<Project[]>([])
 const newProject = reactive({ title: '', description: '', industry: '', url: '', imageUrl: '', order: 99, visible: true })
 const savingProject = ref(false)
+const addImagePreview = ref('')
+const editImagePreview = ref('')
+
+// Debounced image preview so we don't flicker on every keystroke
+let _addPreviewTimer: ReturnType<typeof setTimeout> | undefined
+let _editPreviewTimer: ReturnType<typeof setTimeout> | undefined
+watch(() => newProject.imageUrl, (val) => {
+  clearTimeout(_addPreviewTimer)
+  _addPreviewTimer = setTimeout(() => { addImagePreview.value = val }, 600)
+})
+
+const editingProjectId = ref<string | null>(null)
+const editProject = reactive({ title: '', description: '', industry: '', url: '', imageUrl: '', order: 99, visible: true })
+const savingEditProject = ref(false)
+
+function startEditProject(p: Project) {
+  editingProjectId.value = p.id
+  Object.assign(editProject, {
+    title: p.title,
+    description: p.description,
+    industry: p.industry,
+    url: p.url ?? '',
+    imageUrl: p.imageUrl ?? '',
+    order: p.order,
+    visible: p.visible,
+  })
+  editImagePreview.value = p.imageUrl ?? ''
+  // Watch for URL changes while the edit form is open
+  clearTimeout(_editPreviewTimer)
+  watch(() => editProject.imageUrl, (val) => {
+    clearTimeout(_editPreviewTimer)
+    _editPreviewTimer = setTimeout(() => { editImagePreview.value = val }, 600)
+  }, { flush: 'sync' })
+}
+
+function cancelEditProject() {
+  editingProjectId.value = null
+}
+
+async function saveEditProject(id: string) {
+  savingEditProject.value = true
+  try {
+    await updateDoc(doc(db(), 'projects', id), {
+      title: editProject.title,
+      description: editProject.description,
+      industry: editProject.industry,
+      url: editProject.url || null,
+      imageUrl: editProject.imageUrl || null,
+      order: Number(editProject.order),
+      visible: editProject.visible,
+    })
+    editingProjectId.value = null
+    await loadProjects()
+  }
+  catch (e: unknown) {
+    showError(`Failed to update project: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  finally {
+    savingEditProject.value = false
+  }
+}
 
 async function loadProjects() {
   try {
@@ -190,6 +265,23 @@ async function toggleProjectVisible(p: Project) {
   }
   catch (e: unknown) {
     showError(`Failed to update project: ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
+async function moveProject(p: Project, dir: 'up' | 'down') {
+  const idx = projects.value.findIndex(x => x.id === p.id)
+  const swapIdx = dir === 'up' ? idx - 1 : idx + 1
+  if (swapIdx < 0 || swapIdx >= projects.value.length) return
+  const swap = projects.value[swapIdx]
+  try {
+    await Promise.all([
+      updateDoc(doc(db(), 'projects', p.id), { order: swap.order }),
+      updateDoc(doc(db(), 'projects', swap.id), { order: p.order }),
+    ])
+    await loadProjects()
+  }
+  catch (e: unknown) {
+    showError(`Failed to reorder: ${e instanceof Error ? e.message : String(e)}`)
   }
 }
 
@@ -236,7 +328,7 @@ async function addPromotion() {
       ctaText: newPromo.ctaText || null,
       ctaUrl: newPromo.ctaUrl || null,
       active: true,
-      expiresAt: newPromo.expiresAt || null,
+      expiresAt: newPromo.expiresAt ? new Date(newPromo.expiresAt).toISOString() : null,
     })
     Object.assign(newPromo, { message: '', ctaText: '', ctaUrl: '', expiresAt: '' })
     await loadPromotions()
@@ -246,6 +338,43 @@ async function addPromotion() {
   }
   finally {
     savingPromo.value = false
+  }
+}
+
+const editingPromoId = ref<string | null>(null)
+const editPromo = reactive({ message: '', ctaText: '', ctaUrl: '', expiresAt: '' })
+const savingEditPromo = ref(false)
+
+function startEditPromo(p: Promotion) {
+  editingPromoId.value = p.id
+  Object.assign(editPromo, {
+    message: p.message,
+    ctaText: p.ctaText ?? '',
+    ctaUrl: p.ctaUrl ?? '',
+    // datetime-local expects "YYYY-MM-DDTHH:mm"; slice ISO string to fit
+    expiresAt: p.expiresAt ? p.expiresAt.slice(0, 16) : '',
+  })
+}
+
+function cancelEditPromo() { editingPromoId.value = null }
+
+async function saveEditPromo(id: string) {
+  savingEditPromo.value = true
+  try {
+    await updateDoc(doc(db(), 'promotions', id), {
+      message: editPromo.message,
+      ctaText: editPromo.ctaText || null,
+      ctaUrl: editPromo.ctaUrl || null,
+      expiresAt: editPromo.expiresAt ? new Date(editPromo.expiresAt).toISOString() : null,
+    })
+    editingPromoId.value = null
+    await loadPromotions()
+  }
+  catch (e: unknown) {
+    showError(`Failed to update promotion: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  finally {
+    savingEditPromo.value = false
   }
 }
 
@@ -315,9 +444,64 @@ async function addTestimonial() {
   }
 }
 
+const editingTestimonialId = ref<string | null>(null)
+const editTestimonial = reactive({ name: '', businessName: '', quote: '', order: 99, visible: true })
+const savingEditTestimonial = ref(false)
+
+function startEditTestimonial(t: Testimonial) {
+  editingTestimonialId.value = t.id
+  Object.assign(editTestimonial, {
+    name: t.name,
+    businessName: t.businessName,
+    quote: t.quote,
+    order: t.order,
+    visible: t.visible,
+  })
+}
+
+function cancelEditTestimonial() { editingTestimonialId.value = null }
+
+async function saveEditTestimonial(id: string) {
+  savingEditTestimonial.value = true
+  try {
+    await updateDoc(doc(db(), 'testimonials', id), {
+      name: editTestimonial.name,
+      businessName: editTestimonial.businessName,
+      quote: editTestimonial.quote,
+      order: Number(editTestimonial.order),
+      visible: editTestimonial.visible,
+    })
+    editingTestimonialId.value = null
+    await loadTestimonials()
+  }
+  catch (e: unknown) {
+    showError(`Failed to update testimonial: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  finally {
+    savingEditTestimonial.value = false
+  }
+}
+
 async function toggleTestimonialVisible(t: Testimonial) {
   await updateDoc(doc(db(), 'testimonials', t.id), { visible: !t.visible })
   await loadTestimonials()
+}
+
+async function moveTestimonial(t: Testimonial, dir: 'up' | 'down') {
+  const idx = testimonials.value.findIndex(x => x.id === t.id)
+  const swapIdx = dir === 'up' ? idx - 1 : idx + 1
+  if (swapIdx < 0 || swapIdx >= testimonials.value.length) return
+  const swap = testimonials.value[swapIdx]
+  try {
+    await Promise.all([
+      updateDoc(doc(db(), 'testimonials', t.id), { order: swap.order }),
+      updateDoc(doc(db(), 'testimonials', swap.id), { order: t.order }),
+    ])
+    await loadTestimonials()
+  }
+  catch (e: unknown) {
+    showError(`Failed to reorder: ${e instanceof Error ? e.message : String(e)}`)
+  }
 }
 
 async function deleteTestimonial(id: string) {
@@ -350,6 +534,17 @@ async function loadInquiries() {
   }
   catch (e: unknown) {
     showError(`Failed to load inquiries: ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
+async function deleteInquiry(id: string) {
+  if (!confirm('Delete this inquiry? This cannot be undone.')) return
+  try {
+    await deleteDoc(doc(db(), 'inquiries', id))
+    await loadInquiries()
+  }
+  catch (e: unknown) {
+    showError(`Failed to delete inquiry: ${e instanceof Error ? e.message : String(e)}`)
   }
 }
 
@@ -387,7 +582,7 @@ const analyticsLoading = ref(false)
 async function loadAnalytics() {
   analyticsLoading.value = true
   try {
-    analytics.value = await $fetch<AnalyticsSummary>('/api/analytics/summary')
+    analytics.value = await $fetch<AnalyticsSummary>('/api/analytics/summary', { headers: await getAdminHeaders() })
   }
   catch (e: unknown) {
     showError(`Analytics load failed: ${e instanceof Error ? e.message : String(e)}`)
@@ -446,6 +641,81 @@ async function loadLogs() {
     logsLoading.value = false
   }
 }
+
+// ── Command Palette ────────────────────────────────────────────────────────────
+interface PaletteCommand {
+  id: string
+  group: 'Navigate' | 'Actions'
+  label: string
+  action: () => void
+}
+
+const paletteOpen   = ref(false)
+const paletteQuery  = ref('')
+const paletteIdx    = ref(0)
+const paletteInput  = ref<HTMLInputElement | null>(null)
+
+const ALL_COMMANDS: PaletteCommand[] = [
+  { id: 'nav-portfolio',    group: 'Navigate', label: 'Go to Portfolio',    action: () => { activeTab.value = 'portfolio' } },
+  { id: 'nav-promotions',   group: 'Navigate', label: 'Go to Promotions',   action: () => { activeTab.value = 'promotions' } },
+  { id: 'nav-testimonials', group: 'Navigate', label: 'Go to Testimonials', action: () => { activeTab.value = 'testimonials' } },
+  { id: 'nav-inquiries',    group: 'Navigate', label: 'Go to Inquiries',    action: () => { activeTab.value = 'inquiries' } },
+  { id: 'nav-analytics',    group: 'Navigate', label: 'Go to Analytics',    action: () => { activeTab.value = 'analytics' } },
+  { id: 'nav-logs',         group: 'Navigate', label: 'Go to Logs',         action: () => { activeTab.value = 'logs' } },
+  { id: 'nav-health',       group: 'Navigate', label: 'Go to Health Check', action: () => { activeTab.value = 'health' } },
+  { id: 'nav-docs',         group: 'Navigate', label: 'Go to Docs',         action: () => { activeTab.value = 'docs' } },
+  { id: 'run-health',       group: 'Actions',  label: 'Run Health Check',   action: () => { activeTab.value = 'health'; nextTick(runHealthCheck) } },
+  { id: 'refresh-analytics',group: 'Actions',  label: 'Refresh Analytics',  action: () => { activeTab.value = 'analytics'; nextTick(loadAnalytics) } },
+  { id: 'refresh-logs',     group: 'Actions',  label: 'Refresh Logs',       action: () => { activeTab.value = 'logs'; nextTick(loadLogs) } },
+  { id: 'signout',          group: 'Actions',  label: 'Sign Out',           action: () => logout() },
+]
+
+const paletteFiltered = computed(() => {
+  const q = paletteQuery.value.trim().toLowerCase()
+  if (!q) return ALL_COMMANDS
+  return ALL_COMMANDS.filter(c =>
+    c.label.toLowerCase().includes(q) || c.group.toLowerCase().includes(q),
+  )
+})
+
+const paletteGrouped = computed(() => {
+  const groups: Partial<Record<PaletteCommand['group'], PaletteCommand[]>> = {}
+  for (const cmd of paletteFiltered.value) {
+    ;(groups[cmd.group] ??= []).push(cmd)
+  }
+  return groups
+})
+
+watch(paletteQuery, () => { paletteIdx.value = 0 })
+
+function openPalette() {
+  paletteOpen.value  = true
+  paletteQuery.value = ''
+  paletteIdx.value   = 0
+  nextTick(() => paletteInput.value?.focus())
+}
+
+function closePalette() { paletteOpen.value = false }
+
+function runPaletteCommand(cmd: PaletteCommand) {
+  closePalette()
+  cmd.action()
+}
+
+function onPaletteKey(e: KeyboardEvent) {
+  const len = paletteFiltered.value.length
+  if (e.key === 'ArrowDown')  { e.preventDefault(); paletteIdx.value = (paletteIdx.value + 1) % len }
+  else if (e.key === 'ArrowUp')   { e.preventDefault(); paletteIdx.value = (paletteIdx.value - 1 + len) % len }
+  else if (e.key === 'Enter')     { const cmd = paletteFiltered.value[paletteIdx.value]; if (cmd) runPaletteCommand(cmd) }
+  else if (e.key === 'Escape')    { closePalette() }
+}
+
+function onGlobalKeydown(e: KeyboardEvent) {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+    e.preventDefault()
+    paletteOpen.value ? closePalette() : openPalette()
+  }
+}
 </script>
 
 <template>
@@ -483,6 +753,9 @@ async function loadLogs() {
             {{ tab }}
           </button>
         </nav>
+        <button class="palette-trigger" title="Command palette" @click="openPalette">
+          <span>⌘K</span>
+        </button>
         <button class="logout-btn" @click="logout">Sign out</button>
       </header>
 
@@ -690,20 +963,92 @@ async function loadLogs() {
         <div class="record-list">
           <div v-if="!projects.length" class="empty-state">No projects yet.</div>
           <div v-for="p in projects" :key="p.id" class="record-card">
-            <div class="record-main">
-              <p class="record-title">{{ p.title }}</p>
-              <p class="record-meta">{{ p.industry }} · order {{ p.order }}</p>
-              <p class="record-body">{{ p.description }}</p>
-              <p v-if="p.url" class="record-url"><a :href="p.url" target="_blank">{{ p.url }}</a></p>
-            </div>
-            <div class="record-actions">
-              <button
-class="badge-btn" :class="p.visible ? 'badge-active' : 'badge-off'"
-                @click="toggleProjectVisible(p)">
-                {{ p.visible ? 'Visible' : 'Hidden' }}
-              </button>
-              <button class="danger-btn" @click="deleteProject(p.id)">Delete</button>
-            </div>
+            <!-- Edit mode -->
+            <template v-if="editingProjectId === p.id">
+              <div
+                class="edit-form-inline"
+                @keydown.meta.enter.prevent="saveEditProject(p.id)"
+                @keydown.ctrl.enter.prevent="saveEditProject(p.id)"
+              >
+                <div class="form-row">
+                  <div class="fgroup">
+                    <label>Title</label>
+                    <input v-model="editProject.title" type="text" required>
+                  </div>
+                  <div class="fgroup">
+                    <label>Industry</label>
+                    <input v-model="editProject.industry" type="text" required>
+                  </div>
+                </div>
+                <div class="fgroup">
+                  <label>Description</label>
+                  <input v-model="editProject.description" type="text" required>
+                </div>
+                <div class="form-row">
+                  <div class="fgroup">
+                    <label>Live URL</label>
+                    <input v-model="editProject.url" type="url" placeholder="https://...">
+                  </div>
+                  <div class="fgroup">
+                    <label>Image URL</label>
+                    <input v-model="editProject.imageUrl" type="url" placeholder="https://...">
+                    <div v-if="editImagePreview" class="image-preview-row">
+                      <img :src="editImagePreview" alt="Preview" @error="editImagePreview = ''">
+                    </div>
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="fgroup">
+                    <label>Sort Order</label>
+                    <input v-model.number="editProject.order" type="number" min="1">
+                  </div>
+                  <div class="fgroup fgroup--check">
+                    <label class="check-label">
+                      <input v-model="editProject.visible" type="checkbox">
+                      Visible on site
+                    </label>
+                  </div>
+                </div>
+                <div class="record-actions" style="margin-top:8px;">
+                  <button class="submit-btn" style="padding:6px 16px;font-size:12px;" :disabled="savingEditProject" @click="saveEditProject(p.id)">
+                    {{ savingEditProject ? 'Saving…' : 'Save' }}
+                  </button>
+                  <button class="badge-btn badge-off" style="font-size:12px;" @click="cancelEditProject">Cancel</button>
+                </div>
+              </div>
+            </template>
+            <!-- View mode -->
+            <template v-else>
+              <div class="record-card-inner">
+                <!-- Image thumbnail / placeholder -->
+                <div class="project-thumb">
+                  <img v-if="p.imageUrl" :src="p.imageUrl" :alt="p.title" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
+                  <div v-else class="project-thumb-placeholder">
+                    <span style="font-size:20px;opacity:.3;">&#9670;</span>
+                    <span style="font-size:10px;color:#68667a;margin-top:4px;">No image</span>
+                  </div>
+                </div>
+                <div class="record-main">
+                  <p class="record-title">{{ p.title }}</p>
+                  <p class="record-meta">{{ p.industry }} · order {{ p.order }}</p>
+                  <p class="record-body">{{ p.description }}</p>
+                  <p v-if="p.url" class="record-url"><a :href="p.url" target="_blank">{{ p.url }}</a></p>
+                </div>
+              </div>
+              <div class="record-actions">
+                <div class="reorder-btns">
+                  <button class="reorder-btn" title="Move up" :disabled="projects.indexOf(p) === 0" @click="moveProject(p, 'up')">▲</button>
+                  <button class="reorder-btn" title="Move down" :disabled="projects.indexOf(p) === projects.length - 1" @click="moveProject(p, 'down')">▼</button>
+                </div>
+                <button class="badge-btn badge-off" style="font-size:12px;" @click="startEditProject(p)">Edit</button>
+                <button
+                  class="badge-btn" :class="p.visible ? 'badge-active' : 'badge-off'"
+                  @click="toggleProjectVisible(p)">
+                  {{ p.visible ? 'Visible' : 'Hidden' }}
+                </button>
+                <button class="danger-btn" @click="deleteProject(p.id)">Delete</button>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -731,6 +1076,9 @@ class="badge-btn" :class="p.visible ? 'badge-active' : 'badge-off'"
             <div class="fgroup">
               <label>Image URL (optional)</label>
               <input v-model="newProject.imageUrl" type="url" placeholder="https://...">
+              <div v-if="addImagePreview" class="image-preview-row">
+                <img :src="addImagePreview" alt="Preview" @error="addImagePreview = ''">
+              </div>
             </div>
           </div>
           <div class="form-row">
@@ -759,21 +1107,56 @@ class="badge-btn" :class="p.visible ? 'badge-active' : 'badge-off'"
         <div class="record-list">
           <div v-if="!promotions.length" class="empty-state">No promotions yet.</div>
           <div v-for="p in promotions" :key="p.id" class="record-card">
-            <div class="record-main">
-              <p class="record-title">{{ p.message }}</p>
-              <p class="record-meta">
-                {{ p.ctaText ? `CTA: "${p.ctaText}" → ${p.ctaUrl}` : 'No CTA button' }}
-                {{ p.expiresAt ? ` · expires ${p.expiresAt}` : '' }}
-              </p>
-            </div>
-            <div class="record-actions">
-              <button
-class="badge-btn" :class="p.active ? 'badge-active' : 'badge-off'"
-                @click="togglePromoActive(p)">
-                {{ p.active ? 'Active' : 'Inactive' }}
-              </button>
-              <button class="danger-btn" @click="deletePromotion(p.id)">Delete</button>
-            </div>
+            <!-- Edit mode -->
+            <template v-if="editingPromoId === p.id">
+              <div
+                class="edit-form-inline"
+                @keydown.meta.enter.prevent="saveEditPromo(p.id)"
+                @keydown.ctrl.enter.prevent="saveEditPromo(p.id)"
+              >
+                <div class="fgroup">
+                  <label>Banner message</label>
+                  <input v-model="editPromo.message" type="text" required>
+                </div>
+                <div class="form-row">
+                  <div class="fgroup">
+                    <label>CTA button text</label>
+                    <input v-model="editPromo.ctaText" type="text" placeholder="Claim offer">
+                  </div>
+                  <div class="fgroup">
+                    <label>CTA link</label>
+                    <input v-model="editPromo.ctaUrl" type="text" placeholder="#contact">
+                  </div>
+                </div>
+                <div class="fgroup">
+                  <label>Expiry (optional)</label>
+                  <input v-model="editPromo.expiresAt" type="datetime-local">
+                </div>
+                <div class="record-actions" style="margin-top:8px;">
+                  <button class="submit-btn" style="padding:6px 16px;font-size:12px;" :disabled="savingEditPromo" @click="saveEditPromo(p.id)">
+                    {{ savingEditPromo ? 'Saving…' : 'Save' }}
+                  </button>
+                  <button class="badge-btn badge-off" style="font-size:12px;" @click="cancelEditPromo">Cancel</button>
+                </div>
+              </div>
+            </template>
+            <!-- View mode -->
+            <template v-else>
+              <div class="record-main">
+                <p class="record-title">{{ p.message }}</p>
+                <p class="record-meta">
+                  {{ p.ctaText ? `CTA: "${p.ctaText}" → ${p.ctaUrl}` : 'No CTA button' }}
+                  {{ p.expiresAt ? ` · expires ${new Date(p.expiresAt).toLocaleString('en-US', { month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' })}` : '' }}
+                </p>
+              </div>
+              <div class="record-actions">
+                <button class="badge-btn badge-off" style="font-size:12px;" @click="startEditPromo(p)">Edit</button>
+                <button class="badge-btn" :class="p.active ? 'badge-active' : 'badge-off'" @click="togglePromoActive(p)">
+                  {{ p.active ? 'Active' : 'Inactive' }}
+                </button>
+                <button class="danger-btn" @click="deletePromotion(p.id)">Delete</button>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -794,8 +1177,8 @@ class="badge-btn" :class="p.active ? 'badge-active' : 'badge-off'"
             </div>
           </div>
           <div class="fgroup">
-            <label>Expiry date (optional, ISO format)</label>
-            <input v-model="newPromo.expiresAt" type="text" placeholder="2026-06-01T00:00:00Z">
+            <label>Expiry date (optional)</label>
+            <input v-model="newPromo.expiresAt" type="datetime-local">
           </div>
           <button type="submit" class="submit-btn" :disabled="savingPromo">
             {{ savingPromo ? 'Saving…' : 'Add Promotion' }}
@@ -811,18 +1194,65 @@ class="badge-btn" :class="p.active ? 'badge-active' : 'badge-off'"
         <div class="record-list">
           <div v-if="!testimonials.length" class="empty-state">No testimonials yet.</div>
           <div v-for="t in testimonials" :key="t.id" class="record-card">
-            <div class="record-main">
-              <p class="record-title">{{ t.name }} · {{ t.businessName }}</p>
-              <p class="record-body">"{{ t.quote }}"</p>
-            </div>
-            <div class="record-actions">
-              <button
-class="badge-btn" :class="t.visible ? 'badge-active' : 'badge-off'"
-                @click="toggleTestimonialVisible(t)">
-                {{ t.visible ? 'Visible' : 'Hidden' }}
-              </button>
-              <button class="danger-btn" @click="deleteTestimonial(t.id)">Delete</button>
-            </div>
+            <!-- Edit mode -->
+            <template v-if="editingTestimonialId === t.id">
+              <div
+                class="edit-form-inline"
+                @keydown.meta.enter.prevent="saveEditTestimonial(t.id)"
+                @keydown.ctrl.enter.prevent="saveEditTestimonial(t.id)"
+              >
+                <div class="form-row">
+                  <div class="fgroup">
+                    <label>Client name</label>
+                    <input v-model="editTestimonial.name" type="text" required>
+                  </div>
+                  <div class="fgroup">
+                    <label>Business name</label>
+                    <input v-model="editTestimonial.businessName" type="text" required>
+                  </div>
+                </div>
+                <div class="fgroup">
+                  <label>Quote</label>
+                  <textarea v-model="editTestimonial.quote" rows="3" required />
+                </div>
+                <div class="form-row">
+                  <div class="fgroup">
+                    <label>Sort Order</label>
+                    <input v-model.number="editTestimonial.order" type="number" min="1">
+                  </div>
+                  <div class="fgroup fgroup--check">
+                    <label class="check-label">
+                      <input v-model="editTestimonial.visible" type="checkbox">
+                      Visible on site
+                    </label>
+                  </div>
+                </div>
+                <div class="record-actions" style="margin-top:8px;">
+                  <button class="submit-btn" style="padding:6px 16px;font-size:12px;" :disabled="savingEditTestimonial" @click="saveEditTestimonial(t.id)">
+                    {{ savingEditTestimonial ? 'Saving…' : 'Save' }}
+                  </button>
+                  <button class="badge-btn badge-off" style="font-size:12px;" @click="cancelEditTestimonial">Cancel</button>
+                </div>
+              </div>
+            </template>
+            <!-- View mode -->
+            <template v-else>
+              <div class="record-main">
+                <p class="record-title">{{ t.name }} · {{ t.businessName }}</p>
+                <p class="record-body">"{{ t.quote }}"</p>
+              </div>
+              <div class="record-actions">
+                <div class="reorder-btns">
+                  <button class="reorder-btn" title="Move up" :disabled="testimonials.indexOf(t) === 0" @click="moveTestimonial(t, 'up')">▲</button>
+                  <button class="reorder-btn" title="Move down" :disabled="testimonials.indexOf(t) === testimonials.length - 1" @click="moveTestimonial(t, 'down')">▼</button>
+                </div>
+                <button class="badge-btn badge-off" style="font-size:12px;" @click="startEditTestimonial(t)">Edit</button>
+                <button class="badge-btn" :class="t.visible ? 'badge-active' : 'badge-off'" @click="toggleTestimonialVisible(t)">
+                  {{ t.visible ? 'Visible' : 'Hidden' }}
+                </button>
+                <button class="danger-btn" @click="deleteTestimonial(t.id)">Delete</button>
+              </div>
+            </template>
           </div>
         </div>
 
@@ -951,13 +1381,60 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
             </div>
             <div class="record-actions">
               <a :href="`mailto:${inq.email}`" class="action-link">Reply →</a>
-              <button
-v-if="inq.status === 'new'" class="badge-btn badge-off"
-                @click="markInquiryRead(inq.id)">Mark read</button>
+              <button v-if="inq.status === 'new'" class="badge-btn badge-off" @click="markInquiryRead(inq.id)">Mark read</button>
+              <button class="danger-btn" @click="deleteInquiry(inq.id)">Delete</button>
             </div>
           </div>
         </div>
       </section>
+
+      <!-- ── Command palette ── -->
+      <Teleport to="body">
+        <Transition name="palette">
+          <div v-if="paletteOpen" class="palette-backdrop" @click.self="closePalette">
+            <div class="palette-modal" role="dialog" aria-modal="true" aria-label="Command palette">
+              <div class="palette-search">
+                <span class="palette-search-icon">⌘</span>
+                <input
+                  ref="paletteInput"
+                  v-model="paletteQuery"
+                  type="text"
+                  class="palette-input"
+                  placeholder="Type a command…"
+                  autocomplete="off"
+                  spellcheck="false"
+                  @keydown="onPaletteKey"
+                >
+                <kbd class="palette-esc-hint" @click="closePalette">esc</kbd>
+              </div>
+
+              <div v-if="paletteFiltered.length" class="palette-list">
+                <template v-for="(cmds, group) in paletteGrouped" :key="group">
+                  <p class="palette-group-label">{{ group }}</p>
+                  <button
+                    v-for="cmd in cmds"
+                    :key="cmd.id"
+                    class="palette-item"
+                    :class="{ 'palette-item--active': paletteFiltered.indexOf(cmd) === paletteIdx }"
+                    @mouseenter="paletteIdx = paletteFiltered.indexOf(cmd)"
+                    @click="runPaletteCommand(cmd)"
+                  >
+                    {{ cmd.label }}
+                  </button>
+                </template>
+              </div>
+
+              <div v-else class="palette-empty">No commands match "{{ paletteQuery }}"</div>
+
+              <div class="palette-footer">
+                <span><kbd>↑↓</kbd> navigate</span>
+                <span><kbd>↵</kbd> select</span>
+                <span><kbd>esc</kbd> dismiss</span>
+              </div>
+            </div>
+          </div>
+        </Transition>
+      </Teleport>
     </div>
   </div>
 </template>
@@ -1066,6 +1543,159 @@ h1 {
 }
 .logout-btn:hover { border-color: #f5c518; color: #f5c518; }
 
+.palette-trigger {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid #2a2a32;
+  border-radius: 6px;
+  padding: 6px 10px;
+  color: #4a4855;
+  cursor: pointer;
+  font-size: 11px;
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.5px;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+.palette-trigger:hover { border-color: rgba(245,197,24,0.4); color: #f5c518; }
+
+/* ── Command palette ── */
+.palette-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.55);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 900;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14vh;
+}
+
+.palette-modal {
+  width: calc(100% - 32px);
+  max-width: 520px;
+  background: #18181d;
+  border: 1px solid #2e2e38;
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+}
+
+.palette-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #232328;
+}
+
+.palette-search-icon {
+  color: #4a4855;
+  font-size: 15px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.palette-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: #f0ece6;
+  font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  min-width: 0;
+}
+.palette-input::placeholder { color: #3a3845; }
+
+.palette-esc-hint {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid #2a2a32;
+  color: #3a3845;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  cursor: pointer;
+  font-family: 'Space Mono', monospace;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+.palette-esc-hint:hover { color: #68667a; }
+
+.palette-list {
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #2a2a32 transparent;
+}
+
+.palette-group-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #3a3845;
+  padding: 8px 10px 4px;
+  margin: 0;
+  font-family: 'Space Mono', monospace;
+}
+
+.palette-item {
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  color: #8e8ba0;
+  padding: 9px 12px;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.08s, color 0.08s;
+  display: block;
+}
+.palette-item--active {
+  background: rgba(245,197,24,0.08);
+  color: #f0ece6;
+}
+
+.palette-empty {
+  padding: 28px 16px;
+  text-align: center;
+  color: #3a3845;
+  font-size: 13px;
+}
+
+.palette-footer {
+  display: flex;
+  gap: 16px;
+  padding: 10px 16px;
+  border-top: 1px solid #1e1e24;
+  font-size: 11px;
+  color: #3a3845;
+}
+.palette-footer kbd {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #2a2a32;
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: 'Space Mono', monospace;
+  font-size: 10px;
+  margin-right: 4px;
+}
+
+/* Palette open/close transition */
+.palette-enter-active,
+.palette-leave-active {
+  transition: opacity 0.15s, transform 0.15s;
+}
+.palette-enter-from,
+.palette-leave-to {
+  opacity: 0;
+  transform: scale(0.97) translateY(-6px);
+}
+
 @media (max-width: 640px) {
   .login-screen { padding: 48px 20px; }
   .dash-header { padding: 10px 16px; gap: 6px 12px; flex-wrap: wrap; }
@@ -1122,6 +1752,79 @@ h3 {
 }
 
 .record-card--new { border-color: rgba(245, 197, 24, 0.35); }
+
+.record-card-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  flex: 1;
+  min-width: 0;
+}
+
+.project-thumb {
+  width: 72px;
+  height: 72px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid #2a2a32;
+  background: #111116;
+}
+
+.project-thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.edit-form-inline {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.image-preview-row {
+  margin-top: 8px;
+}
+
+.image-preview-row img {
+  max-height: 120px;
+  max-width: 100%;
+  border-radius: 6px;
+  border: 1px solid #2a2a32;
+  object-fit: cover;
+  display: block;
+}
+
+.reorder-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.reorder-btn {
+  background: none;
+  border: 1px solid #2a2a32;
+  color: #68667a;
+  border-radius: 4px;
+  width: 26px;
+  height: 22px;
+  cursor: pointer;
+  font-size: 9px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  padding: 0;
+}
+
+.reorder-btn:hover:not(:disabled) { border-color: #f5c518; color: #f5c518; }
+.reorder-btn:disabled { opacity: 0.2; cursor: default; }
 
 .record-title {
   font-weight: 600;

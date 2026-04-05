@@ -6,7 +6,9 @@
  */
 
 import { listR2Docs } from '~/server/utils/r2'
+import { requireAdmin } from '~/server/utils/verifyAdmin'
 
-export default defineEventHandler(async () => {
+export default defineEventHandler(async (event) => {
+  await requireAdmin(event)
   return await listR2Docs()
 })
