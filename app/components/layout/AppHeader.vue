@@ -5,6 +5,7 @@ const mobileOpen = ref(false)
 
 const navLinks = [
   { label: 'Services', to: '/services' },
+  { label: 'Blog', to: '/blog' },
   { label: 'QR Generator', to: '/tools/qr-code' },
   { label: 'Pricing', to: '/pricing' },
   { label: 'About', to: '/about' },

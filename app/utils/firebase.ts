@@ -68,6 +68,7 @@ export const Collections = {
   USERS: 'users',
   INQUIRIES: 'inquiries',
   TESTIMONIALS: 'testimonials',
+  BLOG_POSTS: 'blog_posts',
 } as const
 
 export {

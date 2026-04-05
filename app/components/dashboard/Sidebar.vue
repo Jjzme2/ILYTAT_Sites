@@ -12,6 +12,7 @@ const nav = [
 const adminNav = [
   { label: 'All Orders', to: '/admin/orders', icon: 'i-heroicons-clipboard-document-list' },
   { label: 'Inquiries', to: '/admin/inquiries', icon: 'i-heroicons-inbox' },
+  { label: 'Blog', to: '/admin/blog', icon: 'i-heroicons-document-text' },
 ]
 </script>
 

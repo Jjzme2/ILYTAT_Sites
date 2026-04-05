@@ -191,6 +191,7 @@ Collections = {
   USERS: 'users',
   INQUIRIES: 'inquiries',
   TESTIMONIALS: 'testimonials',
+  BLOG_POSTS: 'blog_posts',
 }
 ```
 
@@ -238,6 +239,32 @@ Helper functions:
 - `formatPrice(price)` — returns `'Free'` for 0, otherwise `$XXX` USD format
 - `isRecurring(packageId)` — returns true for subscription packages
 
+### Blog
+
+The blog feature uses the Firebase client SDK (same pattern as `useOrders`).
+
+**Composable:** `useBlog()` in `app/composables/useBlog.ts`
+- `getPublishedPosts()` — public listing, ordered by `publishedAt` desc
+- `getPostBySlug(slug)` — public single post lookup
+- `getAllPosts()` — admin: all posts (draft + published)
+- `getPostById(id)` — admin: load post for editing
+- `createPost(data)` — sets `publishedAt` automatically when `status === 'published'`
+- `updatePost(id, data, wasPublished)` — sets `publishedAt` only on first publish
+- `deletePost(id)` — permanent delete
+
+**Public pages:**
+- `/blog` — listing of published posts (`pages/blog/index.vue`)
+- `/blog/[slug]` — post detail (`pages/blog/[slug].vue`)
+
+**Admin pages** (require `isAdmin`, redirect to `/dashboard` otherwise):
+- `/admin/blog` — post table with edit/delete actions (`pages/admin/blog/index.vue`)
+- `/admin/blog/new` — create form with "Save Draft" and "Publish" (`pages/admin/blog/new.vue`)
+- `/admin/blog/[id]` — edit form with "Save Changes", "Publish", and "Revert to Draft" (`pages/admin/blog/[id].vue`)
+
+**Content format:** Plain text stored in Firestore. Paragraphs are separated by blank lines (`\n\n`). Displayed with `whitespace-pre-line` CSS — no markdown renderer needed.
+
+**Firestore security:** The `blog_posts` collection must allow public reads for the blog listing and detail pages to work without authentication.
+
 ### Order Status Flow
 
 ```
@@ -275,6 +302,16 @@ ContactInquiry {
   status: 'new' | 'contacted' | 'converted' | 'closed'
   name, email, businessName, phone?, service, message
   createdAt: Date
+}
+
+BlogPost {
+  id?, title, slug, excerpt, content
+  coverImage?         // URL string
+  author
+  tags: string[]
+  status: 'draft' | 'published'
+  publishedAt?: Date | null
+  createdAt, updatedAt: Date
 }
 ```
 
