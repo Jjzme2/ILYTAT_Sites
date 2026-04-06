@@ -19,7 +19,7 @@ useHead({
         name: 'ILYTAT LLC',
         description: 'Custom websites built for local businesses in Illinois',
         url: 'https://ilytat.com',
-        telephone: '+1-708-627-1854',
+        telephone: undefined,
         address: {
           '@type': 'PostalAddress',
           addressLocality: 'Manteno',
@@ -42,11 +42,26 @@ const { data: testimonials } = await useFetch('/api/testimonials')
 // ── Analytics ──────────────────────────────────────────────────────────────
 const { track } = useAnalytics()
 
+// ── Command palette ────────────────────────────────────────────────────────
+const paletteOpen = ref(false)
+function openPalette() { paletteOpen.value = true }
+function closePalette() { paletteOpen.value = false }
+
 // ── Scroll state (transparent nav → opaque) ────────────────────────────────
 const scrolled = ref(false)
 onMounted(() => {
   const onScroll = () => { scrolled.value = window.scrollY > 56 }
   window.addEventListener('scroll', onScroll, { passive: true })
+
+  // ⌘K / Ctrl+K to open palette
+  const onKeydown = (e: KeyboardEvent) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+      e.preventDefault()
+      paletteOpen.value ? closePalette() : openPalette()
+    }
+  }
+  window.addEventListener('keydown', onKeydown)
+  onUnmounted(() => window.removeEventListener('keydown', onKeydown))
   onUnmounted(() => window.removeEventListener('scroll', onScroll))
 
   // Detect abandoned Stripe checkout (cancel URL carries ?checkout=cancelled)
@@ -229,6 +244,10 @@ const faqs = [
     a: 'No — domain registration and management are included in the $89/month plan. If you already own a domain, we\'ll point it to your new site at no extra cost.',
   },
   {
+    q: 'When does the $89/month start?',
+    a: 'Month two. Your first month of hosting is always free — so your site is live and running before any billing begins. After that it\'s a flat $89/month with no surprises.',
+  },
+  {
     q: 'What platform will my site be built on?',
     a: 'Sites are custom-built — not WordPress, not Wix, not Squarespace. They load faster, rank better, and I maintain them directly so you never have to log in to anything.',
   },
@@ -250,10 +269,6 @@ const faqs = [
 // Char codes for '7086271854'
 const _ph = [55, 48, 56, 54, 50, 55, 49, 56, 53, 52]
 const phoneHref = computed(() => `tel:+1${String.fromCharCode(..._ph)}`)
-const phoneDisplay = computed(() => {
-  const n = String.fromCharCode(..._ph)
-  return `(${n.slice(0, 3)}) ${n.slice(3, 6)}-${n.slice(6)}`
-})
 
 // ── Contact form ────────────────────────────────────────────────────────────
 const form = reactive({ name: '', businessName: '', email: '', phone: '', service: '', billingPreference: 'monthly', message: '' })
@@ -309,9 +324,24 @@ async function handleSubmit() {
       :class="{ 'nav-scrolled': scrolled }"
     >
       <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-8 w-auto object-contain">
-      <a href="#contact" class="text-[13px] font-semibold text-[#0f0f11] bg-[#f5c518] px-[22px] py-[9px] rounded-[5px] no-underline tracking-[0.1px] transition-[background,transform] duration-200 hover:bg-[#d4a912] hover:-translate-y-px">
-        Get a Free Quote
-      </a>
+      <div class="flex items-center gap-5 sm:gap-3">
+        <NuxtLink to="/blog" class="text-[13px] font-medium text-[#9996a8] no-underline tracking-[0.1px] transition-colors duration-200 hover:text-[#f0ece6]">
+          Blog
+        </NuxtLink>
+        <!-- ⌘K hint — desktop only -->
+        <button
+          @click="openPalette"
+          class="hidden sm:hidden md:flex items-center gap-1.5 text-[12px] text-[#555] border border-[#2a2a32] rounded-[6px] px-2.5 py-1.5 transition-[border-color,color] duration-200 hover:border-[#4a4a58] hover:text-[#9996a8] cursor-pointer bg-transparent"
+          title="Open command palette"
+          aria-label="Open navigation palette"
+        >
+          <span>Search</span>
+          <kbd class="font-sans text-[10px] px-1 py-0.5 rounded bg-[#1e1e28] border border-[#3a3a48] text-[#666]">⌘K</kbd>
+        </button>
+        <a href="#contact" class="text-[13px] font-semibold text-[#0f0f11] bg-[#f5c518] px-[22px] py-[9px] rounded-[5px] no-underline tracking-[0.1px] transition-[background,transform] duration-200 hover:bg-[#d4a912] hover:-translate-y-px sm:px-[14px] sm:py-[7px]">
+          Get a Free Quote
+        </a>
+      </div>
     </nav>
 
     <!-- ── HERO ──────────────────────────────────────────────────────────────── -->
@@ -371,7 +401,7 @@ async function handleSubmit() {
     </div>
 
     <!-- ── SERVICES ───────────────────────────────────────────────────────────── -->
-    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
+    <section id="services" class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
       <header class="text-center mb-14" data-reveal>
         <p class="eyebrow">What We Build</p>
         <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
@@ -407,7 +437,7 @@ async function handleSubmit() {
     </section>
 
     <!-- ── PROCESS ────────────────────────────────────────────────────────────── -->
-    <section class="bg-[#141417] border-t border-b border-[#1e1e26] py-[88px] sm:py-16">
+    <section id="how-it-works" class="bg-[#141417] border-t border-b border-[#1e1e26] py-[88px] sm:py-16">
       <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
         <header class="text-center mb-14" data-reveal>
           <p class="eyebrow">How It Works</p>
@@ -539,7 +569,7 @@ async function handleSubmit() {
     </section>
 
     <!-- ── PORTFOLIO ──────────────────────────────────────────────────────────── -->
-    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
+    <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
       <header class="text-center mb-14" data-reveal>
         <p class="eyebrow">Recent Work</p>
         <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
@@ -548,7 +578,7 @@ async function handleSubmit() {
       </header>
 
       <!-- Live projects from Firestore -->
-      <div v-if="projects && projects.length" class="grid grid-cols-3 gap-4 lg:grid-cols-2 sm:grid-cols-1" data-reveal>
+      <div v-if="projects && projects.length" class="grid grid-cols-3 gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1" data-reveal>
         <a
           v-for="proj in projects"
           :key="proj.id"
@@ -606,14 +636,14 @@ async function handleSubmit() {
     </section>
 
     <!-- ── ABOUT ──────────────────────────────────────────────────────────────── -->
-    <section class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
+    <section id="about" class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
       <div class="grid grid-cols-1 gap-12 items-start lg:grid-cols-[1fr_1fr] lg:gap-24" data-reveal>
         <!-- Left: Philosophy Blockquote -->
         <div class="lg:sticky lg:top-32">
-          <blockquote class="font-display text-[clamp(22px,3.5vw,40px)] font-bold tracking-[-1px] lg:tracking-[-1.5px] text-[#f0ece6] leading-[1.2] border-l-[3px] border-[#f5c518] pl-6 lg:pl-8 mb-8 lg:mb-10">
-            "I believe everyone should have a way to voice who they are and what they do. The internet is the best way to do that."
-          </blockquote>
-          
+          <p class="font-display text-[clamp(22px,3.5vw,40px)] font-bold tracking-[-1px] lg:tracking-[-1.5px] text-[#f0ece6] leading-[1.2] border-l-[3px] border-[#f5c518] pl-6 lg:pl-8 mb-8 lg:mb-10">
+            Everyone deserves a way to voice who they are and what they do. The internet is the best way to do that.
+          </p>
+
           <div class="flex items-center gap-5 border-t border-white/[0.08] lg:border-t-0 pt-8 lg:pt-0">
             <div class="w-[60px] h-[60px] rounded-full border border-[rgba(245,197,24,0.3)] bg-[#1a1a1f] flex items-center justify-center text-[rgba(245,197,24,0.5)] font-display font-bold shadow-[0_0_20px_rgba(245,197,24,0.05)]">
               <!-- TODO: replace with <img src="/your-photo.jpg" alt="JJ" class="w-full h-full object-cover rounded-full"> -->
@@ -665,19 +695,20 @@ async function handleSubmit() {
             I'm a developer who gives a damn about the work and the paycheck, which means I have every incentive to make sure your site actually performs.
           </p>
 
-          <div class="flex items-center gap-2 mt-8 text-[14px]">
-            <UIcon name="i-heroicons-phone" class="w-4 h-4 text-[#f5c518] flex-shrink-0" />
+          <div class="flex items-center gap-3 mt-8">
             <ClientOnly>
-              <a :href="phoneHref" class="text-[#f5c518] font-semibold no-underline hover:underline transition-colors">{{ phoneDisplay }}</a>
+              <a :href="phoneHref" class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#0f0f11] bg-[#f5c518] px-4 py-2 rounded-[5px] no-underline transition-[background,transform] duration-200 hover:bg-[#d4a912] hover:-translate-y-px">
+                <UIcon name="i-heroicons-phone" class="w-4 h-4 flex-shrink-0" />
+                Call / Text
+              </a>
             </ClientOnly>
-            <span class="text-[#68667a] ml-1">· text or call</span>
           </div>
         </div>
       </div>
     </section>
 
     <!-- ── FAQ ───────────────────────────────────────────────────────────────── -->
-    <section class="py-[80px] sm:py-16">
+    <section id="faq" class="py-[80px] sm:py-16">
       <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
         <header class="text-center mb-14" data-reveal>
           <p class="eyebrow">Common Questions</p>
@@ -832,17 +863,30 @@ async function handleSubmit() {
       <div class="flex flex-col gap-[3px]">
         <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-6 w-auto object-contain mb-1">
         <span class="text-[11.5px] text-[#68667a]">Websites for local businesses · Manteno, IL</span>
-        <span class="text-[12px] text-[#68667a]">
-          Built by JJ ·
-          <ClientOnly>
-            <a :href="phoneHref" class="text-[#8e8ba0] no-underline transition-colors duration-150 hover:text-[#f5c518]">{{ phoneDisplay }}</a>
-          </ClientOnly>
-        </span>
+        <span class="text-[12px] text-[#68667a]">Built by JJ</span>
       </div>
       <div class="flex flex-col items-end gap-1.5 md:items-start">
         <a href="/privacy" class="text-[12px] text-[#68667a] no-underline transition-colors duration-150 hover:text-[#8e8ba0]">Privacy Policy</a>
         <span class="font-mono text-[11px] text-[#68667a]">© {{ new Date().getFullYear() }} ILYTAT LLC</span>
       </div>
     </footer>
+
+    <!-- ── Mobile palette trigger pill ────────────────────────────────────────── -->
+    <button
+      class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[150] md:hidden flex items-center gap-2 text-[13px] font-semibold text-[#c0bdb8] bg-[#1a1a24] border border-[#3a3a48] px-4 py-2.5 rounded-full shadow-[0_4px_24px_rgba(0,0,0,.5)] transition-[transform,box-shadow] duration-200 active:scale-95 hover:border-[#6366f1]/50"
+      @click="openPalette"
+      aria-label="Open navigation"
+    >
+      <UIcon name="i-heroicons-magnifying-glass" class="w-4 h-4 text-[#888]" />
+      <span>Explore</span>
+      <span class="text-[11px] text-[#555] font-normal ml-0.5">or ⌘K</span>
+    </button>
+
+    <!-- ── Command palette (client-side only) ──────────────────────────────────── -->
+    <ClientOnly>
+      <Teleport to="body">
+        <SiteCommandPalette v-if="paletteOpen" @close="closePalette" />
+      </Teleport>
+    </ClientOnly>
   </div>
 </template>

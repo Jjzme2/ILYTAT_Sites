@@ -40,6 +40,19 @@ function showError(msg: string) {
   setTimeout(() => { adminError.value = '' }, 8000)
 }
 
+// ── Toast ────────────────────────────────────────────────────────────────────
+const toast = useToast()
+
+// ── Phone (never rendered publicly — accessible here via command palette) ────
+const _ph = [55, 48, 56, 54, 50, 55, 49, 56, 53, 52]
+const _phoneNumber = String.fromCharCode(..._ph)
+const phoneFormatted = `(${_phoneNumber.slice(0, 3)}) ${_phoneNumber.slice(3, 6)}-${_phoneNumber.slice(6)}`
+
+async function copyPhone() {
+  await navigator.clipboard.writeText(_phoneNumber)
+  toast.add({ title: 'Phone number copied', description: phoneFormatted, icon: 'i-heroicons-clipboard-document-check', duration: 3000 })
+}
+
 // ── Firestore health check ──────────────────────────────────────────────────
 const healthResult = ref<null | Record<string, unknown>>(null)
 const healthLoading = ref(false)
@@ -105,7 +118,7 @@ async function getAdminHeaders(): Promise<Record<string, string>> {
 }
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
-const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs'>('portfolio')
+const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs' | 'blog'>('portfolio')
 
 // ── Internal Docs ─────────────────────────────────────────────────────────────
 interface DocEntry { key: string; name: string; lastModified?: string }
@@ -664,9 +677,12 @@ const ALL_COMMANDS: PaletteCommand[] = [
   { id: 'nav-logs',         group: 'Navigate', label: 'Go to Logs',         action: () => { activeTab.value = 'logs' } },
   { id: 'nav-health',       group: 'Navigate', label: 'Go to Health Check', action: () => { activeTab.value = 'health' } },
   { id: 'nav-docs',         group: 'Navigate', label: 'Go to Docs',         action: () => { activeTab.value = 'docs' } },
+  { id: 'nav-blog',         group: 'Navigate', label: 'Go to Blog',          action: () => { activeTab.value = 'blog' } },
   { id: 'run-health',       group: 'Actions',  label: 'Run Health Check',   action: () => { activeTab.value = 'health'; nextTick(runHealthCheck) } },
   { id: 'refresh-analytics',group: 'Actions',  label: 'Refresh Analytics',  action: () => { activeTab.value = 'analytics'; nextTick(loadAnalytics) } },
   { id: 'refresh-logs',     group: 'Actions',  label: 'Refresh Logs',       action: () => { activeTab.value = 'logs'; nextTick(loadLogs) } },
+  { id: 'copy-phone',       group: 'Contact',  label: 'Copy Phone Number',  action: () => copyPhone() },
+  { id: 'call-phone',       group: 'Contact',  label: 'Call / Text',        action: () => { window.location.href = `tel:+1${_phoneNumber}` } },
   { id: 'signout',          group: 'Actions',  label: 'Sign Out',           action: () => logout() },
 ]
 
@@ -719,6 +735,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
 </script>
 
 <template>
+  <UToaster />
   <div class="admin-page">
     <!-- Login screen -->
     <div v-if="!user" class="login-screen">
@@ -747,7 +764,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
           <button
-            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'logs', 'health', 'docs']" :key="tab"
+            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'logs', 'health', 'docs', 'blog']" :key="tab"
             class="dash-tab" :class="{ active: activeTab === (tab as typeof activeTab) }"
             @click="activeTab = (tab as typeof activeTab)">
             {{ tab }}
@@ -1386,6 +1403,11 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
             </div>
           </div>
         </div>
+      </section>
+
+      <!-- ── BLOG tab ── -->
+      <section v-if="activeTab === 'blog'" class="dash-section" style="max-width:1100px;">
+        <BlogAdmin />
       </section>
 
       <!-- ── Command palette ── -->

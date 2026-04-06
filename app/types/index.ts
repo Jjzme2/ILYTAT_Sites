@@ -98,3 +98,25 @@ export interface Testimonial {
   text: string
   service: string
 }
+
+export interface BlogPostStyle {
+  accentColor: string        // hex, e.g. '#6366f1'
+  heroStyle: 'minimal' | 'gradient' | 'image'
+  fontStyle: 'sans' | 'serif'
+}
+
+export interface BlogPost {
+  id: string
+  title: string
+  slug: string
+  excerpt: string
+  content: string            // HTML from Tiptap
+  coverImage: string
+  tags: string[]
+  status: 'draft' | 'published'
+  style: BlogPostStyle
+  authorName: string
+  publishedAt: Date | null
+  createdAt: Date
+  updatedAt: Date
+}
