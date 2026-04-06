@@ -8,12 +8,13 @@ export default defineEventHandler(async (event) => {
   const slug = getRouterParam(event, 'slug')
   if (!slug) throw createError({ statusCode: 400, message: 'Missing slug' })
 
+  // Order by the same field we filter on — avoids needing a composite index.
   const posts = await firestoreRunQuery({
     collectionId: 'blog_posts',
     whereField: 'slug',
     whereOp: 'EQUAL',
     whereValue: slug,
-    orderByField: 'createdAt',
+    orderByField: 'slug',
     limit: 1,
   })
 

@@ -12,7 +12,7 @@ import LinkExtension from '@tiptap/extension-link'
 import { TextStyle as TextStyleExtension, Color as ColorExtension } from '@tiptap/extension-text-style'
 import PlaceholderExtension from '@tiptap/extension-placeholder'
 import { Node, mergeAttributes } from '@tiptap/core'
-import { defineComponent, markRaw } from 'vue'
+import { defineComponent, markRaw, h } from 'vue'
 import type { BlogPost, BlogPostStyle } from '~/types'
 
 const props = defineProps<{
@@ -62,60 +62,97 @@ function updateStyle(field: keyof BlogPostStyle, value: string) {
 
 const CalloutNodeView = markRaw(defineComponent({
   name: 'CalloutNodeView',
-  components: { NodeViewWrapper, NodeViewContent },
   props: {
     node: { type: Object, required: true },
     updateAttributes: { type: Function, required: true },
   },
   setup(props) {
-    const calloutType = computed(() => props.node.attrs?.type || 'info')
-    const icon = computed(() => ({ info: 'ℹ️', warning: '⚠️', success: '✅', danger: '🚨' }[calloutType.value as string] || 'ℹ️'))
-    return { calloutType, icon }
+    const ICONS: Record<string, string> = { info: 'ℹ️', warning: '⚠️', success: '✅', danger: '🚨' }
+    return () => {
+      const type: string = props.node.attrs?.type || 'info'
+      return h(NodeViewWrapper, { 'data-callout': type, class: `callout-block callout-${type}` }, {
+        default: () => [
+          h('div', { class: 'callout-header', contenteditable: 'false' }, [
+            h('span', { class: 'callout-icon' }, ICONS[type] || 'ℹ️'),
+            h('select', {
+              value: type,
+              class: 'callout-type-select',
+              onChange: (e: Event) => props.updateAttributes({ type: (e.target as HTMLSelectElement).value }),
+            }, [
+              h('option', { value: 'info' }, 'info'),
+              h('option', { value: 'warning' }, 'warning'),
+              h('option', { value: 'success' }, 'success'),
+              h('option', { value: 'danger' }, 'danger'),
+            ]),
+          ]),
+          h(NodeViewContent, { class: 'callout-content' }),
+          h('div', { class: 'block-exit-hint', contenteditable: 'false' }, 'Tab or ⌘↵ to continue writing after this block'),
+        ],
+      })
+    }
   },
-  template: `
-    <NodeViewWrapper :data-callout="calloutType" :class="'callout-block callout-' + calloutType">
-      <div class="callout-header" contenteditable="false">
-        <span class="callout-icon">{{ icon }}</span>
-        <select
-          :value="calloutType"
-          @change="updateAttributes({ type: ($event.target as HTMLSelectElement).value })"
-          class="callout-type-select"
-        >
-          <option value="info">info</option>
-          <option value="warning">warning</option>
-          <option value="success">success</option>
-          <option value="danger">danger</option>
-        </select>
-      </div>
-      <NodeViewContent class="callout-content" />
-    </NodeViewWrapper>
-  `,
 }))
 
 const AccordionNodeView = markRaw(defineComponent({
   name: 'AccordionNodeView',
-  components: { NodeViewWrapper, NodeViewContent },
   props: {
     node: { type: Object, required: true },
     updateAttributes: { type: Function, required: true },
   },
-  template: `
-    <NodeViewWrapper class="accordion-block">
-      <div class="accordion-summary-row" contenteditable="false">
-        <span class="accordion-chevron">▶</span>
-        <input
-          :value="node.attrs?.summary || ''"
-          @input="updateAttributes({ summary: ($event.target as HTMLInputElement).value })"
-          placeholder="Section title..."
-          class="accordion-summary-input"
-        />
-      </div>
-      <NodeViewContent class="accordion-body" />
-    </NodeViewWrapper>
-  `,
+  setup(props) {
+    return () => {
+      const summary: string = props.node.attrs?.summary || ''
+      return h(NodeViewWrapper, { class: 'accordion-block' }, {
+        default: () => [
+          h('div', { class: 'accordion-summary-row', contenteditable: 'false' }, [
+            h('span', { class: 'accordion-chevron' }, '▶'),
+            h('input', {
+              value: summary,
+              class: 'accordion-summary-input',
+              placeholder: 'Section title...',
+              onInput: (e: Event) => props.updateAttributes({ summary: (e.target as HTMLInputElement).value }),
+            }),
+          ]),
+          h(NodeViewContent, { class: 'accordion-body' }),
+          h('div', { class: 'block-exit-hint', contenteditable: 'false' }, 'Tab or ⌘↵ to continue writing after this block'),
+        ],
+      })
+    }
+  },
 }))
 
 // ── Custom Tiptap Extensions ────────────────────────────────────────────────
+
+// Shared keyboard handler: Tab or Mod-Enter exits the custom block and
+// places a new paragraph immediately after it.
+function makeExitShortcuts(typeName: string) {
+  return {
+    Tab: function (this: { editor: ReturnType<typeof useEditor>['value'] }) {
+      const ed = (this as unknown as { editor: NonNullable<ReturnType<typeof useEditor>['value']> }).editor
+      const { $from } = ed.state.selection
+      for (let d = $from.depth; d >= 1; d--) {
+        if ($from.node(d).type.name === typeName) {
+          const after = $from.after(d)
+          ed.chain().insertContentAt(after, { type: 'paragraph' }).setTextSelection(after + 1).run()
+          return true
+        }
+      }
+      return false
+    },
+    'Mod-Enter': function (this: { editor: ReturnType<typeof useEditor>['value'] }) {
+      const ed = (this as unknown as { editor: NonNullable<ReturnType<typeof useEditor>['value']> }).editor
+      const { $from } = ed.state.selection
+      for (let d = $from.depth; d >= 1; d--) {
+        if ($from.node(d).type.name === typeName) {
+          const after = $from.after(d)
+          ed.chain().insertContentAt(after, { type: 'paragraph' }).setTextSelection(after + 1).run()
+          return true
+        }
+      }
+      return false
+    },
+  }
+}
 
 const CalloutExtension = Node.create({
   name: 'callout',
@@ -131,10 +168,13 @@ const CalloutExtension = Node.create({
     return ['div', mergeAttributes({ 'data-callout': node.attrs.type, class: `callout callout-${node.attrs.type}` }), 0]
   },
   addNodeView() { return VueNodeViewRenderer(CalloutNodeView) },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  addKeyboardShortcuts(): any { return makeExitShortcuts('callout') },
   addCommands() {
     return {
-      insertCallout: (attrs?: { type: string }) => ({ commands }: Record<string, unknown>) =>
-        (commands as { insertContent: (c: unknown) => boolean }).insertContent({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      insertCallout: (attrs?: { type: string }) => ({ commands }: any) =>
+        commands.insertContent({
           type: 'callout',
           attrs: attrs || { type: 'info' },
           content: [{ type: 'paragraph' }],
@@ -160,10 +200,13 @@ const AccordionExtension = Node.create({
     return ['details', {}, ['summary', {}, node.attrs.summary], ['div', { class: 'accordion-body' }, 0]]
   },
   addNodeView() { return VueNodeViewRenderer(AccordionNodeView) },
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  addKeyboardShortcuts(): any { return makeExitShortcuts('accordion') },
   addCommands() {
     return {
-      insertAccordion: (attrs?: { summary: string }) => ({ commands }: Record<string, unknown>) =>
-        (commands as { insertContent: (c: unknown) => boolean }).insertContent({
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      insertAccordion: (attrs?: { summary: string }) => ({ commands }: any) =>
+        commands.insertContent({
           type: 'accordion',
           attrs: attrs || { summary: 'Click to expand' },
           content: [{ type: 'paragraph' }],
@@ -224,6 +267,36 @@ function applyImage() {
     imageUrl.value = ''
     showImageInput.value = false
   }
+}
+
+// ── Custom block helpers ────────────────────────────────────────────────────
+// Returns the position to insert a new block. If the cursor is already inside
+// a callout or accordion, returns the position right after that node so the
+// new block lands outside rather than nested inside.
+function getCustomBlockInsertPos(): number {
+  if (!editor.value) return 0
+  const { $from } = editor.value.state.selection
+  for (let d = $from.depth; d >= 1; d--) {
+    const name = $from.node(d).type.name
+    if (name === 'accordion' || name === 'callout') return $from.after(d)
+  }
+  return $from.pos
+}
+
+function insertCallout() {
+  if (!editor.value) return
+  const pos = getCustomBlockInsertPos()
+  editor.value.chain().focus()
+    .insertContentAt(pos, { type: 'callout', attrs: { type: 'info' }, content: [{ type: 'paragraph' }] })
+    .run()
+}
+
+function insertAccordion() {
+  if (!editor.value) return
+  const pos = getCustomBlockInsertPos()
+  editor.value.chain().focus()
+    .insertContentAt(pos, { type: 'accordion', attrs: { summary: 'Click to expand' }, content: [{ type: 'paragraph' }] })
+    .run()
 }
 
 // ── Toolbar helper ──────────────────────────────────────────────────────────
@@ -413,8 +486,8 @@ function btn(active: boolean) {
       <span class="tb-sep" />
 
       <!-- Custom blocks -->
-      <button class="tb-btn tb-callout" @click="(editor.commands as unknown as Record<string, () => void>).insertCallout?.()" title="Callout block">Callout</button>
-      <button class="tb-btn tb-accordion" @click="(editor.commands as unknown as Record<string, () => void>).insertAccordion?.()" title="Accordion block">Accordion</button>
+      <button class="tb-btn tb-callout" @click="insertCallout" title="Insert callout block (Tab or ⌘↵ to exit)">Callout</button>
+      <button class="tb-btn tb-accordion" @click="insertAccordion" title="Insert accordion block (Tab or ⌘↵ to exit)">Accordion</button>
       <span class="tb-sep" />
 
       <!-- History -->
@@ -619,6 +692,14 @@ function btn(active: boolean) {
   font-size: 14px; font-weight: 500; flex: 1; cursor: text;
 }
 :deep(.accordion-body) { padding: 12px 14px; }
+
+/* Exit hint — visible in editor only, not saved to HTML */
+:deep(.block-exit-hint) {
+  padding: 4px 14px 6px;
+  font-size: 10px; color: #444; font-style: italic;
+  border-top: 1px dashed #2a2a32; text-align: right;
+  user-select: none; pointer-events: none;
+}
 
 /* ── Action row ─────────────────────────────────────────────────────────────── */
 .editor-actions {

@@ -39,6 +39,7 @@ onMounted(loadPosts)
 const editorOpen = ref(false)
 const editingPost = ref<Partial<BlogPost>>({})
 const saving = ref(false)
+const previewMode = ref(false)
 
 function openNew() {
   editingPost.value = {
@@ -63,6 +64,7 @@ function openEdit(post: BlogPost) {
 function closeEditor() {
   editorOpen.value = false
   editingPost.value = {}
+  previewMode.value = false
 }
 
 async function savePost() {
@@ -172,7 +174,12 @@ function formatDate(d: Date | string | null | undefined) {
         </div>
         <div class="ba-item-actions">
           <button class="ba-action-btn" @click="openEdit(post)" title="Edit">Edit</button>
-          <a :href="`/blog/${post.slug}`" target="_blank" class="ba-action-btn ba-action-view" title="View">View</a>
+          <a
+            :href="post.status === 'published' ? `/blog/${post.slug}` : `/blog/preview/${post.id}`"
+            target="_blank"
+            class="ba-action-btn ba-action-view"
+            :title="post.status === 'published' ? 'View published post' : 'Preview draft'"
+          >{{ post.status === 'published' ? 'View' : 'Preview' }}</a>
           <button
             :class="['ba-action-btn', 'ba-action-delete', confirmDeleteId === post.id && 'ba-action-confirm']"
             :disabled="deletingId === post.id"
@@ -188,18 +195,32 @@ function formatDate(d: Date | string | null | undefined) {
     <!-- ── Editor Modal ───────────────────────────────────────────────────────── -->
     <Teleport to="body">
       <div v-if="editorOpen" class="ba-modal-overlay" @click.self="closeEditor">
-        <div class="ba-modal">
+        <div :class="['ba-modal', previewMode && 'ba-modal-wide']">
           <div class="ba-modal-header">
             <span>{{ editingPost.id ? 'Edit Post' : 'New Post' }}</span>
-            <button class="ba-modal-close" @click="closeEditor">✕</button>
+            <div class="ba-modal-header-actions">
+              <button
+                :class="['ba-preview-toggle', previewMode && 'active']"
+                @click="previewMode = !previewMode"
+                title="Toggle live preview"
+              >
+                {{ previewMode ? '← Hide Preview' : '👁 Live Preview' }}
+              </button>
+              <button class="ba-modal-close" @click="closeEditor">✕</button>
+            </div>
           </div>
-          <div class="ba-modal-body">
-            <BlogPostEditor
-              v-model="editingPost"
-              :loading="saving"
-              @save="savePost"
-              @close="closeEditor"
-            />
+          <div :class="['ba-modal-body', previewMode && 'ba-modal-split']">
+            <div :class="previewMode ? 'ba-editor-pane' : 'ba-editor-full'">
+              <BlogPostEditor
+                v-model="editingPost"
+                :loading="saving"
+                @save="savePost"
+                @close="closeEditor"
+              />
+            </div>
+            <div v-if="previewMode" class="ba-preview-pane">
+              <BlogPostPreview :post="editingPost" />
+            </div>
           </div>
         </div>
       </div>
@@ -266,17 +287,50 @@ function formatDate(d: Date | string | null | undefined) {
   width: min(820px, 96vw); display: flex; flex-direction: column;
   background: #0f0f14; overflow: hidden;
   box-shadow: -8px 0 40px rgba(0,0,0,.5);
+  transition: width .25s ease;
 }
+.ba-modal-wide { width: 100vw; }
 .ba-modal-header {
   display: flex; align-items: center; justify-content: space-between;
   padding: 14px 20px; border-bottom: 1px solid #2a2a32;
   font-size: 14px; font-weight: 600; color: #c0bdb8; background: #13131a;
   flex-shrink: 0;
 }
+.ba-modal-header-actions { display: flex; align-items: center; gap: 10px; }
 .ba-modal-close {
   background: none; border: none; color: #666; font-size: 16px;
   cursor: pointer; padding: 4px 8px; border-radius: 5px;
 }
 .ba-modal-close:hover { background: #1e1e28; color: #f0ece6; }
+.ba-preview-toggle {
+  background: none; border: 1px solid #3a3a48; border-radius: 5px;
+  color: #888; font-size: 12px; padding: 5px 12px; cursor: pointer;
+  transition: border-color .15s, color .15s, background .15s;
+  white-space: nowrap;
+}
+.ba-preview-toggle:hover { border-color: #6366f1; color: #818cf8; background: rgba(99,102,241,.08); }
+.ba-preview-toggle.active { border-color: #6366f1; color: #818cf8; background: rgba(99,102,241,.12); }
+
+/* Normal body (no preview) */
 .ba-modal-body { flex: 1; overflow-y: auto; }
+.ba-editor-full { min-height: 100%; }
+
+/* Split-screen body */
+.ba-modal-split {
+  display: flex; flex-direction: row; overflow: hidden;
+}
+.ba-editor-pane {
+  flex: 0 0 50%; overflow-y: auto;
+  border-right: 1px solid #2a2a32;
+}
+.ba-preview-pane {
+  flex: 1; overflow-y: auto;
+  background: #0a0a0e;
+}
+
+@media (max-width: 768px) {
+  .ba-modal-split { flex-direction: column; }
+  .ba-editor-pane { flex: 0 0 auto; }
+  .ba-preview-pane { flex: 1; min-height: 50vh; border-top: 1px solid #2a2a32; border-right: none; }
+}
 </style>

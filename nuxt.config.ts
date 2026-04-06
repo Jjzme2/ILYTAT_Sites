@@ -23,6 +23,13 @@ export default defineNuxtConfig({
     '@vercel/speed-insights',
   ],
 
+  image: {
+    domains: ['media.ilytat.com'],
+    // Blog cover images from arbitrary external URLs fall back to native <img>
+    // rather than being proxied — prevents 403s on unwhitelisted domains.
+    provider: 'none',
+  },
+
   css: [resolve(__dirname, 'assets/css/main.css')],
 
   ui: {

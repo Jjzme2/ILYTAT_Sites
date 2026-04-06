@@ -3,7 +3,10 @@ import type { BlogPost } from '~/types'
 
 const props = defineProps<{ post: Partial<BlogPost> }>()
 
+const DEFAULT_COVER = 'https://media.ilytat.com/blog-covers/general-image.png'
+
 const accent = computed(() => props.post.style?.accentColor || '#6366f1')
+const coverImage = computed(() => props.post.coverImage || DEFAULT_COVER)
 
 function formatDate(d: Date | string | null | undefined) {
   if (!d) return ''
@@ -17,8 +20,8 @@ function formatDate(d: Date | string | null | undefined) {
     class="post-card"
     :style="{ '--accent': accent }"
   >
-    <div v-if="post.coverImage" class="post-cover">
-      <NuxtImg :src="post.coverImage" :alt="post.title" loading="lazy" />
+    <div class="post-cover">
+      <NuxtImg :src="coverImage" :alt="post.title" loading="lazy" />
     </div>
     <div class="post-body">
       <div class="post-tags" v-if="post.tags?.length">
