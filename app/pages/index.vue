@@ -1,6 +1,9 @@
 <script setup lang="ts">
 definePageMeta({ layout: false })
 
+import { siteContent } from '~/utils/siteContent'
+const { founder, cta } = siteContent
+
 useHead({
   title: 'ILYTAT — Professional Websites for Local Business',
   meta: [
@@ -578,7 +581,7 @@ async function handleSubmit() {
       </header>
 
       <!-- Live projects from Firestore -->
-      <div v-if="projects && projects.length" class="grid grid-cols-3 gap-4 lg:grid-cols-2 md:grid-cols-2 sm:grid-cols-1" data-reveal>
+      <div v-if="projects && projects.length" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-reveal>
         <a
           v-for="proj in projects"
           :key="proj.id"
@@ -641,17 +644,17 @@ async function handleSubmit() {
         <!-- Left: Philosophy Blockquote -->
         <div class="lg:sticky lg:top-32">
           <p class="font-display text-[clamp(22px,3.5vw,40px)] font-bold tracking-[-1px] lg:tracking-[-1.5px] text-[#f0ece6] leading-[1.2] border-l-[3px] border-[#f5c518] pl-6 lg:pl-8 mb-8 lg:mb-10">
-            Everyone deserves a way to voice who they are and what they do. The internet is the best way to do that.
+            {{ founder.philosophy }}
           </p>
 
           <div class="flex items-center gap-5 border-t border-white/[0.08] lg:border-t-0 pt-8 lg:pt-0">
-            <div class="w-[60px] h-[60px] rounded-full border border-[rgba(245,197,24,0.3)] bg-[#1a1a1f] flex items-center justify-center text-[rgba(245,197,24,0.5)] font-display font-bold shadow-[0_0_20px_rgba(245,197,24,0.05)]">
-              <!-- TODO: replace with <img src="/your-photo.jpg" alt="JJ" class="w-full h-full object-cover rounded-full"> -->
-              JJ
+            <!-- Drop your photo at /public/founder.jpg to display it here -->
+            <div class="w-[72px] h-[72px] rounded-full border border-[rgba(245,197,24,0.3)] overflow-hidden flex-shrink-0 shadow-[0_0_20px_rgba(245,197,24,0.08)]">
+              <img src="/founder.jpg" :alt="founder.name" class="w-full h-full object-cover">
             </div>
             <div>
-              <p class="font-bold text-[#f0ece6] mb-0.5">JJ</p>
-              <p class="font-mono text-[10px] text-[#f5c518] uppercase tracking-[1.5px]">Founder, ILYTAT LLC</p>
+              <p class="font-bold text-[#f0ece6] mb-0.5">{{ founder.name }}</p>
+              <p class="font-mono text-[10px] text-[#f5c518] uppercase tracking-[1.5px]">{{ founder.title }}</p>
             </div>
           </div>
         </div>
@@ -663,36 +666,24 @@ async function handleSubmit() {
             Built by someone who lives here too.
           </h2>
 
-          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-5">
-            I'm JJ. I'm a Manteno local, a husband, and a father of three.
-          </p>
-          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-5">
-            I didn't start ILYTAT to be a non-profit or a "big city" agency that speaks in marketing fluff. I started
-            it to make money by doing something I'm actually good at: building clean, fast, high-performance websites.
-          </p>
-          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-8">
-            I've seen too many local owners get stuck in "rent-to-own" schemes or bloated templates
-            that run like lead. I'm here to provide a better alternative.
-          </p>
+          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-5">{{ founder.intro }}</p>
+          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-5">{{ founder.origin }}</p>
+          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-8">{{ founder.problem }}</p>
 
           <h3 class="text-[17px] font-bold text-[#f0ece6] mb-4">Here's the deal:</h3>
           <ul class="flex flex-col gap-4 mb-8 pl-0">
-            <li class="flex gap-4 text-[14.5px] text-[#f0ece6]/80 leading-[1.7]">
-              <span class="text-[#f5c518] font-mono font-bold mt-[-2px] flex-shrink-0">01</span>
-              <span><strong class="text-[#f0ece6] font-semibold">You Own the Asset:</strong> I build it, you own it. No "locking" you into a platform where you lose your site if you leave.</span>
-            </li>
-            <li class="flex gap-4 text-[14.5px] text-[#f0ece6]/80 leading-[1.7]">
-              <span class="text-[#f5c518] font-mono font-bold mt-[-2px] flex-shrink-0">02</span>
-              <span><strong class="text-[#f0ece6] font-semibold">Simple Hosting:</strong> I handle the technical heavy lifting — security, speed, and maintenance — for a flat $89/month.</span>
-            </li>
-            <li class="flex gap-4 text-[14.5px] text-[#f0ece6]/80 leading-[1.7]">
-              <span class="text-[#f5c518] font-mono font-bold mt-[-2px] flex-shrink-0">03</span>
-              <span><strong class="text-[#f0ece6] font-semibold">No Fluff:</strong> Simplicity and scalability. You get a site that works as hard as you do, documented so well that anyone could step in and manage it.</span>
+            <li
+              v-for="(item, i) in founder.deal"
+              :key="item.label"
+              class="flex gap-4 text-[14.5px] text-[#f0ece6]/80 leading-[1.7]"
+            >
+              <span class="text-[#f5c518] font-mono font-bold mt-[-2px] flex-shrink-0">{{ String(i + 1).padStart(2, '0') }}</span>
+              <span><strong class="text-[#f0ece6] font-semibold">{{ item.label }}:</strong> {{ item.body }}</span>
             </li>
           </ul>
 
           <p class="text-[15px] font-semibold text-[#f0ece6] border-t border-white/[0.06] pt-6 leading-[1.7]">
-            I'm a developer who gives a damn about the work and the paycheck, which means I have every incentive to make sure your site actually performs.
+            {{ founder.closing }}
           </p>
 
           <div class="flex items-center gap-3 mt-8">
@@ -735,13 +726,11 @@ async function handleSubmit() {
     <!-- ── CTA BAND ───────────────────────────────────────────────────────────── -->
     <div class="relative mx-12 my-[88px] rounded-[16px] overflow-hidden bg-[#f5c518] text-[#0f0f11] md:mx-6 md:my-16 sm:mx-4 sm:my-12 sm:rounded-[14px]" data-reveal>
       <div class="relative z-[1] text-center px-12 py-[80px] sm:px-6 sm:py-16">
-        <h2 class="font-display text-[clamp(28px,4vw,48px)] font-extrabold tracking-[-2px] mb-4 leading-[1.1]">
-          Ready to look as good online<br>as you do in person?
-        </h2>
+        <h2 class="font-display text-[clamp(28px,4vw,48px)] font-extrabold tracking-[-2px] mb-4 leading-[1.1]" style="white-space: pre-line">{{ cta.headline }}</h2>
         <p class="text-[16px] text-[#0f0f11]/70 font-medium mb-10 max-w-[500px] mx-auto">
-          Tell us about your business and we'll get back to you within 24 hours.
+          {{ cta.subtext }}
         </p>
-        <a href="#contact" class="cta-amber-btn" @click="track('cta_click', { label: 'Start the Conversation', location: 'cta_band' })">Start the Conversation</a>
+        <a href="#contact" class="cta-amber-btn" @click="track('cta_click', { label: cta.buttonLabel, location: 'cta_band' })">{{ cta.buttonLabel }}</a>
       </div>
     </div>
 
