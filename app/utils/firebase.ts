@@ -67,7 +67,6 @@ export const Collections = {
   ORDERS: 'orders',
   USERS: 'users',
   INQUIRIES: 'inquiries',
-  TESTIMONIALS: 'testimonials',
   // ── Content you manage directly in Firestore ──────────────────────────
   PROJECTS: 'projects',       // Portfolio items (see server/api/projects.get.ts for schema)
   PROMOTIONS: 'promotions',   // Banner/promo messages (see server/api/promotion.get.ts for schema)
