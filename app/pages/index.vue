@@ -46,13 +46,19 @@ const { data: testimonials } = await useFetch('/api/testimonials')
 const { track } = useAnalytics()
 
 // ── Founder photo ──────────────────────────────────────────────────────────
-// Checks at runtime whether /public/founder.jpg has been placed. Falls back to
-// an initials avatar so the build never fails on a missing asset.
+// The path is kept in a runtime string so Vite's static analyzer never tries
+// to resolve it as a bundled asset. Falls back to an initials avatar when the
+// file hasn't been placed in /public yet.
+const FOUNDER_PHOTO_PATH = '/founder.jpg'
 const founderPhotoExists = ref(false)
+const founderPhotoSrc = ref('')
 onMounted(async () => {
   try {
-    const res = await fetch('/founder.jpg', { method: 'HEAD' })
-    founderPhotoExists.value = res.ok
+    const res = await fetch(FOUNDER_PHOTO_PATH, { method: 'HEAD' })
+    if (res.ok) {
+      founderPhotoSrc.value = FOUNDER_PHOTO_PATH
+      founderPhotoExists.value = true
+    }
   } catch {
     founderPhotoExists.value = false
   }
@@ -665,7 +671,7 @@ async function handleSubmit() {
             <div class="w-[72px] h-[72px] rounded-full border border-[rgba(245,197,24,0.3)] overflow-hidden flex-shrink-0 shadow-[0_0_20px_rgba(245,197,24,0.08)] bg-[#1a1a1a] flex items-center justify-center">
               <img
                 v-if="founderPhotoExists"
-                src="/founder.jpg"
+                :src="founderPhotoSrc"
                 :alt="founder.name"
                 class="w-full h-full object-cover"
               >
