@@ -45,6 +45,19 @@ const { data: testimonials } = await useFetch('/api/testimonials')
 // ── Analytics ──────────────────────────────────────────────────────────────
 const { track } = useAnalytics()
 
+// ── Founder photo ──────────────────────────────────────────────────────────
+// Checks at runtime whether /public/founder.jpg has been placed. Falls back to
+// an initials avatar so the build never fails on a missing asset.
+const founderPhotoExists = ref(false)
+onMounted(async () => {
+  try {
+    const res = await fetch('/founder.jpg', { method: 'HEAD' })
+    founderPhotoExists.value = res.ok
+  } catch {
+    founderPhotoExists.value = false
+  }
+})
+
 // ── Command palette ────────────────────────────────────────────────────────
 const paletteOpen = ref(false)
 function openPalette() { paletteOpen.value = true }
@@ -648,9 +661,17 @@ async function handleSubmit() {
           </p>
 
           <div class="flex items-center gap-5 border-t border-white/[0.08] lg:border-t-0 pt-8 lg:pt-0">
-            <!-- Drop your photo at /public/founder.jpg to display it here -->
-            <div class="w-[72px] h-[72px] rounded-full border border-[rgba(245,197,24,0.3)] overflow-hidden flex-shrink-0 shadow-[0_0_20px_rgba(245,197,24,0.08)]">
-              <img src="/founder.jpg" :alt="founder.name" class="w-full h-full object-cover">
+            <!-- Place your photo at /public/founder.jpg to display it here; falls back to initials avatar -->
+            <div class="w-[72px] h-[72px] rounded-full border border-[rgba(245,197,24,0.3)] overflow-hidden flex-shrink-0 shadow-[0_0_20px_rgba(245,197,24,0.08)] bg-[#1a1a1a] flex items-center justify-center">
+              <img
+                v-if="founderPhotoExists"
+                src="/founder.jpg"
+                :alt="founder.name"
+                class="w-full h-full object-cover"
+              >
+              <span v-else class="font-bold text-[#f5c518] text-xl select-none">
+                {{ founder.name.charAt(0) }}
+              </span>
             </div>
             <div>
               <p class="font-bold text-[#f0ece6] mb-0.5">{{ founder.name }}</p>
