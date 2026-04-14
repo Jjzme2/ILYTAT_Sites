@@ -25,6 +25,7 @@ const schema = z.object({
   packageId:   z.string().optional().default(''),
   serviceId:   z.string().optional().default(''),
   billingCycle: z.enum(['monthly', 'yearly']).default('monthly'),
+  hostingTier: z.enum(['standard', 'premium']).default('standard'),
   customerEmail: z.string().email().optional(),
   businessName:  z.string().optional(),
   notes:         z.string().optional(),
@@ -39,12 +40,19 @@ export default defineEventHandler(async (event) => {
 
   const buildPriceId = getBuildPriceId(data.packageName, config)
 
-  const hostingPriceId = data.billingCycle === 'yearly'
-    ? (config.stripePriceHostingYearly as string)
-    : (config.stripePriceHostingMonthly as string)
+  let hostingPriceId: string
+  if (data.hostingTier === 'premium') {
+    hostingPriceId = data.billingCycle === 'yearly'
+      ? (config.stripePricePremiumHostingYearly as string)
+      : (config.stripePricePremiumHostingMonthly as string)
+  } else {
+    hostingPriceId = data.billingCycle === 'yearly'
+      ? (config.stripePriceHostingYearly as string)
+      : (config.stripePriceHostingMonthly as string)
+  }
 
   if (!hostingPriceId) {
-    throw createError({ statusCode: 500, message: `Hosting price ID not configured for billing cycle: ${data.billingCycle}` })
+    throw createError({ statusCode: 500, message: `Hosting price ID not configured for tier ${data.hostingTier} and cycle ${data.billingCycle}` })
   }
 
   let session
@@ -78,7 +86,9 @@ export default defineEventHandler(async (event) => {
     },
     success_url: `${config.public.siteUrl}/onboarding?session_id={CHECKOUT_SESSION_ID}`,
     // cancel carries context so the frontend can fire a checkout_abandoned analytics event
-    cancel_url:  `${config.public.siteUrl}/#pricing?checkout=cancelled&pkg=${encodeURIComponent(data.packageName)}&cycle=${data.billingCycle}`,
+    // Query string MUST precede the hash so window.location.search can read it.
+    // Pattern: /?checkout=cancelled&...#pricing  (not /#pricing?...)
+    cancel_url:  `${config.public.siteUrl}/?checkout=cancelled&pkg=${encodeURIComponent(data.packageName)}&cycle=${data.billingCycle}#pricing`,
       allow_promotion_codes:       true,
       billing_address_collection:  'required',
     })

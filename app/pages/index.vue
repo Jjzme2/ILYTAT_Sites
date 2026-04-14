@@ -1,92 +1,85 @@
 <script setup lang="ts">
+// ============================================================================
+// 01. IMPORTS & COMPOSABLES
+// ============================================================================
+import { ref, onMounted } from 'vue'
+import { useMagicKeys } from '@vueuse/core'
+import { siteConfig } from '~/config/site.config'
+import { siteContent } from '~/utils/siteContent'
+
 definePageMeta({ layout: false })
 
-import { siteContent } from '~/utils/siteContent'
-const { founder, cta } = siteContent
+const { track } = useAnalytics()
+const toast = useToast()
+const { Meta_K, Ctrl_K } = useMagicKeys()
+
+// ============================================================================
+// 02. FETCH LIVE DATA
+// ============================================================================
+const { data: projects }     = await useFetch('/api/projects')
+const { data: promotion }    = await useFetch('/api/promotion')
+const { data: testimonials } = await useFetch('/api/testimonials')
+
+// ============================================================================
+// 03. UI STATE
+// ============================================================================
+const paletteOpen      = ref(false)
+const prefilledService = ref('')
+
+// ============================================================================
+// 04. SEO
+// ============================================================================
+const { monthlyRate, priceRange } = siteConfig
 
 useHead({
   title: 'ILYTAT — Professional Websites for Local Business',
   meta: [
     {
-      name: 'description',
-      content: 'Custom websites built for local businesses in Illinois. You own everything. Managed hosting from $89/mo.',
+      name:    'description',
+      content: `Custom websites built for local businesses in Illinois. You own everything. Managed hosting from ${monthlyRate}/mo.`,
     },
     { property: 'og:image', content: 'https://media.ilytat.com/logo.png' },
   ],
   script: [
     {
-      type: 'application/ld+json',
+      type:      'application/ld+json',
       innerHTML: JSON.stringify({
-        '@context': 'https://schema.org',
-        '@type': 'LocalBusiness',
-        name: 'ILYTAT LLC',
-        description: 'Custom websites built for local businesses in Illinois',
-        url: 'https://ilytat.com',
-        telephone: undefined,
+        '@context':   'https://schema.org',
+        '@type':      'LocalBusiness',
+        name:         'ILYTAT LLC',
+        description:  'Custom websites built for local businesses in Illinois',
+        url:          'https://ilytat.com',
         address: {
-          '@type': 'PostalAddress',
+          '@type':         'PostalAddress',
           addressLocality: 'Manteno',
-          addressRegion: 'IL',
-          addressCountry: 'US',
+          addressRegion:   'IL',
+          addressCountry:  'US',
         },
-        areaServed: { '@type': 'State', name: 'Illinois' },
-        priceRange: '$499–$1,499',
+        areaServed:  { '@type': 'State', name: 'Illinois' },
+        priceRange,
         serviceType: 'Web Design',
       }),
     },
   ],
 })
 
-// ── Live data ──────────────────────────────────────────────────────────────
-const { data: projects } = await useFetch('/api/projects')
-const { data: promotion } = await useFetch('/api/promotion')
-const { data: testimonials } = await useFetch('/api/testimonials')
+// ============================================================================
+// 05. METHODS
+// ============================================================================
+function togglePalette(): void {
+  paletteOpen.value = !paletteOpen.value
+}
 
-// ── Analytics + Toasts ────────────────────────────────────────────────────
-const { track } = useAnalytics()
-const toast = useToast()
+// useMagicKeys handles Cmd/Ctrl+K — SSR-safe and no manual listener cleanup.
+watch([Meta_K, Ctrl_K], ([mk, ck]) => { if (mk || ck) togglePalette() })
 
-// ── Founder photo ──────────────────────────────────────────────────────────
-// Path kept in a runtime string so Vite's static analyzer never tries to
-// resolve it as a bundled asset. Falls back to serif initial when absent.
-const FOUNDER_PHOTO_PATH = '/founder.jpg'
-const founderPhotoExists = ref(false)
-const founderPhotoSrc = ref('')
-onMounted(async () => {
-  try {
-    const res = await fetch(FOUNDER_PHOTO_PATH, { method: 'HEAD' })
-    if (res.ok) {
-      founderPhotoSrc.value = FOUNDER_PHOTO_PATH
-      founderPhotoExists.value = true
-    }
-  }
-  catch {
-    founderPhotoExists.value = false
-  }
-})
-
-// ── Command palette ────────────────────────────────────────────────────────
-const paletteOpen = ref(false)
-function openPalette() { paletteOpen.value = true }
-function closePalette() { paletteOpen.value = false }
-
-// ── Scroll state (transparent nav → frosted glass) ────────────────────────
-const scrolled = ref(false)
+// ============================================================================
+// 06. LIFECYCLE
+// ============================================================================
 onMounted(() => {
-  const onScroll = () => { scrolled.value = window.scrollY > 56 }
-  window.addEventListener('scroll', onScroll, { passive: true })
-
-  const onKeydown = (e: KeyboardEvent) => {
-    if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-      e.preventDefault()
-      paletteOpen.value ? closePalette() : openPalette()
-    }
-  }
-  window.addEventListener('keydown', onKeydown)
-  onUnmounted(() => window.removeEventListener('keydown', onKeydown))
-  onUnmounted(() => window.removeEventListener('scroll', onScroll))
-
-  // Detect abandoned Stripe checkout (cancel URL carries ?checkout=cancelled)
+  // When Stripe redirects back after a cancelled checkout, the server appends
+  // ?checkout=cancelled to the URL. Detect it, fire an analytics event, show
+  // a toast, then clean the URL so a refresh doesn't re-trigger the notice.
   const params = new URLSearchParams(window.location.search)
   if (params.get('checkout') === 'cancelled') {
     track('checkout_abandoned', {
@@ -94,596 +87,37 @@ onMounted(() => {
       billingCycle: params.get('cycle') || '',
     })
     toast.add({
-      title: 'Checkout cancelled',
+      title:       'Checkout cancelled',
       description: 'No charge was made. Feel free to reach out if you have questions.',
-      icon: 'i-heroicons-information-circle',
-      color: 'neutral',
+      icon:        'i-heroicons-information-circle',
+      color:       'neutral',
     })
-    const clean = window.location.pathname + window.location.hash.replace(/\?.*/, '')
-    window.history.replaceState({}, '', clean)
-  }
-
-  // Fire pricing_viewed once when the pricing section scrolls into view
-  const pricingSection = document.getElementById('pricing')
-  if (pricingSection) {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          track('pricing_viewed')
-          observer.disconnect()
-        }
-      },
-      { threshold: 0.2 },
-    )
-    observer.observe(pricingSection)
-    onUnmounted(() => observer.disconnect())
+    // Preserve the hash (e.g. #pricing) while removing the query string.
+    window.history.replaceState({}, '', window.location.pathname + window.location.hash)
   }
 })
 
-// ── Scroll reveal ──────────────────────────────────────────────────────────
+// Attaches IntersectionObserver to all [data-reveal] elements, including
+// those inside child components, since parent onMounted fires last.
 useReveal()
-
-// ── Static content ─────────────────────────────────────────────────────────
-const pillars = [
-  { icon: 'i-heroicons-lock-closed',      title: 'You own your site' },
-  { icon: 'i-heroicons-currency-dollar',  title: 'Simple, clear pricing' },
-  { icon: 'i-heroicons-shield-check',     title: 'Fully managed' },
-  { icon: 'i-heroicons-arrow-path',       title: 'Revisions included' },
-]
-
-const services = [
-  {
-    tag: 'Retail & Services',
-    title: 'Local Business Sites',
-    body: 'Shops, salons, offices — everything a customer needs at a glance. Hours, location, contact, and a reason to choose you.',
-  },
-  {
-    tag: 'Food & Beverage',
-    title: 'Restaurants & Food',
-    body: 'Menus, hours, reservations, and ordering links. Get off Facebook and start showing up in Google searches.',
-  },
-  {
-    tag: 'Trades & Contractors',
-    title: 'Contractors & Trades',
-    body: 'Photo galleries, service areas, quote request forms. Look as professional online as you are on the job.',
-  },
-]
-
-const steps = [
-  {
-    n: '01',
-    title: 'Tell us about your business',
-    body: 'Fill out the form below. Share your services, your goals, any materials you have. The more we know, the better the result.',
-  },
-  {
-    n: '02',
-    title: 'We design and build it',
-    body: 'You\'ll see the site before it\'s finalized. Revisions are built into every package — no surprises, no rush.',
-  },
-  {
-    n: '03',
-    title: 'Your site goes live — and stays live',
-    body: 'We launch your site and handle everything technical. Hosting, SSL, domain, and small updates are covered for $89/month. First month is free.',
-  },
-]
-
-// ── About section stats ────────────────────────────────────────────────────
-const aboutStats = [
-  { value: '100%', label: 'Client ownership' },
-  { value: '$89',  label: 'Monthly hosting' },
-  { value: '24h',  label: 'Response time' },
-]
-
-// ── Footer navigation ──────────────────────────────────────────────────────
-const footerNav = [
-  { label: 'Services',    href: '#services',     type: 'anchor' },
-  { label: 'How It Works', href: '#how-it-works', type: 'anchor' },
-  { label: 'Pricing',     href: '#pricing',      type: 'anchor' },
-  { label: 'Portfolio',   href: '#portfolio',    type: 'anchor' },
-  { label: 'Blog',        href: '/blog',         type: 'nuxt' },
-]
-
-// ── Website build packages ─────────────────────────────────────────────────
-// All packages include managed hosting at $89/month starting month 2.
-// To update the monthly rate, change `monthlyRate` here — it flows everywhere.
-const monthlyRate = '$89'
-
-const packages = [
-  {
-    name: 'Starter',
-    price: '$499',
-    note: 'one-time build',
-    best: 'New businesses that need a presence fast',
-    features: [
-      'Single-page site (scrolling sections)',
-      'Mobile responsive design',
-      'Contact form (email delivery)',
-      'Google Maps embed',
-      'Social media links',
-      'Basic SEO (title, meta, sitemap)',
-      '1 round of revisions',
-    ],
-    delivery: '1–2 weeks',
-    featured: false,
-  },
-  {
-    name: 'Professional',
-    price: '$999',
-    note: 'one-time build',
-    best: 'Businesses ready to convert visitors into customers',
-    features: [
-      'Up to 5 pages (Home, About, Services, Gallery, Contact)',
-      'Mobile responsive design',
-      'Contact + quote request forms',
-      'Photo gallery / portfolio section',
-      'Full SEO setup (schema, sitemap, meta, alt tags)',
-      'Google Business Profile optimization',
-      'Social media integration',
-      '2 rounds of revisions',
-    ],
-    delivery: '2–3 weeks',
-    featured: true,
-  },
-  {
-    name: 'Premium',
-    price: '$1,499',
-    note: 'one-time build',
-    best: 'Established businesses that need full functionality',
-    features: [
-      'Up to 10 pages',
-      'Everything in Professional',
-      'Booking / scheduling integration',
-      'Menu or service catalog system',
-      'Analytics dashboard (Google Analytics)',
-      'Third-party integrations (Square, Toast, etc.)',
-      'Speed optimization (Core Web Vitals)',
-      '3 rounds of revisions',
-    ],
-    delivery: '3–5 weeks',
-    featured: false,
-  },
-]
-
-// ── Checkout ──────────────────────────────────────────────────────────────────
-const billingCycle = ref<'monthly' | 'yearly'>('monthly')
-const checkoutLoading = ref<string | null>(null)
-
-watch(billingCycle, (to) => {
-  track('billing_toggle', { to })
-})
-
-async function startCheckout(pkg: typeof packages[number]) {
-  checkoutLoading.value = pkg.name
-  track('checkout_initiated', { packageName: pkg.name, billingCycle: billingCycle.value })
-  try {
-    const { url } = await $fetch<{ url: string }>('/api/stripe/create-checkout', {
-      method: 'POST',
-      body: {
-        packageName: pkg.name,
-        serviceName: 'Website',
-        billingCycle: billingCycle.value,
-      },
-    })
-    if (url) window.location.href = url
-  }
-  catch {
-    toast.add({
-      title: 'Checkout unavailable',
-      description: 'Something went wrong — please try again or contact us directly.',
-      icon: 'i-heroicons-exclamation-circle',
-      color: 'error',
-    })
-    track('checkout_error', { packageName: pkg.name, billingCycle: billingCycle.value })
-  }
-  finally {
-    checkoutLoading.value = null
-  }
-}
-
-// ── FAQ ───────────────────────────────────────────────────────────────────────
-const faqs = [
-  {
-    q: 'Do I need to already have a domain?',
-    a: 'No — domain registration and management are included in the $89/month plan. If you already own a domain, we\'ll point it to your new site at no extra cost.',
-  },
-  {
-    q: 'When does the $89/month start?',
-    a: 'Month two. Your first month of hosting is always free — so your site is live and running before any billing begins. After that it\'s a flat $89/month with no surprises.',
-  },
-  {
-    q: 'What platform will my site be built on?',
-    a: 'Sites are custom-built — not WordPress, not Wix, not Squarespace. They load faster, rank better, and I maintain them directly so you never have to log in to anything.',
-  },
-  {
-    q: 'What happens if I need changes after the site is delivered?',
-    a: 'Small updates — text edits, photo swaps, hours changes — are covered under the $89/month plan. Larger additions like new pages or features are quoted separately at fair rates.',
-  },
-  {
-    q: 'Will you help me set up Google Business Profile?',
-    a: 'Yes — I\'m happy to walk you through it or do it for you. Mention it in your inquiry and we\'ll include it in the conversation.',
-  },
-  {
-    q: 'Can you work with my existing logo and branding?',
-    a: 'Absolutely. Send over what you have — logo files, brand colors, photos — and we\'ll build around it. No logo yet? I can work with what you have or point you to the right person.',
-  },
-]
-
-// ── Phone (obfuscated — assembled client-side to avoid scraper harvest) ────
-// Char codes for '7086271854'
-const _ph = [55, 48, 56, 54, 50, 55, 49, 56, 53, 52]
-const phoneHref = computed(() => `tel:+1${String.fromCharCode(..._ph)}`)
-
-// ── Contact form ────────────────────────────────────────────────────────────
-const form = reactive({
-  name: '',
-  businessName: '',
-  email: '',
-  phone: '',
-  service: '',
-  billingPreference: 'monthly',
-  message: '',
-})
-const submitted = ref(false)
-const submitting = ref(false)
-
-async function handleSubmit() {
-  submitting.value = true
-  try {
-    await $fetch('/api/contact', {
-      method: 'POST',
-      body: {
-        name: form.name,
-        businessName: form.businessName,
-        email: form.email,
-        phone: form.phone || undefined,
-        service: form.service || 'Not specified',
-        billingPreference: form.billingPreference,
-        message: form.message,
-      },
-    })
-    submitted.value = true
-    toast.add({
-      title: 'Message received!',
-      description: 'I\'ll be in touch within 24 hours.',
-      icon: 'i-heroicons-check-circle',
-      color: 'success',
-    })
-    track('contact_submit', {
-      service: form.service || 'Not specified',
-      billingPreference: form.billingPreference,
-    })
-  }
-  catch {
-    toast.add({
-      title: 'Could not send message',
-      description: 'Please try again or reach out directly.',
-      icon: 'i-heroicons-exclamation-circle',
-      color: 'error',
-    })
-    track('contact_error')
-  }
-  finally {
-    submitting.value = false
-  }
-}
 </script>
 
 <template>
-  <div class="relative min-h-screen bg-[#0f0f11] text-[#f0ece6] font-sans leading-relaxed overflow-x-hidden">
-    <!-- Grain fixed overlay -->
+  <div class="relative min-h-screen bg-[#0d0b09] text-[#f0ece6] font-sans leading-relaxed overflow-x-hidden">
     <div class="grain" aria-hidden="true" />
 
-    <!-- Promo banner (client-only to avoid localStorage hydration mismatch) -->
     <ClientOnly>
       <PromoBanner v-if="promotion" :promotion="promotion" />
     </ClientOnly>
 
-    <!-- ── NAV ──────────────────────────────────────────────────────────────── -->
-    <nav
-      class="fixed top-0 left-0 right-0 z-[90] flex justify-between items-center px-12 py-5 transition-[background,border-color,padding] duration-[400ms] ease-in-out border-b border-transparent md:px-6 sm:px-4"
-      :class="{ 'nav-scrolled': scrolled }"
-    >
-      <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-8 w-auto object-contain">
-      <div class="flex items-center gap-5 sm:gap-3">
-        <NuxtLink
-          to="/blog"
-          class="text-[10px] font-medium text-[#444151] no-underline tracking-[2px] uppercase transition-colors duration-200 hover:text-[#f0ece6]"
-        >
-          Blog
-        </NuxtLink>
-        <!-- ⌘K hint — desktop only -->
-        <button
-          class="hidden md:flex items-center gap-1.5 text-[10px] text-[#333040] border border-[#1e1e26] rounded-sm px-2.5 py-1.5 transition-[border-color,color] duration-200 hover:border-[#2d2d38] hover:text-[#6e6b7b] cursor-pointer bg-transparent tracking-[1.5px] uppercase"
-          title="Open command palette"
-          aria-label="Open navigation palette"
-          @click="openPalette"
-        >
-          <span>Search</span>
-          <kbd class="font-sans text-[9px] px-1 py-0.5 rounded-sm bg-[#111116] border border-[#1e1e26] text-[#333040]">⌘K</kbd>
-        </button>
-        <a href="#contact" class="nav-cta-btn" @click="track('cta_click', { label: 'Nav CTA', location: 'nav' })">
-          Get a Quote
-        </a>
-      </div>
-    </nav>
+    <SiteNav @toggle-palette="togglePalette" />
+    <SiteHero />
+    <SitePillarsMarquee />
+    <SiteServices @select-service="prefilledService = $event" />
+    <SiteProcess />
+    <SitePricing />
 
-    <!-- ── HERO ──────────────────────────────────────────────────────────────── -->
-    <section class="relative min-h-screen flex flex-col justify-center px-12 pt-[120px] pb-24 overflow-hidden md:px-6 md:pt-[100px] sm:px-4 sm:pt-[88px]">
-      <!-- Animated blob mesh -->
-      <div class="hero-blob hero-blob-1" aria-hidden="true" />
-      <div class="hero-blob hero-blob-2" aria-hidden="true" />
-      <div class="hero-blob hero-blob-3" aria-hidden="true" />
-
-      <div class="relative z-[2] max-w-[1080px] mx-auto w-full">
-        <!-- Location badge -->
-        <div
-          class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-10 border border-white/[0.07] bg-white/[0.02] backdrop-blur-md rounded-sm [animation:fade-up_0.8s_ease_both]"
-        >
-          <span class="w-1.5 h-1.5 rounded-full bg-[#f5c518] shadow-[0_0_8px_rgba(245,197,24,0.5)]" aria-hidden="true" />
-          <span class="font-mono text-[9px] tracking-[3px] uppercase text-[#555461]">Manteno, IL — Est. 2024</span>
-        </div>
-
-        <!-- Headline — three-weight typographic statement -->
-        <h1 class="mb-8">
-          <span
-            class="block font-display text-[clamp(48px,7.2vw,88px)] font-extrabold tracking-[-3px] leading-[0.97] text-[#f0ece6] [animation:fade-up_0.8s_0.1s_ease_both]"
-          >
-            Agency-grade
-          </span>
-          <span
-            class="block font-display text-[clamp(44px,6.8vw,82px)] font-light tracking-[-2.5px] leading-[1.05] text-[#55524f] [animation:fade-up_0.8s_0.18s_ease_both]"
-          >
-            websites for
-          </span>
-          <em
-            class="block font-serif italic font-light text-[clamp(46px,7vw,86px)] leading-[1.08] text-[#f5c518] [animation:fade-up_0.8s_0.26s_ease_both]"
-            style="letter-spacing: -2px"
-          >
-            local business.
-          </em>
-        </h1>
-
-        <!-- Supporting copy -->
-        <p
-          class="text-[15px] text-[#55524f] max-w-[420px] mb-10 leading-[1.9] [animation:fade-up_0.8s_0.36s_ease_both]"
-        >
-          Custom-built, not templated. You own every line of code.
-          Managed hosting from $89/month.
-        </p>
-
-        <!-- CTAs -->
-        <div class="flex items-center gap-4 flex-wrap [animation:fade-up_0.8s_0.46s_ease_both]">
-          <a href="#contact" class="btn-primary" @click="track('cta_click', { label: 'Get a Free Quote', location: 'hero' })">
-            Get a Free Quote
-          </a>
-          <a href="#pricing" class="btn-ghost" @click="track('cta_click', { label: 'See Pricing', location: 'hero' })">
-            See Pricing
-          </a>
-        </div>
-
-        <!-- Social proof strip -->
-        <div class="flex items-center gap-5 mt-14 [animation:fade-up_0.8s_0.62s_ease_both]">
-          <div class="h-px w-8 bg-white/[0.08]" />
-          <span class="font-mono text-[9px] tracking-[2px] uppercase text-[#2d2d38]">
-            Illinois-based · Custom-built · No contracts
-          </span>
-        </div>
-      </div>
-
-      <!-- Scroll cue -->
-      <div
-        class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-2.5"
-        aria-hidden="true"
-      >
-        <span class="font-mono text-[8px] tracking-[3px] uppercase text-[#282530]">Scroll</span>
-        <div class="w-px h-8 bg-gradient-to-b from-white/[0.1] to-transparent animate-bob" />
-      </div>
-    </section>
-
-    <!-- ── TRUST STRIP ───────────────────────────────────────────────────────── -->
-    <div class="border-t border-b border-white/[0.04] bg-[#0a0a0c] py-4 overflow-hidden">
-      <div class="flex items-center justify-center overflow-x-auto px-6">
-        <div class="flex items-center" data-reveal>
-          <template v-for="(p, i) in pillars" :key="p.title">
-            <span class="flex items-center gap-2 px-5 whitespace-nowrap">
-              <UIcon :name="p.icon" class="w-3 h-3 text-[#f5c518]/30 flex-shrink-0" />
-              <span class="font-mono text-[9.5px] tracking-[1.5px] uppercase text-[#333040]">{{ p.title }}</span>
-            </span>
-            <span v-if="i < pillars.length - 1" class="text-[#1e1e26] text-xs flex-shrink-0 select-none">—</span>
-          </template>
-        </div>
-      </div>
-    </div>
-
-    <!-- ── SERVICES ──────────────────────────────────────────────────────────── -->
-    <section id="services" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
-      <header class="mb-16" data-reveal>
-        <p class="eyebrow">What We Build</p>
-        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">
-          Sites that work as hard<br/>
-          <em class="font-serif italic font-light text-[#f5c518]">as you do</em>
-        </h2>
-      </header>
-
-      <div class="flex flex-col border-t border-white/[0.05]">
-        <a
-          v-for="(svc, i) in services"
-          :key="svc.title"
-          href="#contact"
-          class="service-row group flex items-center justify-between py-10 pr-6 border-b border-white/[0.05] text-inherit no-underline pl-5"
-          data-reveal
-          :data-reveal-delay="i * 100"
-          @click="form.service = svc.title"
-        >
-          <div class="flex items-start gap-10 sm:gap-5">
-            <span
-              class="font-display text-[50px] font-extrabold text-white opacity-[0.03] leading-none group-hover:opacity-[0.1] transition-opacity duration-500 mt-1 md:text-[34px] sm:hidden"
-            >
-              0{{ i + 1 }}
-            </span>
-            <div class="flex flex-col gap-1.5 mt-1">
-              <span class="font-mono text-[9px] tracking-[2px] uppercase text-[#333040]">{{ svc.tag }}</span>
-              <h3 class="font-display text-[22px] font-bold text-[#f0ece6] tracking-[-0.5px] sm:text-[18px]">{{ svc.title }}</h3>
-              <p class="text-[14px] text-[#55524f] max-w-[520px] leading-[1.85] mt-1">{{ svc.body }}</p>
-            </div>
-          </div>
-          <span
-            class="text-[10px] font-semibold text-[#f5c518] tracking-[2.5px] uppercase opacity-0 -translate-x-3 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 hidden lg:block"
-          >
-            Start &rarr;
-          </span>
-        </a>
-      </div>
-    </section>
-
-    <!-- ── PROCESS ───────────────────────────────────────────────────────────── -->
-    <section id="how-it-works" class="bg-[#0c0c0e] border-t border-b border-[#1a1a20] py-[100px] sm:py-16">
-      <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
-        <header class="mb-20" data-reveal>
-          <p class="eyebrow">How It Works</p>
-          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05] mt-2">
-            Simple from day one.
-          </h2>
-          <p class="text-[14px] text-[#55524f] mt-4 leading-[1.85] max-w-[400px]">
-            No mystery timelines. No confusing agency process.
-          </p>
-        </header>
-
-        <div class="relative">
-          <!-- Connecting line (desktop only) -->
-          <div
-            class="hidden lg:block absolute top-[22px] left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent"
-            aria-hidden="true"
-          />
-
-          <div class="grid grid-cols-1 gap-14 lg:grid-cols-3 lg:gap-10">
-            <div
-              v-for="(step, i) in steps"
-              :key="step.n"
-              class="flex flex-col items-start lg:items-center lg:text-center group"
-              data-reveal
-              :data-reveal-delay="i * 120"
-            >
-              <!-- Indicator dot -->
-              <div
-                class="w-[44px] h-[44px] rounded-full border border-white/[0.08] bg-[#0c0c0e] flex items-center justify-center mb-6 relative z-10 transition-all duration-400 group-hover:border-[#f5c518]/25 group-hover:shadow-[0_0_20px_rgba(245,197,24,0.07)]"
-              >
-                <div class="w-2 h-2 rounded-full bg-[#f5c518]/30 group-hover:bg-[#f5c518]/70 transition-colors duration-400" />
-              </div>
-              <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-[#f5c518]/40 mb-3">Phase {{ step.n }}</span>
-              <h3 class="font-display text-[17px] font-bold text-[#f0ece6] mb-3 tracking-[-0.3px]">{{ step.title }}</h3>
-              <p class="text-[13.5px] text-[#55524f] leading-[1.9] max-w-[260px] lg:mx-auto">{{ step.body }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── PRICING ───────────────────────────────────────────────────────────── -->
-    <section id="pricing" class="relative overflow-hidden">
-      <div class="pricing-bg" aria-hidden="true" />
-
-      <div class="relative max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
-        <header class="mb-14" data-reveal>
-          <p class="eyebrow">Pricing</p>
-          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05] mt-2">
-            One build price.<br/>
-            <em class="font-serif italic font-light text-[#f5c518]">One monthly rate.</em>
-          </h2>
-          <p class="text-[14px] text-[#55524f] mt-4 leading-[1.85]">
-            Pick your package — then {{ monthlyRate }}/month covers everything else.
-          </p>
-        </header>
-
-        <!-- Billing toggle -->
-        <div class="flex items-center gap-3 mb-12" data-reveal>
-          <span
-            class="font-mono text-[10px] tracking-[1.5px] uppercase transition-colors duration-200"
-            :class="billingCycle === 'monthly' ? 'text-[#c8c4be]' : 'text-[#333040]'"
-          >Monthly</span>
-          <button
-            class="relative w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-[#f5c518]/20"
-            :class="billingCycle === 'yearly' ? 'bg-[#f5c518]' : 'bg-[#1a1a20]'"
-            :aria-label="billingCycle === 'yearly' ? 'Switch to monthly' : 'Switch to yearly'"
-            @click="billingCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly'"
-          >
-            <span
-              class="absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform duration-200"
-              :class="billingCycle === 'yearly' ? 'translate-x-[18px]' : 'translate-x-0'"
-            />
-          </button>
-          <span
-            class="font-mono text-[10px] tracking-[1.5px] uppercase transition-colors duration-200"
-            :class="billingCycle === 'yearly' ? 'text-[#c8c4be]' : 'text-[#333040]'"
-          >
-            Yearly
-            <span class="ml-1.5 font-mono text-[8.5px] font-bold text-[#0f0f11] bg-[#f5c518] px-1.5 py-0.5 rounded-sm uppercase tracking-[0.5px]">Save 25%</span>
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 gap-4 items-start sm:grid-cols-2 lg:grid-cols-3">
-          <div
-            v-for="(pkg, i) in packages"
-            :key="pkg.name"
-            class="glass-deep rounded-sm px-5 py-7 sm:px-7 sm:py-9 relative transition-[border-color,transform] duration-300 hover:-translate-y-1"
-            :class="pkg.featured ? 'price-card-featured' : 'hover:border-white/[0.13]'"
-            data-reveal
-            :data-reveal-delay="i * 100"
-          >
-            <!-- Featured: top gold line -->
-            <div v-if="pkg.featured" class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f5c518] to-transparent" />
-            <div v-if="pkg.featured" class="absolute top-4 right-5 font-mono text-[8px] font-bold text-[#f5c518]/70 uppercase tracking-[2px]">Most Popular</div>
-
-            <p class="font-mono text-[9px] text-[#333040] uppercase tracking-[2px] mb-5">{{ pkg.name }}</p>
-
-            <div class="flex items-baseline gap-2 mb-1.5">
-              <span class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-[#f0ece6]">{{ pkg.price }}</span>
-              <span class="text-[12px] text-[#333040]">{{ pkg.note }}</span>
-            </div>
-
-            <div class="flex flex-col gap-1 mb-6 pb-6 border-b border-white/[0.05]">
-              <span v-if="billingCycle === 'monthly'" class="font-mono text-[11.5px] font-bold text-[#f5c518]/70">$89/mo hosting</span>
-              <span v-else class="font-mono text-[11.5px] font-bold text-[#f5c518]/70">
-                $799/yr hosting <span class="text-[#333040] font-normal text-[10px]">· save $269</span>
-              </span>
-              <span class="text-[11px] text-[#333040] leading-snug">First 30 days free — hosting, SSL &amp; domain included</span>
-            </div>
-
-            <p class="text-[11.5px] text-[#f5c518]/50 mb-5 leading-snug">Best for: {{ pkg.best }}</p>
-
-            <ul class="tier-features">
-              <li v-for="f in pkg.features" :key="f">{{ f }}</li>
-            </ul>
-
-            <p class="font-mono text-[9px] tracking-[1.5px] text-[#222028] uppercase mt-5 mb-5 border-t border-white/[0.05] pt-4">
-              Delivered in {{ pkg.delivery }}
-            </p>
-
-            <button
-              class="price-cta"
-              :class="{ 'price-cta-featured': pkg.featured }"
-              :disabled="checkoutLoading !== null"
-              @click="startCheckout(pkg)"
-            >
-              <span v-if="checkoutLoading === pkg.name" class="flex items-center justify-center gap-2">
-                <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
-                </svg>
-                Redirecting…
-              </span>
-              <span v-else>Buy Now</span>
-            </button>
-          </div>
-        </div>
-
-        <p class="mt-10 text-[12.5px] text-[#333040] leading-[1.85]" data-reveal>
-          Every site includes managed hosting, SSL, and your domain — starting free on month one.
-        </p>
-      </div>
-    </section>
-
-    <!-- ── PORTFOLIO ─────────────────────────────────────────────────────────── -->
+    <!-- ── Portfolio ──────────────────────────────────────────────────────── -->
     <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
       <header class="mb-16" data-reveal>
         <p class="eyebrow">Recent Work</p>
@@ -691,9 +125,7 @@ async function handleSubmit() {
           Built for businesses like yours
         </h2>
       </header>
-
-      <!-- Live projects from Firestore -->
-      <div v-if="projects && projects.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" data-reveal>
+      <div v-if="projects?.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" data-reveal>
         <a
           v-for="proj in projects"
           :key="proj.id"
@@ -701,8 +133,7 @@ async function handleSubmit() {
           :target="proj.url ? '_blank' : undefined"
           :rel="proj.url ? 'noopener noreferrer' : undefined"
           class="glass-deep rounded-sm overflow-hidden flex flex-col no-underline text-inherit transition-[border-color,transform] duration-300"
-          :class="proj.url ? 'hover:border-[rgba(245,197,24,0.18)] hover:-translate-y-1' : ''"
-        >
+          :class="proj.url ? 'hover:border-[rgba(245,197,24,0.18)] hover:-translate-y-1' : ''">
           <div class="aspect-video bg-[#0a0a0c] flex items-center justify-center overflow-hidden">
             <img v-if="proj.imageUrl" :src="proj.imageUrl" :alt="proj.title" loading="lazy" class="w-full h-full object-cover">
             <UIcon v-else name="i-heroicons-photo" class="w-8 h-8 opacity-[0.06]" />
@@ -714,42 +145,29 @@ async function handleSubmit() {
           </div>
         </a>
       </div>
-
-      <!-- Empty state until first real projects are added via /admin -->
       <div v-else class="py-20 px-8 glass-deep rounded-sm text-center" data-reveal>
         <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-3 tracking-[-0.5px]">First projects in progress.</p>
-        <p class="text-[14px] text-[#55524f] max-w-[380px] mx-auto mb-8 leading-[1.85]">
-          Ask about being an early client — discounted builds available for businesses in Kankakee County.
-        </p>
+        <p class="text-[14px] text-[#55524f] max-w-[380px] mx-auto mb-8 leading-[1.85]">Ask about being an early client — discounted builds available for businesses in Kankakee County.</p>
         <a href="#contact" class="btn-ghost">Let's talk &rarr;</a>
       </div>
     </section>
 
-    <!-- ── TESTIMONIALS ──────────────────────────────────────────────────────── -->
+    <!-- ── Testimonials ───────────────────────────────────────────────────── -->
     <section
-      v-if="testimonials && testimonials.length"
-      class="max-w-[1080px] mx-auto px-12 pb-[100px] md:px-6 md:pb-20 sm:px-4 sm:pb-16"
-    >
+      v-if="testimonials?.length"
+      class="max-w-[1080px] mx-auto px-12 pb-[100px] md:px-6 md:pb-20 sm:px-4 sm:pb-16">
       <header class="mb-16" data-reveal>
         <p class="eyebrow">What Clients Say</p>
-        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">
-          Built on real results
-        </h2>
+        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">Built on real results</h2>
       </header>
-
       <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
         <div
           v-for="(t, i) in testimonials"
           :key="t.id"
           class="glass-deep rounded-sm px-7 py-8 flex flex-col gap-5 relative overflow-hidden transition-[border-color,transform] duration-300 hover:border-white/[0.13] hover:-translate-y-1"
           data-reveal
-          :data-reveal-delay="i * 100"
-        >
-          <!-- Decorative opening quote mark -->
-          <span
-            class="absolute top-2 right-5 font-serif text-[80px] leading-none text-[#f5c518]/[0.06] select-none pointer-events-none"
-            aria-hidden="true"
-          >"</span>
+          :data-reveal-delay="i * 100">
+          <span class="absolute top-2 right-5 font-serif text-[80px] leading-none text-[#f5c518]/[0.06] select-none pointer-events-none" aria-hidden="true">"</span>
           <p class="text-[14.5px] text-[#c8c4be]/75 leading-[1.9] flex-1 italic relative z-[1]">"{{ t.quote }}"</p>
           <div class="pt-4 border-t border-white/[0.05] relative z-[1]">
             <p class="text-[14px] font-semibold text-[#f0ece6] mb-0.5">{{ t.name }}</p>
@@ -759,107 +177,22 @@ async function handleSubmit() {
       </div>
     </section>
 
-    <!-- ── ABOUT ─────────────────────────────────────────────────────────────── -->
-    <section id="about" class="border-t border-[#1a1a20] bg-[#0c0c0e]">
-      <div class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
-        <div class="grid grid-cols-1 gap-16 items-start lg:grid-cols-[1fr_1fr] lg:gap-28" data-reveal>
+    <SiteAbout />
 
-          <!-- Left: philosophy (sticky on desktop) -->
-          <div class="lg:sticky lg:top-32">
-            <div class="flex items-center gap-4 mb-8">
-              <div class="h-px w-8 bg-[#f5c518]/25" />
-              <p class="eyebrow mb-0">The Philosophy</p>
-            </div>
-
-            <blockquote class="font-display text-[clamp(20px,2.8vw,32px)] font-bold tracking-[-1px] text-[#f0ece6] leading-[1.3] border-l border-[#f5c518]/30 pl-6 mb-10">
-              {{ founder.philosophy }}
-            </blockquote>
-
-            <!-- Founder ID -->
-            <div class="flex items-center gap-4">
-              <div
-                class="w-[56px] h-[56px] rounded-full border border-white/[0.1] overflow-hidden flex-shrink-0 bg-[#111116] flex items-center justify-center"
-              >
-                <img v-if="founderPhotoExists" :src="founderPhotoSrc" :alt="founder.name" class="w-full h-full object-cover">
-                <em v-else class="font-serif italic font-light text-[#f5c518] text-2xl select-none">{{ founder.name.charAt(0) }}</em>
-              </div>
-              <div>
-                <p class="font-semibold text-[#c8c4be] text-[14px]">{{ founder.name }}</p>
-                <p class="font-mono text-[9px] text-[#333040] uppercase tracking-[1.5px] mt-0.5">{{ founder.title }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Right: story -->
-          <div>
-            <h2 class="font-display text-[clamp(20px,2.5vw,28px)] font-extrabold tracking-[-1px] text-[#f0ece6] mb-7 leading-[1.2]">
-              Built by someone who lives here too.
-            </h2>
-
-            <div class="flex flex-col gap-4 mb-8">
-              <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.intro }}</p>
-              <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.origin }}</p>
-              <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.problem }}</p>
-            </div>
-
-            <p class="font-mono text-[9px] uppercase tracking-[2px] text-[#2d2d38] mb-5">Here's the deal</p>
-            <ul class="flex flex-col gap-4 mb-10">
-              <li
-                v-for="(item, idx) in founder.deal"
-                :key="item.label"
-                class="flex gap-4 text-[14px] text-[#55524f] leading-[1.85]"
-              >
-                <span class="font-mono text-[#f5c518]/30 font-bold flex-shrink-0 mt-px text-[10px]">{{ String(idx + 1).padStart(2, '0') }}</span>
-                <span>
-                  <strong class="text-[#c8c4be] font-semibold">{{ item.label }}:</strong>
-                  {{ item.body }}
-                </span>
-              </li>
-            </ul>
-
-            <p class="text-[14px] font-medium text-[#f0ece6]/60 border-t border-white/[0.05] pt-7 mb-8 leading-[1.85]">
-              {{ founder.closing }}
-            </p>
-
-            <!-- Stats strip -->
-            <div class="grid grid-cols-3 gap-6 mb-10 pb-8 border-b border-white/[0.05]">
-              <div v-for="stat in aboutStats" :key="stat.label">
-                <p class="font-serif italic font-light text-[30px] text-[#f5c518] leading-none mb-2">{{ stat.value }}</p>
-                <p class="font-mono text-[9px] uppercase tracking-[1.5px] text-[#2d2d38]">{{ stat.label }}</p>
-              </div>
-            </div>
-
-            <!-- Call CTA -->
-            <ClientOnly>
-              <a :href="phoneHref" class="btn-primary">
-                <UIcon name="i-heroicons-phone" class="w-3.5 h-3.5 flex-shrink-0" />
-                Call or Text
-              </a>
-            </ClientOnly>
-          </div>
-
-        </div>
-      </div>
-    </section>
-
-    <!-- ── FAQ ───────────────────────────────────────────────────────────────── -->
+    <!-- ── FAQ ───────────────────────────────────────────────────────────── -->
     <section id="faq" class="py-[100px] sm:py-16">
       <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
         <header class="mb-16" data-reveal>
           <p class="eyebrow">Common Questions</p>
-          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">
-            Straight answers
-          </h2>
+          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">Straight answers</h2>
         </header>
-
         <div class="max-w-[680px] flex flex-col gap-1">
           <details
-            v-for="(item, i) in faqs"
+            v-for="(item, i) in siteConfig.faqs"
             :key="item.q"
             class="faq-item"
             data-reveal
-            :data-reveal-delay="i * 60"
-          >
+            :data-reveal-delay="i * 60">
             <summary class="faq-q">{{ item.q }}</summary>
             <p class="faq-a">{{ item.a }}</p>
           </details>
@@ -867,222 +200,44 @@ async function handleSubmit() {
       </div>
     </section>
 
-    <!-- ── CTA BAND ──────────────────────────────────────────────────────────── -->
-    <!-- Dark glass panel with a single gold top-line accent — premium alternative
-         to the jarring full-bleed yellow block. -->
+    <!-- ── CTA Band ───────────────────────────────────────────────────────── -->
     <div class="relative mx-12 my-[100px] overflow-hidden rounded-sm md:mx-6 md:my-16 sm:mx-4 sm:my-12" data-reveal>
-      <!-- Glassmorphism layer -->
       <div class="absolute inset-0 bg-white/[0.025] backdrop-blur-2xl border border-white/[0.07]" />
-      <!-- Gold top accent line -->
       <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f5c518]/50 to-transparent" />
-      <!-- Ambient upward glow -->
       <div
         class="absolute inset-0 pointer-events-none"
         style="background: radial-gradient(ellipse 60% 120% at 50% 0%, rgba(245,197,24,0.04), transparent)"
-        aria-hidden="true"
-      />
-
+        aria-hidden="true" />
       <div class="relative z-[1] text-center px-12 py-20 sm:px-6 sm:py-14">
         <p class="eyebrow">Ready to start?</p>
         <h2
           class="font-display text-[clamp(28px,4.2vw,54px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.05] text-[#f0ece6]"
-          style="white-space: pre-line"
-        >{{ cta.headline }}</h2>
-        <p class="text-[15px] text-[#55524f] mb-10 max-w-[440px] mx-auto leading-[1.85]">
-          {{ cta.subtext }}
-        </p>
-        <a href="#contact" class="btn-primary" @click="track('cta_click', { label: cta.buttonLabel, location: 'cta_band' })">
-          {{ cta.buttonLabel }}
+          style="white-space: pre-line">{{ siteContent.cta.headline }}</h2>
+        <p class="text-[15px] text-[#55524f] mb-10 max-w-[440px] mx-auto leading-[1.85]">{{ siteContent.cta.subtext }}</p>
+        <a
+          href="#contact"
+          class="btn-primary"
+          @click="track('cta_click', { label: siteContent.cta.buttonLabel, location: 'cta_band' })">
+          {{ siteContent.cta.buttonLabel }}
         </a>
       </div>
     </div>
 
-    <!-- ── CONTACT ───────────────────────────────────────────────────────────── -->
-    <section id="contact" class="border-t border-[#1a1a20] bg-[#0c0c0e] px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
-      <div class="max-w-[1080px] mx-auto grid grid-cols-1 gap-12 items-start lg:grid-cols-[360px_1fr] lg:gap-20">
+    <SiteContact :prefilled-service="prefilledService" />
+    <SiteFooter />
 
-        <!-- Left: context -->
-        <div data-reveal>
-          <div class="flex items-center gap-4 mb-6">
-            <div class="h-px w-8 bg-[#f5c518]/25" />
-            <p class="eyebrow mb-0">Get in touch</p>
-          </div>
-          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] mb-4 leading-[1.05]">
-            Book a free<br/>
-            <em class="font-serif italic font-light text-[#f5c518]">consultation</em>
-          </h2>
-          <p class="text-[14px] text-[#55524f] leading-[1.9] mb-8">
-            Tell me about your business. I'll review it and get back to you within 24 hours.
-            No sales pressure — just a straight conversation.
-          </p>
-
-          <!-- Promises -->
-          <ul class="flex flex-col gap-3.5">
-            <li
-              v-for="promise in ['Free quote, no obligation', 'Response within 24 hours', 'You own everything we build']"
-              :key="promise"
-              class="flex items-center gap-3 text-[13px] text-[#55524f]"
-            >
-              <span class="w-[18px] h-[18px] rounded-sm border border-[#f5c518]/20 flex items-center justify-center flex-shrink-0">
-                <span class="w-1.5 h-1.5 rounded-full bg-[#f5c518]/40" />
-              </span>
-              {{ promise }}
-            </li>
-          </ul>
-        </div>
-
-        <!-- Right: glass form card -->
-        <div
-          class="glass-deep rounded-sm p-9 sm:p-6"
-          data-reveal
-          data-reveal-delay="100"
-        >
-          <!-- Success state -->
-          <div v-if="submitted" class="flex flex-col items-center py-16 px-6 text-center">
-            <div class="w-12 h-12 rounded-sm border border-[#f5c518]/25 bg-[#f5c518]/[0.05] flex items-center justify-center text-[#f5c518] mb-6">
-              <UIcon name="i-heroicons-check" class="w-5 h-5" />
-            </div>
-            <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-2 tracking-[-0.5px]">Message received.</p>
-            <p class="text-[13px] text-[#55524f]">I'll be in touch within 24 hours.</p>
-          </div>
-
-          <!-- Form -->
-          <form v-else class="flex flex-col gap-4" @submit.prevent="handleSubmit">
-            <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-              <div class="fgroup">
-                <label>Your Name</label>
-                <input v-model="form.name" type="text" placeholder="Jane Smith" minlength="2" required>
-              </div>
-              <div class="fgroup">
-                <label>Business Name</label>
-                <input v-model="form.businessName" type="text" placeholder="Jane's Bakery" required>
-              </div>
-            </div>
-            <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-              <div class="fgroup">
-                <label>Email <span class="text-[#f5c518]/40 normal-case tracking-normal not-italic">*</span></label>
-                <input v-model="form.email" type="email" placeholder="jane@email.com" required>
-              </div>
-              <div class="fgroup">
-                <label>Phone <span class="text-[#2d2d38] normal-case tracking-normal">(optional)</span></label>
-                <input v-model="form.phone" type="tel" placeholder="(815) 555-1234">
-              </div>
-            </div>
-            <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
-              <div class="fgroup">
-                <label>Package Interest</label>
-                <div class="select-wrap">
-                  <select v-model="form.service">
-                    <option value="">Select a package…</option>
-                    <option value="Starter — $499">Starter — $499</option>
-                    <option value="Professional — $999">Professional — $999</option>
-                    <option value="Premium — $1,499">Premium — $1,499</option>
-                    <option value="Not sure yet">Not sure yet</option>
-                  </select>
-                  <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />
-                </div>
-              </div>
-              <div v-if="form.service && form.service !== 'Not sure yet'" class="fgroup">
-                <label>Billing Preference</label>
-                <div class="select-wrap">
-                  <select v-model="form.billingPreference">
-                    <option value="monthly">Monthly ($89/mo)</option>
-                    <option value="yearly">Yearly ($799/yr) — Save $269</option>
-                  </select>
-                  <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />
-                </div>
-              </div>
-            </div>
-            <div class="fgroup">
-              <label>Tell me about your business</label>
-              <textarea
-                v-model="form.message"
-                rows="5"
-                placeholder="What do you do? Do you have an existing website? What matters most to you?"
-                minlength="10"
-                required
-              />
-            </div>
-            <button type="submit" class="submit-btn" :disabled="submitting">
-              {{ submitting ? 'Sending…' : 'Send Message →' }}
-            </button>
-          </form>
-        </div>
-      </div>
-    </section>
-
-    <!-- ── FOOTER ────────────────────────────────────────────────────────────── -->
-    <footer class="border-t border-[#111116] bg-[#0a0a0c]">
-      <!-- Main grid -->
-      <div class="max-w-[1080px] mx-auto px-12 py-14 md:px-6 sm:px-4 grid grid-cols-1 gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
-
-        <!-- Brand -->
-        <div>
-          <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="h-7 w-auto object-contain mb-4 block opacity-60 hover:opacity-100 transition-opacity duration-200">
-          <p class="text-[12px] text-[#222028] leading-[1.75] max-w-[200px]">
-            Websites for local businesses.<br/>Manteno, IL.
-          </p>
-        </div>
-
-        <!-- Navigate -->
-        <div>
-          <p class="font-mono text-[9px] tracking-[2px] uppercase text-[#222028] mb-5">Navigate</p>
-          <ul class="flex flex-col gap-3">
-            <li v-for="link in footerNav" :key="link.label">
-              <NuxtLink
-                v-if="link.type === 'nuxt'"
-                :to="link.href"
-                class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]"
-              >
-                {{ link.label }}
-              </NuxtLink>
-              <a
-                v-else
-                :href="link.href"
-                class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]"
-              >
-                {{ link.label }}
-              </a>
-            </li>
-          </ul>
-        </div>
-
-        <!-- Legal -->
-        <div>
-          <p class="font-mono text-[9px] tracking-[2px] uppercase text-[#222028] mb-5">Legal</p>
-          <ul class="flex flex-col gap-3">
-            <li>
-              <NuxtLink to="/privacy" class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]">
-                Privacy Policy
-              </NuxtLink>
-            </li>
-          </ul>
-        </div>
-      </div>
-
-      <!-- Bottom bar -->
-      <div class="border-t border-[#0f0f11] py-4">
-        <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4 flex items-center justify-between flex-wrap gap-2">
-          <span class="font-mono text-[9.5px] text-[#1a1a20] uppercase tracking-[1px]">© {{ new Date().getFullYear() }} ILYTAT LLC</span>
-          <span class="font-mono text-[9.5px] text-[#1a1a20] uppercase tracking-[1px]">Built by JJ</span>
-        </div>
-      </div>
-    </footer>
-
-    <!-- ── Mobile palette trigger pill ──────────────────────────────────────── -->
+    <!-- ── Mobile explore button ─────────────────────────────────────────── -->
     <button
-      class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[150] md:hidden flex items-center gap-2 text-[10px] font-semibold text-[#6e6b7b] bg-[#111116] border border-[#1e1e26] px-4 py-2.5 rounded-sm shadow-[0_4px_24px_rgba(0,0,0,.6)] transition-[transform,box-shadow] duration-200 active:scale-95 hover:border-white/[0.12] tracking-[2px] uppercase"
+      class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[150] md:hidden flex items-center gap-2 text-[10px] font-semibold text-[#6e6b5f] bg-[#13100d] border border-[#211e1a] px-4 py-2.5 rounded-sm shadow-[0_4px_24px_rgba(0,0,0,.6)] transition-[transform,box-shadow] duration-200 active:scale-95 hover:border-white/[0.12] tracking-[2px] uppercase"
       aria-label="Open navigation"
-      @click="openPalette"
-    >
-      <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-[#444151]" />
+      @click="togglePalette">
+      <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-[#4e4843]" />
       <span>Explore</span>
     </button>
 
-    <!-- ── Command palette (client-side only) ───────────────────────────────── -->
     <ClientOnly>
       <Teleport to="body">
-        <SiteCommandPalette v-if="paletteOpen" @close="closePalette" />
+        <SiteCommandPalette v-if="paletteOpen" @close="paletteOpen = false" />
       </Teleport>
     </ClientOnly>
   </div>
