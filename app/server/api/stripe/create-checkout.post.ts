@@ -3,9 +3,9 @@ import { useStripe } from '~/server/utils/stripe'
 import { log } from '~/server/utils/logger'
 
 const PACKAGE_PRICE_MAP: Record<string, (config: ReturnType<typeof useRuntimeConfig>) => string | undefined> = {
-  starter:      (c) => c.stripePriceStarterBuild as string | undefined,
-  professional: (c) => c.stripePriceProfessionalBuild as string | undefined,
-  premium:      (c) => c.stripePricePremiumBuild as string | undefined,
+  popup:           (c) => c.stripePriceStarterBuild as string | undefined,
+  localbusiness:   (c) => c.stripePriceProfessionalBuild as string | undefined,
+  webapplication:  (c) => c.stripePricePremiumBuild as string | undefined,
 }
 
 function getBuildPriceId(packageName: string, config: ReturnType<typeof useRuntimeConfig>): string {
