@@ -41,6 +41,8 @@ export default defineNuxtConfig({
       { name: 'Inter', provider: 'google' },
       { name: 'Sora', provider: 'google', weights: [400, 600, 700, 800] },
       { name: 'Space Mono', provider: 'google', weights: [400, 700] },
+      // Playfair Display: premium serif for display headlines
+      { name: 'Playfair Display', provider: 'google', weights: [400, 700, 900], styles: ['normal', 'italic'] },
     ],
   },
 
