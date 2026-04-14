@@ -42,13 +42,13 @@ const { data: projects } = await useFetch('/api/projects')
 const { data: promotion } = await useFetch('/api/promotion')
 const { data: testimonials } = await useFetch('/api/testimonials')
 
-// ── Analytics ──────────────────────────────────────────────────────────────
+// ── Analytics + Toasts ────────────────────────────────────────────────────
 const { track } = useAnalytics()
+const toast = useToast()
 
 // ── Founder photo ──────────────────────────────────────────────────────────
-// The path is kept in a runtime string so Vite's static analyzer never tries
-// to resolve it as a bundled asset. Falls back to an initials avatar when the
-// file hasn't been placed in /public yet.
+// Path kept in a runtime string so Vite's static analyzer never tries to
+// resolve it as a bundled asset. Falls back to serif initial when absent.
 const FOUNDER_PHOTO_PATH = '/founder.jpg'
 const founderPhotoExists = ref(false)
 const founderPhotoSrc = ref('')
@@ -59,7 +59,8 @@ onMounted(async () => {
       founderPhotoSrc.value = FOUNDER_PHOTO_PATH
       founderPhotoExists.value = true
     }
-  } catch {
+  }
+  catch {
     founderPhotoExists.value = false
   }
 })
@@ -69,13 +70,12 @@ const paletteOpen = ref(false)
 function openPalette() { paletteOpen.value = true }
 function closePalette() { paletteOpen.value = false }
 
-// ── Scroll state (transparent nav → opaque) ────────────────────────────────
+// ── Scroll state (transparent nav → frosted glass) ────────────────────────
 const scrolled = ref(false)
 onMounted(() => {
   const onScroll = () => { scrolled.value = window.scrollY > 56 }
   window.addEventListener('scroll', onScroll, { passive: true })
 
-  // ⌘K / Ctrl+K to open palette
   const onKeydown = (e: KeyboardEvent) => {
     if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
       e.preventDefault()
@@ -93,7 +93,12 @@ onMounted(() => {
       packageName:  params.get('pkg')   || '',
       billingCycle: params.get('cycle') || '',
     })
-    // Clean up URL without reloading
+    toast.add({
+      title: 'Checkout cancelled',
+      description: 'No charge was made. Feel free to reach out if you have questions.',
+      icon: 'i-heroicons-information-circle',
+      color: 'neutral',
+    })
     const clean = window.location.pathname + window.location.hash.replace(/\?.*/, '')
     window.history.replaceState({}, '', clean)
   }
@@ -120,27 +125,24 @@ useReveal()
 
 // ── Static content ─────────────────────────────────────────────────────────
 const pillars = [
-  { icon: 'i-heroicons-lock-closed', title: 'You own your site', body: 'Every file, every line of code is yours. We just keep it running.' },
-  { icon: 'i-heroicons-currency-dollar', title: 'Simple, clear pricing', body: 'One build price. One flat monthly rate. Nothing hidden, nothing variable.' },
-  { icon: 'i-heroicons-shield-check', title: 'Fully managed', body: 'Hosting, SSL, domain, and updates — all handled for $89/mo.' },
-  { icon: 'i-heroicons-arrow-path', title: 'Revisions included', body: 'Every package includes rounds of feedback before we close.' },
+  { icon: 'i-heroicons-lock-closed',      title: 'You own your site' },
+  { icon: 'i-heroicons-currency-dollar',  title: 'Simple, clear pricing' },
+  { icon: 'i-heroicons-shield-check',     title: 'Fully managed' },
+  { icon: 'i-heroicons-arrow-path',       title: 'Revisions included' },
 ]
 
 const services = [
   {
-    icon: 'i-heroicons-building-storefront',
     tag: 'Retail & Services',
     title: 'Local Business Sites',
     body: 'Shops, salons, offices — everything a customer needs at a glance. Hours, location, contact, and a reason to choose you.',
   },
   {
-    icon: 'i-heroicons-cake',
     tag: 'Food & Beverage',
     title: 'Restaurants & Food',
     body: 'Menus, hours, reservations, and ordering links. Get off Facebook and start showing up in Google searches.',
   },
   {
-    icon: 'i-heroicons-wrench-screwdriver',
     tag: 'Trades & Contractors',
     title: 'Contractors & Trades',
     body: 'Photo galleries, service areas, quote request forms. Look as professional online as you are on the job.',
@@ -161,8 +163,24 @@ const steps = [
   {
     n: '03',
     title: 'Your site goes live — and stays live',
-    body: 'We launch your site and handle everything technical from there. Hosting, SSL, domain renewal, and small updates are covered for $89/month. First month is free.',
+    body: 'We launch your site and handle everything technical. Hosting, SSL, domain, and small updates are covered for $89/month. First month is free.',
   },
+]
+
+// ── About section stats ────────────────────────────────────────────────────
+const aboutStats = [
+  { value: '100%', label: 'Client ownership' },
+  { value: '$89',  label: 'Monthly hosting' },
+  { value: '24h',  label: 'Response time' },
+]
+
+// ── Footer navigation ──────────────────────────────────────────────────────
+const footerNav = [
+  { label: 'Services',    href: '#services',     type: 'anchor' },
+  { label: 'How It Works', href: '#how-it-works', type: 'anchor' },
+  { label: 'Pricing',     href: '#pricing',      type: 'anchor' },
+  { label: 'Portfolio',   href: '#portfolio',    type: 'anchor' },
+  { label: 'Blog',        href: '/blog',         type: 'nuxt' },
 ]
 
 // ── Website build packages ─────────────────────────────────────────────────
@@ -228,15 +246,13 @@ const packages = [
 
 // ── Checkout ──────────────────────────────────────────────────────────────────
 const billingCycle = ref<'monthly' | 'yearly'>('monthly')
-const checkoutLoading = ref<string | null>(null) // holds the package name being loaded
-const checkoutError = ref('')
+const checkoutLoading = ref<string | null>(null)
 
 watch(billingCycle, (to) => {
   track('billing_toggle', { to })
 })
 
 async function startCheckout(pkg: typeof packages[number]) {
-  checkoutError.value = ''
   checkoutLoading.value = pkg.name
   track('checkout_initiated', { packageName: pkg.name, billingCycle: billingCycle.value })
   try {
@@ -251,7 +267,12 @@ async function startCheckout(pkg: typeof packages[number]) {
     if (url) window.location.href = url
   }
   catch {
-    checkoutError.value = 'Something went wrong — please try again or contact us directly.'
+    toast.add({
+      title: 'Checkout unavailable',
+      description: 'Something went wrong — please try again or contact us directly.',
+      icon: 'i-heroicons-exclamation-circle',
+      color: 'error',
+    })
     track('checkout_error', { packageName: pkg.name, billingCycle: billingCycle.value })
   }
   finally {
@@ -279,7 +300,7 @@ const faqs = [
   },
   {
     q: 'Will you help me set up Google Business Profile?',
-    a: "Yes — I'm happy to walk you through it or do it for you. Mention it in your inquiry and we'll include it in the conversation.",
+    a: 'Yes — I\'m happy to walk you through it or do it for you. Mention it in your inquiry and we\'ll include it in the conversation.',
   },
   {
     q: 'Can you work with my existing logo and branding?',
@@ -293,14 +314,20 @@ const _ph = [55, 48, 56, 54, 50, 55, 49, 56, 53, 52]
 const phoneHref = computed(() => `tel:+1${String.fromCharCode(..._ph)}`)
 
 // ── Contact form ────────────────────────────────────────────────────────────
-const form = reactive({ name: '', businessName: '', email: '', phone: '', service: '', billingPreference: 'monthly', message: '' })
+const form = reactive({
+  name: '',
+  businessName: '',
+  email: '',
+  phone: '',
+  service: '',
+  billingPreference: 'monthly',
+  message: '',
+})
 const submitted = ref(false)
 const submitting = ref(false)
-const submitError = ref('')
 
 async function handleSubmit() {
   submitting.value = true
-  submitError.value = ''
   try {
     await $fetch('/api/contact', {
       method: 'POST',
@@ -315,13 +342,24 @@ async function handleSubmit() {
       },
     })
     submitted.value = true
+    toast.add({
+      title: 'Message received!',
+      description: 'I\'ll be in touch within 24 hours.',
+      icon: 'i-heroicons-check-circle',
+      color: 'success',
+    })
     track('contact_submit', {
-      service:          form.service || 'Not specified',
+      service: form.service || 'Not specified',
       billingPreference: form.billingPreference,
     })
   }
   catch {
-    submitError.value = 'Something went wrong — please try again or reach out directly.'
+    toast.add({
+      title: 'Could not send message',
+      description: 'Please try again or reach out directly.',
+      icon: 'i-heroicons-exclamation-circle',
+      color: 'error',
+    })
     track('contact_error')
   }
   finally {
@@ -332,7 +370,7 @@ async function handleSubmit() {
 
 <template>
   <div class="relative min-h-screen bg-[#0f0f11] text-[#f0ece6] font-sans leading-relaxed overflow-x-hidden">
-    <!-- Grain overlay -->
+    <!-- Grain fixed overlay -->
     <div class="grain" aria-hidden="true" />
 
     <!-- Promo banner (client-only to avoid localStorage hydration mismatch) -->
@@ -347,236 +385,291 @@ async function handleSubmit() {
     >
       <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-8 w-auto object-contain">
       <div class="flex items-center gap-5 sm:gap-3">
-        <NuxtLink to="/blog" class="text-[13px] font-medium text-[#9996a8] no-underline tracking-[0.1px] transition-colors duration-200 hover:text-[#f0ece6]">
+        <NuxtLink
+          to="/blog"
+          class="text-[10px] font-medium text-[#444151] no-underline tracking-[2px] uppercase transition-colors duration-200 hover:text-[#f0ece6]"
+        >
           Blog
         </NuxtLink>
         <!-- ⌘K hint — desktop only -->
         <button
-          @click="openPalette"
-          class="hidden sm:hidden md:flex items-center gap-1.5 text-[12px] text-[#555] border border-[#2a2a32] rounded-[6px] px-2.5 py-1.5 transition-[border-color,color] duration-200 hover:border-[#4a4a58] hover:text-[#9996a8] cursor-pointer bg-transparent"
+          class="hidden md:flex items-center gap-1.5 text-[10px] text-[#333040] border border-[#1e1e26] rounded-sm px-2.5 py-1.5 transition-[border-color,color] duration-200 hover:border-[#2d2d38] hover:text-[#6e6b7b] cursor-pointer bg-transparent tracking-[1.5px] uppercase"
           title="Open command palette"
           aria-label="Open navigation palette"
+          @click="openPalette"
         >
           <span>Search</span>
-          <kbd class="font-sans text-[10px] px-1 py-0.5 rounded bg-[#1e1e28] border border-[#3a3a48] text-[#666]">⌘K</kbd>
+          <kbd class="font-sans text-[9px] px-1 py-0.5 rounded-sm bg-[#111116] border border-[#1e1e26] text-[#333040]">⌘K</kbd>
         </button>
-        <a href="#contact" class="text-[13px] font-semibold text-[#0f0f11] bg-[#f5c518] px-[22px] py-[9px] rounded-[5px] no-underline tracking-[0.1px] transition-[background,transform] duration-200 hover:bg-[#d4a912] hover:-translate-y-px sm:px-[14px] sm:py-[7px]">
-          Get a Free Quote
+        <a href="#contact" class="nav-cta-btn" @click="track('cta_click', { label: 'Nav CTA', location: 'nav' })">
+          Get a Quote
         </a>
       </div>
     </nav>
 
     <!-- ── HERO ──────────────────────────────────────────────────────────────── -->
-    <section class="relative min-h-screen flex flex-col items-center justify-center px-12 pt-[120px] pb-20 overflow-hidden md:px-6 md:pt-[100px] md:pb-16 sm:px-4 sm:pt-[88px] sm:pb-12">
-      <div class="hero-grid" aria-hidden="true" />
-      <div class="hero-glow hero-glow--center" aria-hidden="true" />
-      <div class="hero-glow hero-glow--bottom" aria-hidden="true" />
+    <section class="relative min-h-screen flex flex-col justify-center px-12 pt-[120px] pb-24 overflow-hidden md:px-6 md:pt-[100px] sm:px-4 sm:pt-[88px]">
+      <!-- Animated blob mesh -->
+      <div class="hero-blob hero-blob-1" aria-hidden="true" />
+      <div class="hero-blob hero-blob-2" aria-hidden="true" />
+      <div class="hero-blob hero-blob-3" aria-hidden="true" />
 
-      <div class="relative z-[2] text-center max-w-[800px] mx-auto">
-        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-white/[0.08] bg-white/[0.02] mb-8 [animation:fade-up_0.8s_ease_both] backdrop-blur-md">
-          <span class="w-1.5 h-1.5 rounded-full bg-[#f5c518] shadow-[0_0_8px_rgba(245,197,24,0.6)]" aria-hidden="true"/>
-          <span class="font-mono text-[10px] tracking-[2px] uppercase text-[#f0ece6] font-semibold">Manteno, IL</span>
+      <div class="relative z-[2] max-w-[1080px] mx-auto w-full">
+        <!-- Location badge -->
+        <div
+          class="inline-flex items-center gap-2 px-3.5 py-1.5 mb-10 border border-white/[0.07] bg-white/[0.02] backdrop-blur-md rounded-sm [animation:fade-up_0.8s_ease_both]"
+        >
+          <span class="w-1.5 h-1.5 rounded-full bg-[#f5c518] shadow-[0_0_8px_rgba(245,197,24,0.5)]" aria-hidden="true" />
+          <span class="font-mono text-[9px] tracking-[3px] uppercase text-[#555461]">Manteno, IL — Est. 2024</span>
         </div>
 
-        <h1 class="flex flex-col gap-1 mb-8">
-          <span class="font-display text-[clamp(42px,7vw,76px)] font-light tracking-[-2.5px] leading-[1.05] text-[#b8b4ae] [animation:fade-up_0.8s_0.1s_ease_both]">
-            Agency-grade websites
+        <!-- Headline — three-weight typographic statement -->
+        <h1 class="mb-8">
+          <span
+            class="block font-display text-[clamp(48px,7.2vw,88px)] font-extrabold tracking-[-3px] leading-[0.97] text-[#f0ece6] [animation:fade-up_0.8s_0.1s_ease_both]"
+          >
+            Agency-grade
           </span>
-          <span class="hero-gradient-text font-display text-[clamp(46px,7.5vw,82px)] font-extrabold tracking-[-3.5px] leading-[1.0] [animation:fade-up_0.8s_0.18s_ease_both]">
-            for local business.
+          <span
+            class="block font-display text-[clamp(44px,6.8vw,82px)] font-light tracking-[-2.5px] leading-[1.05] text-[#55524f] [animation:fade-up_0.8s_0.18s_ease_both]"
+          >
+            websites for
           </span>
+          <em
+            class="block font-serif italic font-light text-[clamp(46px,7vw,86px)] leading-[1.08] text-[#f5c518] [animation:fade-up_0.8s_0.26s_ease_both]"
+            style="letter-spacing: -2px"
+          >
+            local business.
+          </em>
         </h1>
 
-        <p class="font-mono text-[12px] tracking-[1.5px] text-[#68667a] uppercase max-w-[520px] mx-auto mb-10 leading-[1.85] [animation:fade-up_0.8s_0.3s_ease_both]">
-          We Build It. <span class="text-[#f5c518] opacity-50 mx-1.5">/</span> You Own It. <span class="text-[#f5c518] opacity-50 mx-1.5">/</span> We Manage It.
+        <!-- Supporting copy -->
+        <p
+          class="text-[15px] text-[#55524f] max-w-[420px] mb-10 leading-[1.9] [animation:fade-up_0.8s_0.36s_ease_both]"
+        >
+          Custom-built, not templated. You own every line of code.
+          Managed hosting from $89/month.
         </p>
 
-        <div class="flex items-center justify-center gap-3 flex-wrap [animation:fade-up_0.8s_0.42s_ease_both]">
-          <a href="#contact" class="btn-primary" @click="track('cta_click', { label: 'Get a Free Quote', location: 'hero' })">Get a Free Quote</a>
-          <a href="#pricing" class="btn-ghost" @click="track('cta_click', { label: 'See Pricing', location: 'hero' })">See Pricing</a>
+        <!-- CTAs -->
+        <div class="flex items-center gap-4 flex-wrap [animation:fade-up_0.8s_0.46s_ease_both]">
+          <a href="#contact" class="btn-primary" @click="track('cta_click', { label: 'Get a Free Quote', location: 'hero' })">
+            Get a Free Quote
+          </a>
+          <a href="#pricing" class="btn-ghost" @click="track('cta_click', { label: 'See Pricing', location: 'hero' })">
+            See Pricing
+          </a>
+        </div>
+
+        <!-- Social proof strip -->
+        <div class="flex items-center gap-5 mt-14 [animation:fade-up_0.8s_0.62s_ease_both]">
+          <div class="h-px w-8 bg-white/[0.08]" />
+          <span class="font-mono text-[9px] tracking-[2px] uppercase text-[#2d2d38]">
+            Illinois-based · Custom-built · No contracts
+          </span>
         </div>
       </div>
 
-      <!-- Scroll indicator -->
+      <!-- Scroll cue -->
       <div
-        class="absolute bottom-9 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-[#68667a] font-mono text-[9px] tracking-[2px] uppercase z-[2] [animation:fade-up_1s_0.8s_ease_both]"
+        class="absolute bottom-8 left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-2.5"
         aria-hidden="true"
       >
-        <span>scroll</span>
-        <div class="hero-scroll-line" />
+        <span class="font-mono text-[8px] tracking-[3px] uppercase text-[#282530]">Scroll</span>
+        <div class="w-px h-8 bg-gradient-to-b from-white/[0.1] to-transparent animate-bob" />
       </div>
     </section>
 
-    <!-- ── TRUST STRIP (Pillars) ─────────────────────────────────────────────── -->
-    <div class="border-t border-b border-white/[0.05] bg-[#0c0c0e] py-4 overflow-hidden relative">
-      <div class="flex items-center justify-center whitespace-nowrap overflow-x-auto no-scrollbar px-6">
-        <div class="flex items-center gap-6 md:gap-4 font-mono text-[10px] tracking-[1.5px] uppercase text-[#68667a]" data-reveal>
-          <span v-for="(p, i) in pillars" :key="p.title" class="flex items-center gap-6 md:gap-4">
-            <span class="flex items-center gap-2.5 text-[#f0ece6]">
-              <UIcon :name="p.icon" class="w-3.5 h-3.5 text-[#f5c518]" />
-              {{ p.title }}
+    <!-- ── TRUST STRIP ───────────────────────────────────────────────────────── -->
+    <div class="border-t border-b border-white/[0.04] bg-[#0a0a0c] py-4 overflow-hidden">
+      <div class="flex items-center justify-center overflow-x-auto px-6">
+        <div class="flex items-center" data-reveal>
+          <template v-for="(p, i) in pillars" :key="p.title">
+            <span class="flex items-center gap-2 px-5 whitespace-nowrap">
+              <UIcon :name="p.icon" class="w-3 h-3 text-[#f5c518]/30 flex-shrink-0" />
+              <span class="font-mono text-[9.5px] tracking-[1.5px] uppercase text-[#333040]">{{ p.title }}</span>
             </span>
-            <span v-if="i < pillars.length - 1" class="text-[#f5c518] opacity-30">/</span>
-          </span>
+            <span v-if="i < pillars.length - 1" class="text-[#1e1e26] text-xs flex-shrink-0 select-none">—</span>
+          </template>
         </div>
       </div>
     </div>
 
-    <!-- ── SERVICES ───────────────────────────────────────────────────────────── -->
-    <section id="services" class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
-      <header class="text-center mb-14" data-reveal>
+    <!-- ── SERVICES ──────────────────────────────────────────────────────────── -->
+    <section id="services" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+      <header class="mb-16" data-reveal>
         <p class="eyebrow">What We Build</p>
-        <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
-          Sites that work as hard as you do
+        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">
+          Sites that work as hard<br/>
+          <em class="font-serif italic font-light text-[#f5c518]">as you do</em>
         </h2>
       </header>
 
-      <div class="flex flex-col border-t border-white/[0.06]">
+      <div class="flex flex-col border-t border-white/[0.05]">
         <a
           v-for="(svc, i) in services"
           :key="svc.title"
           href="#contact"
-          class="service-row group flex items-center justify-between py-10 pr-6 border-b border-white/[0.06] hover:bg-white/[0.015] text-inherit no-underline pl-6"
+          class="service-row group flex items-center justify-between py-10 pr-6 border-b border-white/[0.05] text-inherit no-underline pl-5"
           data-reveal
           :data-reveal-delay="i * 100"
           @click="form.service = svc.title"
         >
-          <div class="flex items-start gap-12 sm:gap-6">
-            <span class="font-display text-[56px] font-extrabold text-[#f5c518] opacity-[0.08] leading-none group-hover:opacity-100 transition-opacity duration-300 md:text-[40px] sm:text-[30px]">
+          <div class="flex items-start gap-10 sm:gap-5">
+            <span
+              class="font-display text-[50px] font-extrabold text-white opacity-[0.03] leading-none group-hover:opacity-[0.1] transition-opacity duration-500 mt-1 md:text-[34px] sm:hidden"
+            >
               0{{ i + 1 }}
             </span>
-            <div class="flex flex-col gap-2 mt-1">
-              <span class="font-mono text-[9px] tracking-[1.5px] uppercase text-[#68667a]">{{ svc.tag }}</span>
-              <h3 class="font-display text-[26px] font-bold text-[#f0ece6] tracking-[-0.5px] mb-1 sm:text-[20px]">{{ svc.title }}</h3>
-              <p class="text-[14.5px] text-[#8e8ba0] max-w-[540px] leading-[1.75]">{{ svc.body }}</p>
+            <div class="flex flex-col gap-1.5 mt-1">
+              <span class="font-mono text-[9px] tracking-[2px] uppercase text-[#333040]">{{ svc.tag }}</span>
+              <h3 class="font-display text-[22px] font-bold text-[#f0ece6] tracking-[-0.5px] sm:text-[18px]">{{ svc.title }}</h3>
+              <p class="text-[14px] text-[#55524f] max-w-[520px] leading-[1.85] mt-1">{{ svc.body }}</p>
             </div>
           </div>
-          <div class="text-[13px] font-bold text-[#f5c518] opacity-0 -translate-x-4 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 hidden lg:block tracking-[0.2px]">
-            Get started &rarr;
-          </div>
+          <span
+            class="text-[10px] font-semibold text-[#f5c518] tracking-[2.5px] uppercase opacity-0 -translate-x-3 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 hidden lg:block"
+          >
+            Start &rarr;
+          </span>
         </a>
       </div>
     </section>
 
-    <!-- ── PROCESS ────────────────────────────────────────────────────────────── -->
-    <section id="how-it-works" class="bg-[#141417] border-t border-b border-[#1e1e26] py-[88px] sm:py-16">
+    <!-- ── PROCESS ───────────────────────────────────────────────────────────── -->
+    <section id="how-it-works" class="bg-[#0c0c0e] border-t border-b border-[#1a1a20] py-[100px] sm:py-16">
       <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
-        <header class="text-center mb-14" data-reveal>
+        <header class="mb-20" data-reveal>
           <p class="eyebrow">How It Works</p>
-          <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
-            Simple from day one
+          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05] mt-2">
+            Simple from day one.
           </h2>
-          <p class="text-[15px] text-[#8e8ba0] max-w-[460px] mx-auto leading-[1.75]">
-            No mystery timelines or confusing agency processes.
+          <p class="text-[14px] text-[#55524f] mt-4 leading-[1.85] max-w-[400px]">
+            No mystery timelines. No confusing agency process.
           </p>
         </header>
 
-        <div class="relative mt-8">
-          <!-- Ambient line connecting the dots (desktop only) -->
-          <div class="hidden lg:block absolute top-[28px] left-[15%] right-[15%] h-px bg-gradient-to-r from-transparent via-[rgba(245,197,24,0.3)] to-transparent" aria-hidden="true"/>
+        <div class="relative">
+          <!-- Connecting line (desktop only) -->
+          <div
+            class="hidden lg:block absolute top-[22px] left-[10%] right-[10%] h-px bg-gradient-to-r from-transparent via-white/[0.06] to-transparent"
+            aria-hidden="true"
+          />
 
-          <div class="grid grid-cols-1 gap-12 lg:grid-cols-3 lg:gap-8">
+          <div class="grid grid-cols-1 gap-14 lg:grid-cols-3 lg:gap-10">
             <div
               v-for="(step, i) in steps"
               :key="step.n"
-              class="relative flex flex-col items-center text-center group"
+              class="flex flex-col items-start lg:items-center lg:text-center group"
               data-reveal
               :data-reveal-delay="i * 120"
             >
-              <!-- Amber dot visual indicator -->
-              <div class="w-[56px] h-[56px] rounded-full border border-[rgba(245,197,24,0.2)] bg-[#141417] flex items-center justify-center mb-6 relative z-10 shadow-[0_0_20px_rgba(245,197,24,0.05)] transition-all duration-300 group-hover:border-[rgba(245,197,24,0.5)] group-hover:shadow-[0_0_30px_rgba(245,197,24,0.15)] group-hover:scale-110">
-                <div class="w-2.5 h-2.5 rounded-full bg-[#f5c518]"/>
+              <!-- Indicator dot -->
+              <div
+                class="w-[44px] h-[44px] rounded-full border border-white/[0.08] bg-[#0c0c0e] flex items-center justify-center mb-6 relative z-10 transition-all duration-400 group-hover:border-[#f5c518]/25 group-hover:shadow-[0_0_20px_rgba(245,197,24,0.07)]"
+              >
+                <div class="w-2 h-2 rounded-full bg-[#f5c518]/30 group-hover:bg-[#f5c518]/70 transition-colors duration-400" />
               </div>
-
-              <span class="font-mono text-[11px] font-bold text-[#f5c518] tracking-[1.5px] block mb-3 uppercase">Phase {{ step.n }}</span>
-              <h3 class="font-display text-[18px] font-bold text-[#f0ece6] mb-3 tracking-[-0.3px]">{{ step.title }}</h3>
-              <p class="text-[14px] text-[#8e8ba0] leading-[1.8] max-w-[280px] mx-auto">{{ step.body }}</p>
+              <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-[#f5c518]/40 mb-3">Phase {{ step.n }}</span>
+              <h3 class="font-display text-[17px] font-bold text-[#f0ece6] mb-3 tracking-[-0.3px]">{{ step.title }}</h3>
+              <p class="text-[13.5px] text-[#55524f] leading-[1.9] max-w-[260px] lg:mx-auto">{{ step.body }}</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ── PRICING ────────────────────────────────────────────────────────────── -->
+    <!-- ── PRICING ───────────────────────────────────────────────────────────── -->
     <section id="pricing" class="relative overflow-hidden">
       <div class="pricing-bg" aria-hidden="true" />
 
-      <div class="relative max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
-        <header class="text-center mb-10" data-reveal>
+      <div class="relative max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+        <header class="mb-14" data-reveal>
           <p class="eyebrow">Pricing</p>
-          <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
-            One build. One monthly rate.
+          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05] mt-2">
+            One build price.<br/>
+            <em class="font-serif italic font-light text-[#f5c518]">One monthly rate.</em>
           </h2>
-          <p class="text-[15px] text-[#8e8ba0] max-w-[460px] mx-auto leading-[1.75]">
+          <p class="text-[14px] text-[#55524f] mt-4 leading-[1.85]">
             Pick your package — then {{ monthlyRate }}/month covers everything else.
           </p>
         </header>
 
         <!-- Billing toggle -->
-        <div class="flex items-center justify-center gap-3 mb-10" data-reveal>
-          <span class="text-[13px]" :class="billingCycle === 'monthly' ? 'text-[#f0ece6] font-semibold' : 'text-[#68667a]'">Monthly</span>
+        <div class="flex items-center gap-3 mb-12" data-reveal>
+          <span
+            class="font-mono text-[10px] tracking-[1.5px] uppercase transition-colors duration-200"
+            :class="billingCycle === 'monthly' ? 'text-[#c8c4be]' : 'text-[#333040]'"
+          >Monthly</span>
           <button
-            class="relative w-11 h-6 rounded-full transition-colors duration-200 focus:outline-none"
-            :class="billingCycle === 'yearly' ? 'bg-[#f5c518]' : 'bg-[#2a2a32]'"
+            class="relative w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-[#f5c518]/20"
+            :class="billingCycle === 'yearly' ? 'bg-[#f5c518]' : 'bg-[#1a1a20]'"
             :aria-label="billingCycle === 'yearly' ? 'Switch to monthly' : 'Switch to yearly'"
             @click="billingCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly'"
           >
             <span
-              class="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
-              :class="billingCycle === 'yearly' ? 'translate-x-5' : 'translate-x-0'"
+              class="absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow transition-transform duration-200"
+              :class="billingCycle === 'yearly' ? 'translate-x-[18px]' : 'translate-x-0'"
             />
           </button>
-          <span class="text-[13px]" :class="billingCycle === 'yearly' ? 'text-[#f0ece6] font-semibold' : 'text-[#68667a]'">
+          <span
+            class="font-mono text-[10px] tracking-[1.5px] uppercase transition-colors duration-200"
+            :class="billingCycle === 'yearly' ? 'text-[#c8c4be]' : 'text-[#333040]'"
+          >
             Yearly
-            <span class="ml-1.5 font-mono text-[10px] font-bold text-[#0f0f11] bg-[#f5c518] px-1.5 py-0.5 rounded-sm uppercase tracking-[0.5px]">Save 25%</span>
+            <span class="ml-1.5 font-mono text-[8.5px] font-bold text-[#0f0f11] bg-[#f5c518] px-1.5 py-0.5 rounded-sm uppercase tracking-[0.5px]">Save 25%</span>
           </span>
         </div>
 
-        <p v-if="checkoutError" class="text-center text-[13px] text-red-400 mb-4">{{ checkoutError }}</p>
-
-        <div class="grid grid-cols-1 gap-5 items-start sm:grid-cols-2 lg:grid-cols-3">
+        <div class="grid grid-cols-1 gap-4 items-start sm:grid-cols-2 lg:grid-cols-3">
           <div
             v-for="(pkg, i) in packages"
             :key="pkg.name"
-            class="glass-card rounded-[18px] px-5 py-7 sm:px-7 sm:py-9 relative transition-[border-color,box-shadow,transform] duration-[250ms] hover:border-[rgba(245,197,24,0.2)] hover:-translate-y-[3px]"
-            :class="pkg.featured ? 'price-card-featured' : 'hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.08),0_8px_40px_rgba(0,0,0,0.45)]'"
+            class="glass-deep rounded-sm px-5 py-7 sm:px-7 sm:py-9 relative transition-[border-color,transform] duration-300 hover:-translate-y-1"
+            :class="pkg.featured ? 'price-card-featured' : 'hover:border-white/[0.13]'"
             data-reveal
             :data-reveal-delay="i * 100"
           >
-            <div v-if="pkg.featured" class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#f5c518] to-[#f09420]"/>
-            <div v-if="pkg.featured" class="absolute top-4 right-5 font-mono text-[9px] font-bold text-[#f5c518] uppercase tracking-[1.5px]">Featured</div>
+            <!-- Featured: top gold line -->
+            <div v-if="pkg.featured" class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f5c518] to-transparent" />
+            <div v-if="pkg.featured" class="absolute top-4 right-5 font-mono text-[8px] font-bold text-[#f5c518]/70 uppercase tracking-[2px]">Most Popular</div>
 
-            <p class="font-mono text-[11px] text-[#68667a] uppercase tracking-[1.5px] mb-4">{{ pkg.name }}</p>
+            <p class="font-mono text-[9px] text-[#333040] uppercase tracking-[2px] mb-5">{{ pkg.name }}</p>
 
             <div class="flex items-baseline gap-2 mb-1.5">
-              <span class="font-display text-[38px] sm:text-[48px] font-extrabold tracking-[-2px] sm:tracking-[-3px] leading-none text-[#f0ece6]">{{ pkg.price }}</span>
-              <span class="text-[13px] text-[#68667a] tracking-[0.2px]">{{ pkg.note }}</span>
+              <span class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-[#f0ece6]">{{ pkg.price }}</span>
+              <span class="text-[12px] text-[#333040]">{{ pkg.note }}</span>
             </div>
 
-            <div class="flex items-baseline gap-2 mb-5 pb-5 border-b border-white/[0.06] flex-wrap">
-              <span v-if="billingCycle === 'monthly'" class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">$89/mo hosting</span>
-              <span v-else class="font-mono text-[13px] font-bold text-[#f5c518] whitespace-nowrap">$799/yr hosting <span class="text-[#68667a] font-normal text-[11px]">· save $269/yr</span></span>
-              <span class="text-[11px] text-[#68667a] leading-snug w-full">First 30 days free &mdash; hosting, SSL &amp; domain included</span>
+            <div class="flex flex-col gap-1 mb-6 pb-6 border-b border-white/[0.05]">
+              <span v-if="billingCycle === 'monthly'" class="font-mono text-[11.5px] font-bold text-[#f5c518]/70">$89/mo hosting</span>
+              <span v-else class="font-mono text-[11.5px] font-bold text-[#f5c518]/70">
+                $799/yr hosting <span class="text-[#333040] font-normal text-[10px]">· save $269</span>
+              </span>
+              <span class="text-[11px] text-[#333040] leading-snug">First 30 days free — hosting, SSL &amp; domain included</span>
             </div>
 
-            <p class="text-[12.5px] text-[#f5c518]/70 mb-6 leading-snug">Best for: {{ pkg.best }}</p>
+            <p class="text-[11.5px] text-[#f5c518]/50 mb-5 leading-snug">Best for: {{ pkg.best }}</p>
 
             <ul class="tier-features">
               <li v-for="f in pkg.features" :key="f">{{ f }}</li>
             </ul>
 
-            <p class="font-mono text-[10px] tracking-[1px] text-[#68667a] uppercase mt-5 mb-5 border-t border-white/[0.06] pt-4">
+            <p class="font-mono text-[9px] tracking-[1.5px] text-[#222028] uppercase mt-5 mb-5 border-t border-white/[0.05] pt-4">
               Delivered in {{ pkg.delivery }}
             </p>
 
             <button
-              class="price-cta w-full"
+              class="price-cta"
               :class="{ 'price-cta-featured': pkg.featured }"
               :disabled="checkoutLoading !== null"
               @click="startCheckout(pkg)"
             >
               <span v-if="checkoutLoading === pkg.name" class="flex items-center justify-center gap-2">
-                <svg class="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/></svg>
+                <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                </svg>
                 Redirecting…
               </span>
               <span v-else>Buy Now</span>
@@ -584,158 +677,182 @@ async function handleSubmit() {
           </div>
         </div>
 
-        <p class="text-center mt-10 text-[13px] text-[#8e8ba0] tracking-[0.1px]" data-reveal>
+        <p class="mt-10 text-[12.5px] text-[#333040] leading-[1.85]" data-reveal>
           Every site includes managed hosting, SSL, and your domain — starting free on month one.
         </p>
       </div>
     </section>
 
-    <!-- ── PORTFOLIO ──────────────────────────────────────────────────────────── -->
-    <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
-      <header class="text-center mb-14" data-reveal>
+    <!-- ── PORTFOLIO ─────────────────────────────────────────────────────────── -->
+    <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+      <header class="mb-16" data-reveal>
         <p class="eyebrow">Recent Work</p>
-        <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
+        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">
           Built for businesses like yours
         </h2>
       </header>
 
       <!-- Live projects from Firestore -->
-      <div v-if="projects && projects.length" class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3" data-reveal>
+      <div v-if="projects && projects.length" class="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3" data-reveal>
         <a
           v-for="proj in projects"
           :key="proj.id"
           :href="proj.url || undefined"
           :target="proj.url ? '_blank' : undefined"
           :rel="proj.url ? 'noopener noreferrer' : undefined"
-          class="bg-[#1a1a1f] border border-[#2a2a32] rounded-[14px] overflow-hidden flex flex-col no-underline text-inherit transition-[border-color,transform,box-shadow] duration-[250ms]"
-          :class="proj.url ? 'hover:border-[rgba(245,197,24,0.35)] hover:-translate-y-[3px] hover:shadow-[0_8px_32px_rgba(0,0,0,0.35)]' : ''"
+          class="glass-deep rounded-sm overflow-hidden flex flex-col no-underline text-inherit transition-[border-color,transform] duration-300"
+          :class="proj.url ? 'hover:border-[rgba(245,197,24,0.18)] hover:-translate-y-1' : ''"
         >
-          <div class="aspect-video bg-[#222228] flex items-center justify-center text-[#68667a] overflow-hidden">
+          <div class="aspect-video bg-[#0a0a0c] flex items-center justify-center overflow-hidden">
             <img v-if="proj.imageUrl" :src="proj.imageUrl" :alt="proj.title" loading="lazy" class="w-full h-full object-cover">
-            <UIcon v-else name="i-heroicons-photo" class="w-10 h-10 opacity-10" />
+            <UIcon v-else name="i-heroicons-photo" class="w-8 h-8 opacity-[0.06]" />
           </div>
-          <div class="px-[22px] pt-5 pb-6">
-            <span class="font-mono text-[9px] tracking-[1.5px] uppercase text-[#f5c518]/70 block mb-2">{{ proj.industry }}</span>
-            <h3 class="font-display text-[15px] font-bold text-[#f0ece6] mb-1.5 tracking-[-0.2px]">{{ proj.title }}</h3>
-            <p class="text-[12.5px] text-[#8e8ba0] leading-[1.65]">{{ proj.description }}</p>
+          <div class="px-5 pt-5 pb-6">
+            <span class="font-mono text-[8.5px] tracking-[2px] uppercase text-[#f5c518]/40 block mb-2">{{ proj.industry }}</span>
+            <h3 class="font-display text-[15px] font-bold text-[#f0ece6] mb-1.5 tracking-[-0.3px]">{{ proj.title }}</h3>
+            <p class="text-[12.5px] text-[#55524f] leading-[1.75]">{{ proj.description }}</p>
           </div>
         </a>
       </div>
 
       <!-- Empty state until first real projects are added via /admin -->
-      <div v-else class="text-center py-[72px] px-6 border border-dashed border-white/[0.08] rounded-[20px]" data-reveal>
-        <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-2.5">First projects in progress.</p>
-        <p class="text-[15px] text-[#8e8ba0] max-w-[400px] mx-auto mb-7 leading-[1.7]">
+      <div v-else class="py-20 px-8 glass-deep rounded-sm text-center" data-reveal>
+        <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-3 tracking-[-0.5px]">First projects in progress.</p>
+        <p class="text-[14px] text-[#55524f] max-w-[380px] mx-auto mb-8 leading-[1.85]">
           Ask about being an early client — discounted builds available for businesses in Kankakee County.
         </p>
-        <a href="#contact" class="btn-ghost">Let's talk →</a>
+        <a href="#contact" class="btn-ghost">Let's talk &rarr;</a>
       </div>
     </section>
 
-    <!-- ── TESTIMONIALS ───────────────────────────────────────────────────────── -->
-    <section v-if="testimonials && testimonials.length" class="max-w-[1080px] mx-auto px-12 pb-[88px] md:px-6 md:pb-16 sm:px-4 sm:pb-14">
-      <header class="text-center mb-14" data-reveal>
+    <!-- ── TESTIMONIALS ──────────────────────────────────────────────────────── -->
+    <section
+      v-if="testimonials && testimonials.length"
+      class="max-w-[1080px] mx-auto px-12 pb-[100px] md:px-6 md:pb-20 sm:px-4 sm:pb-16"
+    >
+      <header class="mb-16" data-reveal>
         <p class="eyebrow">What Clients Say</p>
-        <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
+        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">
           Built on real results
         </h2>
       </header>
-      <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-5">
+
+      <div class="grid grid-cols-[repeat(auto-fit,minmax(280px,1fr))] gap-4">
         <div
           v-for="(t, i) in testimonials"
           :key="t.id"
-          class="glass-card rounded-[18px] px-7 py-8 flex flex-col gap-5 transition-[border-color,transform] duration-[250ms] hover:border-[rgba(245,197,24,0.2)] hover:-translate-y-[3px]"
+          class="glass-deep rounded-sm px-7 py-8 flex flex-col gap-5 relative overflow-hidden transition-[border-color,transform] duration-300 hover:border-white/[0.13] hover:-translate-y-1"
           data-reveal
           :data-reveal-delay="i * 100"
         >
-          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.75] flex-1 italic">"{{ t.quote }}"</p>
-          <div class="pt-4 border-t border-white/[0.06]">
+          <!-- Decorative opening quote mark -->
+          <span
+            class="absolute top-2 right-5 font-serif text-[80px] leading-none text-[#f5c518]/[0.06] select-none pointer-events-none"
+            aria-hidden="true"
+          >"</span>
+          <p class="text-[14.5px] text-[#c8c4be]/75 leading-[1.9] flex-1 italic relative z-[1]">"{{ t.quote }}"</p>
+          <div class="pt-4 border-t border-white/[0.05] relative z-[1]">
             <p class="text-[14px] font-semibold text-[#f0ece6] mb-0.5">{{ t.name }}</p>
-            <p class="text-[12px] text-[#68667a] font-mono tracking-[0.3px]">{{ t.businessName }}</p>
+            <p class="font-mono text-[9.5px] text-[#333040] tracking-[1px] uppercase">{{ t.businessName }}</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ── ABOUT ──────────────────────────────────────────────────────────────── -->
-    <section id="about" class="max-w-[1080px] mx-auto px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
-      <div class="grid grid-cols-1 gap-12 items-start lg:grid-cols-[1fr_1fr] lg:gap-24" data-reveal>
-        <!-- Left: Philosophy Blockquote -->
-        <div class="lg:sticky lg:top-32">
-          <p class="font-display text-[clamp(22px,3.5vw,40px)] font-bold tracking-[-1px] lg:tracking-[-1.5px] text-[#f0ece6] leading-[1.2] border-l-[3px] border-[#f5c518] pl-6 lg:pl-8 mb-8 lg:mb-10">
-            {{ founder.philosophy }}
-          </p>
+    <!-- ── ABOUT ─────────────────────────────────────────────────────────────── -->
+    <section id="about" class="border-t border-[#1a1a20] bg-[#0c0c0e]">
+      <div class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+        <div class="grid grid-cols-1 gap-16 items-start lg:grid-cols-[1fr_1fr] lg:gap-28" data-reveal>
 
-          <div class="flex items-center gap-5 border-t border-white/[0.08] lg:border-t-0 pt-8 lg:pt-0">
-            <!-- Place your photo at /public/founder.jpg to display it here; falls back to initials avatar -->
-            <div class="w-[72px] h-[72px] rounded-full border border-[rgba(245,197,24,0.3)] overflow-hidden flex-shrink-0 shadow-[0_0_20px_rgba(245,197,24,0.08)] bg-[#1a1a1a] flex items-center justify-center">
-              <img
-                v-if="founderPhotoExists"
-                :src="founderPhotoSrc"
-                :alt="founder.name"
-                class="w-full h-full object-cover"
-              >
-              <span v-else class="font-bold text-[#f5c518] text-xl select-none">
-                {{ founder.name.charAt(0) }}
-              </span>
+          <!-- Left: philosophy (sticky on desktop) -->
+          <div class="lg:sticky lg:top-32">
+            <div class="flex items-center gap-4 mb-8">
+              <div class="h-px w-8 bg-[#f5c518]/25" />
+              <p class="eyebrow mb-0">The Philosophy</p>
             </div>
-            <div>
-              <p class="font-bold text-[#f0ece6] mb-0.5">{{ founder.name }}</p>
-              <p class="font-mono text-[10px] text-[#f5c518] uppercase tracking-[1.5px]">{{ founder.title }}</p>
+
+            <blockquote class="font-display text-[clamp(20px,2.8vw,32px)] font-bold tracking-[-1px] text-[#f0ece6] leading-[1.3] border-l border-[#f5c518]/30 pl-6 mb-10">
+              {{ founder.philosophy }}
+            </blockquote>
+
+            <!-- Founder ID -->
+            <div class="flex items-center gap-4">
+              <div
+                class="w-[56px] h-[56px] rounded-full border border-white/[0.1] overflow-hidden flex-shrink-0 bg-[#111116] flex items-center justify-center"
+              >
+                <img v-if="founderPhotoExists" :src="founderPhotoSrc" :alt="founder.name" class="w-full h-full object-cover">
+                <em v-else class="font-serif italic font-light text-[#f5c518] text-2xl select-none">{{ founder.name.charAt(0) }}</em>
+              </div>
+              <div>
+                <p class="font-semibold text-[#c8c4be] text-[14px]">{{ founder.name }}</p>
+                <p class="font-mono text-[9px] text-[#333040] uppercase tracking-[1.5px] mt-0.5">{{ founder.title }}</p>
+              </div>
             </div>
           </div>
-        </div>
 
-        <!-- Right: Story -->
-        <div class="max-w-[560px]">
-          <p class="eyebrow">The Story</p>
-          <h2 class="font-display text-[clamp(22px,3vw,30px)] font-extrabold tracking-[-1px] text-[#f0ece6] mt-2 mb-6 leading-snug">
-            Built by someone who lives here too.
-          </h2>
+          <!-- Right: story -->
+          <div>
+            <h2 class="font-display text-[clamp(20px,2.5vw,28px)] font-extrabold tracking-[-1px] text-[#f0ece6] mb-7 leading-[1.2]">
+              Built by someone who lives here too.
+            </h2>
 
-          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-5">{{ founder.intro }}</p>
-          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-5">{{ founder.origin }}</p>
-          <p class="text-[15px] text-[#f0ece6]/80 leading-[1.8] mb-8">{{ founder.problem }}</p>
+            <div class="flex flex-col gap-4 mb-8">
+              <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.intro }}</p>
+              <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.origin }}</p>
+              <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.problem }}</p>
+            </div>
 
-          <h3 class="text-[17px] font-bold text-[#f0ece6] mb-4">Here's the deal:</h3>
-          <ul class="flex flex-col gap-4 mb-8 pl-0">
-            <li
-              v-for="(item, i) in founder.deal"
-              :key="item.label"
-              class="flex gap-4 text-[14.5px] text-[#f0ece6]/80 leading-[1.7]"
-            >
-              <span class="text-[#f5c518] font-mono font-bold mt-[-2px] flex-shrink-0">{{ String(i + 1).padStart(2, '0') }}</span>
-              <span><strong class="text-[#f0ece6] font-semibold">{{ item.label }}:</strong> {{ item.body }}</span>
-            </li>
-          </ul>
+            <p class="font-mono text-[9px] uppercase tracking-[2px] text-[#2d2d38] mb-5">Here's the deal</p>
+            <ul class="flex flex-col gap-4 mb-10">
+              <li
+                v-for="(item, idx) in founder.deal"
+                :key="item.label"
+                class="flex gap-4 text-[14px] text-[#55524f] leading-[1.85]"
+              >
+                <span class="font-mono text-[#f5c518]/30 font-bold flex-shrink-0 mt-px text-[10px]">{{ String(idx + 1).padStart(2, '0') }}</span>
+                <span>
+                  <strong class="text-[#c8c4be] font-semibold">{{ item.label }}:</strong>
+                  {{ item.body }}
+                </span>
+              </li>
+            </ul>
 
-          <p class="text-[15px] font-semibold text-[#f0ece6] border-t border-white/[0.06] pt-6 leading-[1.7]">
-            {{ founder.closing }}
-          </p>
+            <p class="text-[14px] font-medium text-[#f0ece6]/60 border-t border-white/[0.05] pt-7 mb-8 leading-[1.85]">
+              {{ founder.closing }}
+            </p>
 
-          <div class="flex items-center gap-3 mt-8">
+            <!-- Stats strip -->
+            <div class="grid grid-cols-3 gap-6 mb-10 pb-8 border-b border-white/[0.05]">
+              <div v-for="stat in aboutStats" :key="stat.label">
+                <p class="font-serif italic font-light text-[30px] text-[#f5c518] leading-none mb-2">{{ stat.value }}</p>
+                <p class="font-mono text-[9px] uppercase tracking-[1.5px] text-[#2d2d38]">{{ stat.label }}</p>
+              </div>
+            </div>
+
+            <!-- Call CTA -->
             <ClientOnly>
-              <a :href="phoneHref" class="inline-flex items-center gap-2 text-[13px] font-semibold text-[#0f0f11] bg-[#f5c518] px-4 py-2 rounded-[5px] no-underline transition-[background,transform] duration-200 hover:bg-[#d4a912] hover:-translate-y-px">
-                <UIcon name="i-heroicons-phone" class="w-4 h-4 flex-shrink-0" />
-                Call / Text
+              <a :href="phoneHref" class="btn-primary">
+                <UIcon name="i-heroicons-phone" class="w-3.5 h-3.5 flex-shrink-0" />
+                Call or Text
               </a>
             </ClientOnly>
           </div>
+
         </div>
       </div>
     </section>
 
     <!-- ── FAQ ───────────────────────────────────────────────────────────────── -->
-    <section id="faq" class="py-[80px] sm:py-16">
+    <section id="faq" class="py-[100px] sm:py-16">
       <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
-        <header class="text-center mb-14" data-reveal>
+        <header class="mb-16" data-reveal>
           <p class="eyebrow">Common Questions</p>
-          <h2 class="font-display text-[clamp(24px,3vw,38px)] font-bold tracking-[-1px] text-[#f0ece6] mb-3">
+          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05]">
             Straight answers
           </h2>
         </header>
 
-        <div class="max-w-[720px] mx-auto flex flex-col gap-1">
+        <div class="max-w-[680px] flex flex-col gap-1">
           <details
             v-for="(item, i) in faqs"
             :key="item.q"
@@ -750,60 +867,83 @@ async function handleSubmit() {
       </div>
     </section>
 
-    <!-- ── CTA BAND ───────────────────────────────────────────────────────────── -->
-    <div class="relative mx-12 my-[88px] rounded-[16px] overflow-hidden bg-[#f5c518] text-[#0f0f11] md:mx-6 md:my-16 sm:mx-4 sm:my-12 sm:rounded-[14px]" data-reveal>
-      <div class="relative z-[1] text-center px-12 py-[80px] sm:px-6 sm:py-16">
-        <h2 class="font-display text-[clamp(28px,4vw,48px)] font-extrabold tracking-[-2px] mb-4 leading-[1.1]" style="white-space: pre-line">{{ cta.headline }}</h2>
-        <p class="text-[16px] text-[#0f0f11]/70 font-medium mb-10 max-w-[500px] mx-auto">
+    <!-- ── CTA BAND ──────────────────────────────────────────────────────────── -->
+    <!-- Dark glass panel with a single gold top-line accent — premium alternative
+         to the jarring full-bleed yellow block. -->
+    <div class="relative mx-12 my-[100px] overflow-hidden rounded-sm md:mx-6 md:my-16 sm:mx-4 sm:my-12" data-reveal>
+      <!-- Glassmorphism layer -->
+      <div class="absolute inset-0 bg-white/[0.025] backdrop-blur-2xl border border-white/[0.07]" />
+      <!-- Gold top accent line -->
+      <div class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f5c518]/50 to-transparent" />
+      <!-- Ambient upward glow -->
+      <div
+        class="absolute inset-0 pointer-events-none"
+        style="background: radial-gradient(ellipse 60% 120% at 50% 0%, rgba(245,197,24,0.04), transparent)"
+        aria-hidden="true"
+      />
+
+      <div class="relative z-[1] text-center px-12 py-20 sm:px-6 sm:py-14">
+        <p class="eyebrow">Ready to start?</p>
+        <h2
+          class="font-display text-[clamp(28px,4.2vw,54px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.05] text-[#f0ece6]"
+          style="white-space: pre-line"
+        >{{ cta.headline }}</h2>
+        <p class="text-[15px] text-[#55524f] mb-10 max-w-[440px] mx-auto leading-[1.85]">
           {{ cta.subtext }}
         </p>
-        <a href="#contact" class="cta-amber-btn" @click="track('cta_click', { label: cta.buttonLabel, location: 'cta_band' })">{{ cta.buttonLabel }}</a>
+        <a href="#contact" class="btn-primary" @click="track('cta_click', { label: cta.buttonLabel, location: 'cta_band' })">
+          {{ cta.buttonLabel }}
+        </a>
       </div>
     </div>
 
-    <!-- ── CONTACT ────────────────────────────────────────────────────────────── -->
-    <section id="contact" class="border-t border-[#1e1e26] bg-[#141417] px-12 py-[88px] md:px-6 md:py-16 sm:px-4 sm:py-14">
-      <div class="max-w-[1080px] mx-auto grid grid-cols-1 gap-12 items-start lg:grid-cols-[380px_1fr] lg:gap-20">
+    <!-- ── CONTACT ───────────────────────────────────────────────────────────── -->
+    <section id="contact" class="border-t border-[#1a1a20] bg-[#0c0c0e] px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+      <div class="max-w-[1080px] mx-auto grid grid-cols-1 gap-12 items-start lg:grid-cols-[360px_1fr] lg:gap-20">
 
         <!-- Left: context -->
         <div data-reveal>
-          <p class="eyebrow">Contact</p>
-          <h2 class="font-display text-[clamp(28px,3.5vw,42px)] font-bold tracking-[-1.5px] text-[#f0ece6] mb-4 leading-[1.1]">
-            Book a free consultation
+          <div class="flex items-center gap-4 mb-6">
+            <div class="h-px w-8 bg-[#f5c518]/25" />
+            <p class="eyebrow mb-0">Get in touch</p>
+          </div>
+          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] mb-4 leading-[1.05]">
+            Book a free<br/>
+            <em class="font-serif italic font-light text-[#f5c518]">consultation</em>
           </h2>
-          <p class="text-[15px] text-[#8e8ba0] leading-[1.8] mb-8">
+          <p class="text-[14px] text-[#55524f] leading-[1.9] mb-8">
             Tell me about your business. I'll review it and get back to you within 24 hours.
-            No sales pressure — just a straight conversation about what we can do.
+            No sales pressure — just a straight conversation.
           </p>
-          <ul class="contact-promises list-none p-0 flex flex-col gap-3">
-            <li class="flex items-center gap-2.5 text-[13.5px] text-[#f0ece6]/80">
-              <UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
-              Free quote, no obligation
-            </li>
-            <li class="flex items-center gap-2.5 text-[13.5px] text-[#f0ece6]/80">
-              <UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
-              Response within 24 hours
-            </li>
-            <li class="flex items-center gap-2.5 text-[13.5px] text-[#f0ece6]/80">
-              <UIcon name="i-heroicons-check-circle" class="w-4 h-4" />
-              You own everything we build
+
+          <!-- Promises -->
+          <ul class="flex flex-col gap-3.5">
+            <li
+              v-for="promise in ['Free quote, no obligation', 'Response within 24 hours', 'You own everything we build']"
+              :key="promise"
+              class="flex items-center gap-3 text-[13px] text-[#55524f]"
+            >
+              <span class="w-[18px] h-[18px] rounded-sm border border-[#f5c518]/20 flex items-center justify-center flex-shrink-0">
+                <span class="w-1.5 h-1.5 rounded-full bg-[#f5c518]/40" />
+              </span>
+              {{ promise }}
             </li>
           </ul>
         </div>
 
-        <!-- Right: form -->
+        <!-- Right: glass form card -->
         <div
-          class="bg-white/[0.03] backdrop-blur-[24px] border border-white/[0.08] rounded-[16px] p-9 shadow-[inset_0_1px_0_rgba(255,255,255,0.06),0_8px_40px_rgba(0,0,0,0.35)] sm:p-6"
+          class="glass-deep rounded-sm p-9 sm:p-6"
           data-reveal
           data-reveal-delay="100"
         >
           <!-- Success state -->
-          <div v-if="submitted" class="flex flex-col items-center py-14 px-6 text-center">
-            <div class="w-14 h-14 rounded-full border border-[rgba(245,197,24,0.35)] bg-[rgba(245,197,24,0.08)] flex items-center justify-center text-[#f5c518] mb-5">
-              <UIcon name="i-heroicons-check" class="w-6 h-6" />
+          <div v-if="submitted" class="flex flex-col items-center py-16 px-6 text-center">
+            <div class="w-12 h-12 rounded-sm border border-[#f5c518]/25 bg-[#f5c518]/[0.05] flex items-center justify-center text-[#f5c518] mb-6">
+              <UIcon name="i-heroicons-check" class="w-5 h-5" />
             </div>
-            <p class="font-display text-[22px] font-bold text-[#f0ece6] mb-2">Message sent!</p>
-            <p class="text-[14px] text-[#8e8ba0]">I'll be in touch within 24 hours.</p>
+            <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-2 tracking-[-0.5px]">Message received.</p>
+            <p class="text-[13px] text-[#55524f]">I'll be in touch within 24 hours.</p>
           </div>
 
           <!-- Form -->
@@ -820,11 +960,11 @@ async function handleSubmit() {
             </div>
             <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
               <div class="fgroup">
-                <label>Email <span class="text-[#f5c518]">*</span></label>
+                <label>Email <span class="text-[#f5c518]/40 normal-case tracking-normal not-italic">*</span></label>
                 <input v-model="form.email" type="email" placeholder="jane@email.com" required>
               </div>
               <div class="fgroup">
-                <label>Phone <span class="text-[10px] opacity-50">(optional)</span></label>
+                <label>Phone <span class="text-[#2d2d38] normal-case tracking-normal">(optional)</span></label>
                 <input v-model="form.phone" type="tel" placeholder="(815) 555-1234">
               </div>
             </div>
@@ -847,7 +987,7 @@ async function handleSubmit() {
                 <div class="select-wrap">
                   <select v-model="form.billingPreference">
                     <option value="monthly">Monthly ($89/mo)</option>
-                    <option value="yearly">Yearly ($799/yr) - Save $269</option>
+                    <option value="yearly">Yearly ($799/yr) — Save $269</option>
                   </select>
                   <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />
                 </div>
@@ -863,9 +1003,6 @@ async function handleSubmit() {
                 required
               />
             </div>
-            <p v-if="submitError" class="text-[13px] text-[#f87171] px-3.5 py-2.5 bg-[rgba(248,113,113,0.06)] border border-[rgba(248,113,113,0.15)] rounded-lg">
-              {{ submitError }}
-            </p>
             <button type="submit" class="submit-btn" :disabled="submitting">
               {{ submitting ? 'Sending…' : 'Send Message →' }}
             </button>
@@ -874,31 +1011,75 @@ async function handleSubmit() {
       </div>
     </section>
 
-    <!-- ── FOOTER ─────────────────────────────────────────────────────────────── -->
-    <footer class="px-12 py-7 border-t border-[#1e1e26] flex justify-between items-center flex-wrap gap-3 bg-[#0f0f11] md:px-6 md:flex-col md:items-start sm:px-4">
-      <div class="flex flex-col gap-[3px]">
-        <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-6 w-auto object-contain mb-1">
-        <span class="text-[11.5px] text-[#68667a]">Websites for local businesses · Manteno, IL</span>
-        <span class="text-[12px] text-[#68667a]">Built by JJ</span>
+    <!-- ── FOOTER ────────────────────────────────────────────────────────────── -->
+    <footer class="border-t border-[#111116] bg-[#0a0a0c]">
+      <!-- Main grid -->
+      <div class="max-w-[1080px] mx-auto px-12 py-14 md:px-6 sm:px-4 grid grid-cols-1 gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
+
+        <!-- Brand -->
+        <div>
+          <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="h-7 w-auto object-contain mb-4 block opacity-60 hover:opacity-100 transition-opacity duration-200">
+          <p class="text-[12px] text-[#222028] leading-[1.75] max-w-[200px]">
+            Websites for local businesses.<br/>Manteno, IL.
+          </p>
+        </div>
+
+        <!-- Navigate -->
+        <div>
+          <p class="font-mono text-[9px] tracking-[2px] uppercase text-[#222028] mb-5">Navigate</p>
+          <ul class="flex flex-col gap-3">
+            <li v-for="link in footerNav" :key="link.label">
+              <NuxtLink
+                v-if="link.type === 'nuxt'"
+                :to="link.href"
+                class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]"
+              >
+                {{ link.label }}
+              </NuxtLink>
+              <a
+                v-else
+                :href="link.href"
+                class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]"
+              >
+                {{ link.label }}
+              </a>
+            </li>
+          </ul>
+        </div>
+
+        <!-- Legal -->
+        <div>
+          <p class="font-mono text-[9px] tracking-[2px] uppercase text-[#222028] mb-5">Legal</p>
+          <ul class="flex flex-col gap-3">
+            <li>
+              <NuxtLink to="/privacy" class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]">
+                Privacy Policy
+              </NuxtLink>
+            </li>
+          </ul>
+        </div>
       </div>
-      <div class="flex flex-col items-end gap-1.5 md:items-start">
-        <a href="/privacy" class="text-[12px] text-[#68667a] no-underline transition-colors duration-150 hover:text-[#8e8ba0]">Privacy Policy</a>
-        <span class="font-mono text-[11px] text-[#68667a]">© {{ new Date().getFullYear() }} ILYTAT LLC</span>
+
+      <!-- Bottom bar -->
+      <div class="border-t border-[#0f0f11] py-4">
+        <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4 flex items-center justify-between flex-wrap gap-2">
+          <span class="font-mono text-[9.5px] text-[#1a1a20] uppercase tracking-[1px]">© {{ new Date().getFullYear() }} ILYTAT LLC</span>
+          <span class="font-mono text-[9.5px] text-[#1a1a20] uppercase tracking-[1px]">Built by JJ</span>
+        </div>
       </div>
     </footer>
 
-    <!-- ── Mobile palette trigger pill ────────────────────────────────────────── -->
+    <!-- ── Mobile palette trigger pill ──────────────────────────────────────── -->
     <button
-      class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[150] md:hidden flex items-center gap-2 text-[13px] font-semibold text-[#c0bdb8] bg-[#1a1a24] border border-[#3a3a48] px-4 py-2.5 rounded-full shadow-[0_4px_24px_rgba(0,0,0,.5)] transition-[transform,box-shadow] duration-200 active:scale-95 hover:border-[#6366f1]/50"
-      @click="openPalette"
+      class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[150] md:hidden flex items-center gap-2 text-[10px] font-semibold text-[#6e6b7b] bg-[#111116] border border-[#1e1e26] px-4 py-2.5 rounded-sm shadow-[0_4px_24px_rgba(0,0,0,.6)] transition-[transform,box-shadow] duration-200 active:scale-95 hover:border-white/[0.12] tracking-[2px] uppercase"
       aria-label="Open navigation"
+      @click="openPalette"
     >
-      <UIcon name="i-heroicons-magnifying-glass" class="w-4 h-4 text-[#888]" />
+      <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-[#444151]" />
       <span>Explore</span>
-      <span class="text-[11px] text-[#555] font-normal ml-0.5">or ⌘K</span>
     </button>
 
-    <!-- ── Command palette (client-side only) ──────────────────────────────────── -->
+    <!-- ── Command palette (client-side only) ───────────────────────────────── -->
     <ClientOnly>
       <Teleport to="body">
         <SiteCommandPalette v-if="paletteOpen" @close="closePalette" />
