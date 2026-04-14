@@ -54,6 +54,8 @@ export default defineNuxtConfig({
     stripePricePremiumBuild: process.env.STRIPE_PRICE_PREMIUM_BUILD,
     stripePriceHostingMonthly: process.env.STRIPE_PRICE_HOSTING_MONTHLY,
     stripePriceHostingYearly: process.env.STRIPE_PRICE_HOSTING_YEARLY,
+    stripePricePremiumHostingMonthly: process.env.STRIPE_PRICE_PREMIUM_HOSTING_MONTHLY,
+    stripePricePremiumHostingYearly: process.env.STRIPE_PRICE_PREMIUM_HOSTING_YEARLY,
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || 'ILYTAT Inquiries <noreply@ilytat.com>',
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || '',
