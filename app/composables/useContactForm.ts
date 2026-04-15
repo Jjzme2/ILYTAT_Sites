@@ -7,13 +7,17 @@
 import { reactive, ref } from 'vue'
 
 interface ContactForm {
-  name:              string
-  businessName:      string
-  email:             string
-  phone:             string
-  service:           string
-  billingPreference: string
-  message:           string
+  name:               string
+  businessName:       string
+  email:              string
+  phone:              string
+  service:            string
+  billingPreference:  string
+  message:            string
+  /** Cloudflare Turnstile challenge token — populated by <NuxtTurnstile> widget. */
+  cfTurnstileToken:   string
+  /** Honeypot — must stay empty; any value signals an automated submission. */
+  honeypot:           string
 }
 
 export function useContactForm() {
@@ -28,6 +32,8 @@ export function useContactForm() {
     service:           '',
     billingPreference: 'monthly',
     message:           '',
+    cfTurnstileToken:  '',
+    honeypot:          '',
   })
 
   const submitting = ref(false)
@@ -39,9 +45,15 @@ export function useContactForm() {
       await $fetch('/api/contact', {
         method: 'POST',
         body: {
-          ...form,
-          phone:   form.phone   || undefined,
-          service: form.service || 'Not specified',
+          name:              form.name,
+          businessName:      form.businessName,
+          email:             form.email,
+          phone:             form.phone     || undefined,
+          service:           form.service   || 'Not specified',
+          billingPreference: form.billingPreference,
+          message:           form.message,
+          cfTurnstileToken:  form.cfTurnstileToken,
+          honeypot:          form.honeypot,
         },
       })
       submitted.value = true

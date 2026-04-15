@@ -33,6 +33,7 @@
     "@vueuse/shared": "^13.9.0",
     "firebase": "^11.2.0",
     "nuxt": "^3.15.4",
+    "nuxt-turnstile": "^0.1.1",
     "pinia": "^3.0.4",
     "qrcode": "^1.5.4",
     "stripe": "^17.7.0",

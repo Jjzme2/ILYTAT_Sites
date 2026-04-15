@@ -21,7 +21,14 @@ export default defineNuxtConfig({
     '@pinia/nuxt',
     '@vercel/analytics',
     '@vercel/speed-insights',
+    'nuxt-turnstile',
   ],
+
+  turnstile: {
+    // Public site key — safe to expose to the browser.
+    // Get from: dash.cloudflare.com → Turnstile → Add site
+    siteKey: process.env.TURNSTILE_SITE_KEY || '1x00000000000000000000AA', // '1x00000000000000000000AA' = always-pass test key
+  },
 
   image: {
     domains: ['media.ilytat.com'],
@@ -61,6 +68,7 @@ export default defineNuxtConfig({
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || '',
     notificationEmail: process.env.NOTIFICATION_EMAIL,
     cronSecret: process.env.CRON_SECRET,
+    turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || '1x0000000000000000000000000000000AA', // '1x000...AA' = always-pass test secret
     adminEmails: process.env.ADMIN_EMAILS || 'admin@ilytat.com',
     firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY,

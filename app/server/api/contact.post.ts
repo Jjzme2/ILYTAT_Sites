@@ -2,6 +2,8 @@ import { z } from 'zod'
 import { firestoreRequest, toFirestoreFields } from '~/server/utils/firebaseAdmin'
 import { log } from '~/server/utils/logger'
 
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
 /** Escape characters with special meaning in HTML to prevent injection via email clients. */
 function escapeHtml(str: string): string {
   return str
@@ -12,28 +14,105 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#x27;')
 }
 
+/**
+ * Verifies a Cloudflare Turnstile challenge token against the Turnstile API.
+ *
+ * Why: Turnstile is a CAPTCHA replacement that challenges bots silently.
+ * The widget issues a short-lived token on the client; we verify it here so
+ * the token cannot be reused or fabricated.
+ */
+async function verifyTurnstileToken(token: string, secretKey: string): Promise<boolean> {
+  try {
+    const res = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ secret: secretKey, response: token }),
+    })
+    const data = await res.json() as { success: boolean }
+    return data.success === true
+  }
+  catch {
+    // If the Turnstile API itself is unreachable, fail closed (block the submission).
+    return false
+  }
+}
+
+/**
+ * Detects obvious gibberish strings — sequences of mostly consonants with no
+ * meaningful vowel ratio (e.g. "xkzpqwmf"). Real names and business names
+ * always contain vowels.
+ *
+ * Why: Catches automated spam that slips past Turnstile or fills honeypots
+ * with plausible-looking random strings rather than real words.
+ */
+function isGibberish(text: string): boolean {
+  const lettersOnly = text.toLowerCase().replace(/[^a-z]/g, '')
+  if (lettersOnly.length < 5) return false
+  const vowelCount = (lettersOnly.match(/[aeiou]/g) ?? []).length
+  // Genuine words in English average ~38% vowels; spam runs ~0–8%.
+  return vowelCount / lettersOnly.length < 0.1
+}
+
+// ─── Validation schema ────────────────────────────────────────────────────────
+
 const schema = z.object({
-  name: z.string().min(2),
-  email: z.string().email(),
-  businessName: z.string().min(1),
-  phone: z.string().optional(),
-  service: z.string(),
+  name:              z.string().min(2),
+  email:             z.string().email(),
+  businessName:      z.string().min(1),
+  phone:             z.string().optional(),
+  service:           z.string(),
   billingPreference: z.string().optional(),
-  message: z.string().min(10).max(2000),
+  message:           z.string().min(10).max(2000),
+  /** Cloudflare Turnstile token issued after the client-side challenge passes. */
+  cfTurnstileToken:  z.string().min(1, 'Bot check required.'),
+  /**
+   * Honeypot — must be absent or empty.
+   * Bots fill every visible and hidden field; a non-empty value here is a
+   * near-certain signal of automated submission.
+   */
+  honeypot:          z.string().max(0, 'Bot detected.').optional(),
 })
 
 export default defineEventHandler(async (event) => {
-  const body = await readBody(event)
+  const body   = await readBody(event)
   const parsed = schema.safeParse(body)
-  
+
   if (!parsed.success) {
     throw createError({ statusCode: 400, message: 'Invalid form data provided.', data: parsed.error.issues })
   }
-  
-  const data = parsed.data
+
+  const data   = parsed.data
+  const config = useRuntimeConfig()
+
+  // ── Layer 1: Honeypot ───────────────────────────────────────────────────────
+  // A non-empty honeypot field means an automated agent filled it.
+  // Return 200 to avoid telling the bot it was caught.
+  if (data.honeypot) {
+    await log('warn', 'contact', 'Honeypot triggered — submission silently dropped', { email: data.email })
+    return { success: true }
+  }
+
+  // ── Layer 2: Cloudflare Turnstile ───────────────────────────────────────────
+  // Verify the client-side challenge token with Cloudflare's API.
+  const turnstileValid = await verifyTurnstileToken(data.cfTurnstileToken, config.turnstileSecretKey)
+  if (!turnstileValid) {
+    await log('warn', 'contact', 'Turnstile verification failed', { email: data.email })
+    throw createError({ statusCode: 400, message: 'Bot check failed. Please refresh and try again.' })
+  }
+
+  // ── Layer 3: Gibberish detection ────────────────────────────────────────────
+  // Reject submissions where the name OR message looks like random character spam.
+  if (isGibberish(data.name) || isGibberish(data.message)) {
+    await log('warn', 'contact', 'Gibberish content detected — submission rejected', { email: data.email, name: data.name })
+    throw createError({ statusCode: 400, message: 'Your message could not be processed. Please use plain language and try again.' })
+  }
+
+  // Destructure out the bot-protection fields — they are not business data
+  // and must not be stored in Firestore.
+  const { cfTurnstileToken: _token, honeypot: _hp, ...cleanData } = data
 
   const inquiry = {
-    ...data,
+    ...cleanData,
     status: 'new',
     createdAt: new Date().toISOString(),
   }
@@ -60,7 +139,6 @@ export default defineEventHandler(async (event) => {
   })
 
   // 2. Send email notification via Resend (fire-and-forget — form success is not blocked by email)
-  const config = useRuntimeConfig()
   if (config.resendApiKey && config.notificationEmail) {
     const safeName     = escapeHtml(data.name)
     const safeBiz      = escapeHtml(data.businessName)

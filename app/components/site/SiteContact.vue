@@ -55,6 +55,22 @@ watch(() => props.prefilledService, (name) => {
         </div>
 
         <form v-else class="flex flex-col gap-4" @submit.prevent="handleSubmit">
+          <!--
+            Honeypot — visually hidden from real users via off-screen positioning.
+            NOT using display:none or visibility:hidden because some bots skip those.
+            If this field contains any value the server will silently discard the submission.
+          -->
+          <div class="absolute -left-[9999px] -top-[9999px] h-px w-px overflow-hidden" aria-hidden="true">
+            <label for="hp_website">Website</label>
+            <input
+              id="hp_website"
+              v-model="form.honeypot"
+              name="website"
+              type="text"
+              tabindex="-1"
+              autocomplete="off"
+            >
+          </div>
           <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
             <div class="fgroup">
               <label>Your Name</label>
@@ -109,7 +125,11 @@ watch(() => props.prefilledService, (name) => {
               minlength="10"
               required />
           </div>
-          <button type="submit" class="submit-btn" :disabled="submitting">
+          <!-- Cloudflare Turnstile — challenges bots before the form can be submitted.
+               v-model binds the verified token; the server rejects submissions with no token. -->
+          <NuxtTurnstile v-model="form.cfTurnstileToken" class="self-start" />
+
+          <button type="submit" class="submit-btn" :disabled="submitting || !form.cfTurnstileToken">
             {{ submitting ? 'Sending…' : 'Send Message →' }}
           </button>
         </form>
