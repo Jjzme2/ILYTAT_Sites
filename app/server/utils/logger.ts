@@ -12,7 +12,7 @@
 import { firestoreRequest, toFirestoreFields } from './firebaseAdmin'
 
 export type LogLevel = 'info' | 'warn' | 'error' | 'critical'
-export type LogArea  = 'stripe' | 'email' | 'firestore' | 'r2' | 'contact' | 'api' | 'auth' | 'cron'
+export type LogArea  = 'stripe' | 'email' | 'firestore' | 'r2' | 'contact' | 'api' | 'auth' | 'cron' | 'spam'
 
 /** Lower number = higher priority in the nightly report */
 const PRIORITY: Record<LogLevel, number> = { critical: 0, error: 1, warn: 2, info: 3 }

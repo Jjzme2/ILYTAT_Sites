@@ -1,3 +1,4 @@
+import { getRequestIP } from 'h3'
 import { z } from 'zod'
 import { firestoreRequest, toFirestoreFields } from '~/server/utils/firebaseAdmin'
 import { log } from '~/server/utils/logger'
@@ -53,6 +54,28 @@ function isGibberish(text: string): boolean {
   return vowelCount / lettersOnly.length < 0.1
 }
 
+/**
+ * Persists a blocked submission to the `spamAttempts` Firestore collection.
+ *
+ * Why: General logs are a stream of all app activity. Spam attempts need their
+ * own collection so the admin UI can surface them as actionable security events
+ * without drowning in noise. Each record includes network metadata (IP,
+ * user-agent) to help identify patterns across multiple attacks.
+ *
+ * Fire-and-forget — blocking the response on a DB write for a bot is unnecessary.
+ */
+function recordSpamAttempt(
+  reason: 'honeypot' | 'turnstile' | 'gibberish',
+  email: string,
+  name: string,
+  ip: string,
+  userAgent: string,
+): void {
+  firestoreRequest('POST', 'spamAttempts', {
+    fields: toFirestoreFields({ reason, email, name, ip, userAgent, createdAt: new Date().toISOString() }),
+  }).catch(err => console.error('[spam] Failed to record spam attempt:', err.message))
+}
+
 // ─── Validation schema ────────────────────────────────────────────────────────
 
 const schema = z.object({
@@ -81,14 +104,17 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Invalid form data provided.', data: parsed.error.issues })
   }
 
-  const data   = parsed.data
-  const config = useRuntimeConfig()
+  const data      = parsed.data
+  const config    = useRuntimeConfig()
+  const ip        = getRequestIP(event, { xForwardedFor: true }) ?? 'unknown'
+  const userAgent = getRequestHeader(event, 'user-agent') ?? 'unknown'
 
   // ── Layer 1: Honeypot ───────────────────────────────────────────────────────
   // A non-empty honeypot field means an automated agent filled it.
   // Return 200 to avoid telling the bot it was caught.
   if (data.honeypot) {
-    await log('warn', 'contact', 'Honeypot triggered — submission silently dropped', { email: data.email })
+    recordSpamAttempt('honeypot', data.email, data.name, ip, userAgent)
+    await log('warn', 'spam', 'Honeypot triggered — submission silently dropped', { email: data.email, ip })
     return { success: true }
   }
 
@@ -96,14 +122,16 @@ export default defineEventHandler(async (event) => {
   // Verify the client-side challenge token with Cloudflare's API.
   const turnstileValid = await verifyTurnstileToken(data.cfTurnstileToken, config.turnstileSecretKey)
   if (!turnstileValid) {
-    await log('warn', 'contact', 'Turnstile verification failed', { email: data.email })
+    recordSpamAttempt('turnstile', data.email, data.name, ip, userAgent)
+    await log('warn', 'spam', 'Turnstile verification failed', { email: data.email, ip })
     throw createError({ statusCode: 400, message: 'Bot check failed. Please refresh and try again.' })
   }
 
   // ── Layer 3: Gibberish detection ────────────────────────────────────────────
   // Reject submissions where the name OR message looks like random character spam.
   if (isGibberish(data.name) || isGibberish(data.message)) {
-    await log('warn', 'contact', 'Gibberish content detected — submission rejected', { email: data.email, name: data.name })
+    recordSpamAttempt('gibberish', data.email, data.name, ip, userAgent)
+    await log('warn', 'spam', 'Gibberish content detected — submission rejected', { email: data.email, name: data.name, ip })
     throw createError({ statusCode: 400, message: 'Your message could not be processed. Please use plain language and try again.' })
   }
 

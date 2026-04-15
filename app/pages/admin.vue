@@ -118,7 +118,7 @@ async function getAdminHeaders(): Promise<Record<string, string>> {
 }
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
-const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs' | 'blog'>('portfolio')
+const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs' | 'blog' | 'security'>('portfolio')
 
 // ── Internal Docs ─────────────────────────────────────────────────────────────
 interface DocEntry { key: string; name: string; lastModified?: string }
@@ -609,6 +609,7 @@ watch(activeTab, (tab) => {
   if (tab === 'analytics' && !analytics.value) loadAnalytics()
   if (tab === 'docs' && !internalDocs.value.length) loadDocs()
   if (tab === 'logs' && !appLogs.value.length) loadLogs()
+  if (tab === 'security' && !spamAttempts.value.length) loadSpamAttempts()
 })
 
 // ── App Logs ──────────────────────────────────────────────────────────────────
@@ -655,6 +656,60 @@ async function loadLogs() {
   }
 }
 
+// ── Security / Spam Attempts ──────────────────────────────────────────────────
+interface SpamAttempt {
+  id:        string
+  reason:    'honeypot' | 'turnstile' | 'gibberish'
+  email:     string
+  name:      string
+  ip:        string
+  userAgent: string
+  createdAt: string
+}
+
+const spamAttempts        = ref<SpamAttempt[]>([])
+const spamLoading         = ref(false)
+
+const SPAM_REASON_LABEL: Record<SpamAttempt['reason'], string> = {
+  honeypot:  'Honeypot filled',
+  turnstile: 'Bot check failed',
+  gibberish: 'Gibberish content',
+}
+
+const SPAM_REASON_COLOR: Record<SpamAttempt['reason'], string> = {
+  honeypot:  '#7c3aed',
+  turnstile: '#dc2626',
+  gibberish: '#d97706',
+}
+
+async function loadSpamAttempts() {
+  spamLoading.value = true
+  try {
+    const res = await $fetch<{ attempts: SpamAttempt[] }>(
+      '/api/admin/spam-attempts',
+      { headers: await getAdminHeaders() },
+    )
+    spamAttempts.value = res.attempts
+  }
+  catch (e: unknown) {
+    showError(`Failed to load spam attempts: ${e instanceof Error ? e.message : String(e)}`)
+  }
+  finally {
+    spamLoading.value = false
+  }
+}
+
+async function deleteSpamAttempt(id: string) {
+  if (!confirm('Delete this blocked attempt record? This cannot be undone.')) return
+  try {
+    await deleteDoc(doc(db(), 'spamAttempts', id))
+    spamAttempts.value = spamAttempts.value.filter(a => a.id !== id)
+  }
+  catch (e: unknown) {
+    showError(`Failed to delete spam record: ${e instanceof Error ? e.message : String(e)}`)
+  }
+}
+
 // ── Command Palette ────────────────────────────────────────────────────────────
 interface PaletteCommand {
   id: string
@@ -678,9 +733,11 @@ const ALL_COMMANDS: PaletteCommand[] = [
   { id: 'nav-health',       group: 'Navigate', label: 'Go to Health Check', action: () => { activeTab.value = 'health' } },
   { id: 'nav-docs',         group: 'Navigate', label: 'Go to Docs',         action: () => { activeTab.value = 'docs' } },
   { id: 'nav-blog',         group: 'Navigate', label: 'Go to Blog',          action: () => { activeTab.value = 'blog' } },
+  { id: 'nav-security',    group: 'Navigate', label: 'Go to Security',       action: () => { activeTab.value = 'security' } },
   { id: 'run-health',       group: 'Actions',  label: 'Run Health Check',   action: () => { activeTab.value = 'health'; nextTick(runHealthCheck) } },
   { id: 'refresh-analytics',group: 'Actions',  label: 'Refresh Analytics',  action: () => { activeTab.value = 'analytics'; nextTick(loadAnalytics) } },
   { id: 'refresh-logs',     group: 'Actions',  label: 'Refresh Logs',       action: () => { activeTab.value = 'logs'; nextTick(loadLogs) } },
+  { id: 'refresh-security', group: 'Actions', label: 'Refresh Security Log', action: () => { activeTab.value = 'security'; nextTick(loadSpamAttempts) } },
   { id: 'copy-phone',       group: 'Contact',  label: 'Copy Phone Number',  action: () => copyPhone() },
   { id: 'call-phone',       group: 'Contact',  label: 'Call / Text',        action: () => { window.location.href = `tel:+1${_phoneNumber}` } },
   { id: 'signout',          group: 'Actions',  label: 'Sign Out',           action: () => logout() },
@@ -764,7 +821,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
           <button
-            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'logs', 'health', 'docs', 'blog']" :key="tab"
+            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'logs', 'health', 'docs', 'blog', 'security']" :key="tab"
             class="dash-tab" :class="{ active: activeTab === (tab as typeof activeTab) }"
             @click="activeTab = (tab as typeof activeTab)">
             {{ tab }}
@@ -1408,6 +1465,65 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
       <!-- ── BLOG tab ── -->
       <section v-if="activeTab === 'blog'" class="dash-section" style="max-width:1100px;">
         <BlogAdmin />
+      </section>
+
+      <!-- ── SECURITY tab ── -->
+      <section v-if="activeTab === 'security'" class="dash-section" style="max-width:1000px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
+          <h2 class="dash-title" style="margin:0;">Security Log</h2>
+          <button class="submit-btn" style="padding:6px 14px;font-size:12px;" :disabled="spamLoading" @click="loadSpamAttempts">
+            {{ spamLoading ? 'Loading…' : 'Refresh' }}
+          </button>
+        </div>
+        <p class="dash-hint">
+          Contact form submissions that were automatically blocked — honeypot triggers, failed bot checks, and gibberish content.
+          These were never saved to Inquiries or sent by email.
+        </p>
+
+        <div v-if="spamLoading && !spamAttempts.length" style="color:#8e8ba0;font-size:13px;">Loading…</div>
+
+        <div v-else-if="!spamAttempts.length" class="empty-state">
+          No blocked attempts on record — that's a good sign.
+        </div>
+
+        <div v-else style="display:flex;flex-direction:column;gap:6px;">
+          <div
+            v-for="attempt in spamAttempts"
+            :key="attempt.id"
+            style="background:rgba(255,255,255,0.025);border:1px solid #2a2a32;border-radius:6px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;"
+          >
+            <div>
+              <!-- Reason badge + timestamp -->
+              <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+                <span
+                  style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:10px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;"
+                  :style="{
+                    background: SPAM_REASON_COLOR[attempt.reason] + '22',
+                    color:      SPAM_REASON_COLOR[attempt.reason],
+                    border:     '1px solid ' + SPAM_REASON_COLOR[attempt.reason] + '44',
+                  }"
+                >{{ SPAM_REASON_LABEL[attempt.reason] }}</span>
+                <span style="font-family:monospace;font-size:11px;color:#68667a;">
+                  {{ new Date(attempt.createdAt).toLocaleString('en-US', { timeZone:'America/Chicago', month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' }) }}
+                </span>
+              </div>
+
+              <!-- Submitted identity -->
+              <p style="margin:0 0 4px;font-size:13px;color:#f0ece6;">
+                <strong>{{ attempt.name || '—' }}</strong>
+                <span style="color:#68667a;margin-left:8px;">{{ attempt.email }}</span>
+              </p>
+
+              <!-- Network metadata -->
+              <p style="margin:0;font-family:monospace;font-size:11px;color:#68667a;word-break:break-all;">
+                IP: {{ attempt.ip }}
+                <span v-if="attempt.userAgent" style="margin-left:12px;">UA: {{ attempt.userAgent }}</span>
+              </p>
+            </div>
+
+            <button class="danger-btn" style="flex-shrink:0;" @click="deleteSpamAttempt(attempt.id)">Delete</button>
+          </div>
+        </div>
       </section>
 
       <!-- ── Command palette ── -->
