@@ -127,7 +127,7 @@ watch(() => props.prefilledService, (name) => {
           </div>
           <!-- Cloudflare Turnstile — challenges bots before the form can be submitted.
                v-model binds the verified token; the server rejects submissions with no token. -->
-          <NuxtTurnstile v-model="form.cfTurnstileToken" class="self-start" />
+          <Turnstile v-model="form.cfTurnstileToken" class="self-start" />
 
           <button type="submit" class="submit-btn" :disabled="submitting || !form.cfTurnstileToken">
             {{ submitting ? 'Sending…' : 'Send Message →' }}
