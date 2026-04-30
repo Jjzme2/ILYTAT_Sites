@@ -63,7 +63,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
           One build price.<br />
           <em class="font-headline italic text-[#f5c518]">One monthly rate.</em>
         </h2>
-        <p class="text-[14px] text-[#55524f] mt-4 leading-[1.85]">
+        <p class="text-[14px] text-[#6a6761] mt-4 leading-[1.85]">
           Pick your package — then {{ hostingMonthlyRate }}/month covers everything else.
         </p>
       </header>

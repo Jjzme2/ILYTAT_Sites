@@ -13,22 +13,22 @@ defineEmits<{ 'toggle-palette': [] }>()
 
 <template>
   <nav
-    class="fixed top-0 left-0 right-0 z-[90] flex justify-between items-center px-12 py-5 transition-[background,border-color,padding] duration-[400ms] ease-in-out border-b border-transparent md:px-6 sm:px-4"
+    class="fixed top-0 left-0 right-0 z-[90] flex justify-between items-center px-12 py-5 transition-[background,border-color,padding] duration-500 ease-[cubic-bezier(0.4,0,0.2,1)] border-b border-transparent md:px-6 sm:px-4"
     :class="{ 'nav-scrolled': scrolled }">
-    <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-8 w-auto object-contain">
+    <img src="https://media.ilytat.com/logo.png" alt="ILYTAT" class="block h-9 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-200">
     <div class="flex items-center gap-5 sm:gap-3">
       <NuxtLink
         to="/blog"
-        class="text-[10px] font-medium text-[#4e4843] no-underline tracking-[2px] uppercase transition-colors duration-200 hover:text-[#f0ece6]">
+        class="text-[10px] font-medium text-[#5a5650] no-underline tracking-[2px] uppercase transition-colors duration-200 hover:text-[#c8c4be]">
         Blog
       </NuxtLink>
       <button
-        class="hidden md:flex items-center gap-1.5 text-[10px] text-[#3a3530] border border-[#211e1a] rounded-sm px-2.5 py-1.5 transition-[border-color,color] duration-200 hover:border-[#2d2a25] hover:text-[#6e6b5f] cursor-pointer bg-transparent tracking-[1.5px] uppercase"
+        class="hidden md:flex items-center gap-1.5 text-[10px] text-[#3f3c37] border border-[#221f1b] rounded-sm px-2.5 py-1.5 transition-[border-color,color] duration-200 hover:border-[#353028] hover:text-[#6e6b5f] cursor-pointer bg-transparent tracking-[1.5px] uppercase"
         title="Open command palette"
         aria-label="Open navigation palette"
         @click.stop="$emit('toggle-palette')">
         <span>Search</span>
-        <kbd class="font-sans text-[9px] px-1 py-0.5 rounded-sm bg-[#13100d] border border-[#211e1a] text-[#3a3530]">⌘K</kbd>
+        <kbd class="font-sans text-[9px] px-1 py-0.5 rounded-sm bg-[#14110e] border border-[#221f1b] text-[#3f3c37]">⌘K</kbd>
       </button>
       <a
         href="#contact"

@@ -34,7 +34,7 @@ const emit = defineEmits<{ 'select-service': [name: string] }>()
           <div class="flex flex-col gap-1.5 mt-1">
             <span class="font-mono text-[9px] tracking-[2px] uppercase text-[#333040]">{{ svc.tag }}</span>
             <h3 class="font-display text-[22px] font-bold text-[#f0ece6] tracking-[-0.5px] sm:text-[18px]">{{ svc.title }}</h3>
-            <p class="text-[14px] text-[#55524f] max-w-[520px] leading-[1.85] mt-1">{{ svc.body }}</p>
+            <p class="text-[14px] text-[#6a6761] max-w-[520px] leading-[1.85] mt-1">{{ svc.body }}</p>
           </div>
         </div>
         <span class="text-[10px] font-semibold text-[#f5c518] tracking-[2.5px] uppercase opacity-0 -translate-x-3 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0 hidden lg:block">

@@ -12,7 +12,7 @@ const { steps } = siteConfig
         <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05] mt-2">
           Simple from day one.
         </h2>
-        <p class="text-[14px] text-[#55524f] mt-4 leading-[1.85] max-w-[400px]">
+        <p class="text-[14px] text-[#6a6761] mt-4 leading-[1.85] max-w-[400px]">
           No mystery timelines. No confusing agency process.
         </p>
       </header>
@@ -33,7 +33,7 @@ const { steps } = siteConfig
             </div>
             <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-[#f5c518]/40 mb-3">Phase {{ step.n }}</span>
             <h3 class="font-display text-[17px] font-bold text-[#f0ece6] mb-3 tracking-[-0.3px]">{{ step.title }}</h3>
-            <p class="text-[13.5px] text-[#55524f] leading-[1.9] max-w-[260px] lg:mx-auto">{{ step.body }}</p>
+            <p class="text-[13.5px] text-[#6a6761] leading-[1.9] max-w-[260px] lg:mx-auto">{{ step.body }}</p>
           </div>
         </div>
       </div>

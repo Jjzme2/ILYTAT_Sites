@@ -67,16 +67,16 @@ onMounted(async () => {
             Built by someone who lives here too.
           </h2>
           <div class="flex flex-col gap-4 mb-8">
-            <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.intro }}</p>
-            <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.origin }}</p>
-            <p class="text-[14.5px] text-[#55524f] leading-[1.9]">{{ founder.problem }}</p>
+            <p class="text-[14.5px] text-[#6a6761] leading-[1.9]">{{ founder.intro }}</p>
+            <p class="text-[14.5px] text-[#6a6761] leading-[1.9]">{{ founder.origin }}</p>
+            <p class="text-[14.5px] text-[#6a6761] leading-[1.9]">{{ founder.problem }}</p>
           </div>
           <p class="font-mono text-[9px] uppercase tracking-[2px] text-[#2d2d38] mb-5">Here's the deal</p>
           <ul class="flex flex-col gap-4 mb-10">
             <li
               v-for="(item, idx) in founder.deal"
               :key="item.label"
-              class="flex gap-4 text-[14px] text-[#55524f] leading-[1.85]">
+              class="flex gap-4 text-[14px] text-[#6a6761] leading-[1.85]">
               <span class="font-mono text-[#f5c518]/30 font-bold flex-shrink-0 mt-px text-[10px]">{{ String(idx + 1).padStart(2, '0') }}</span>
               <span><strong class="text-[#c8c4be] font-semibold">{{ item.label }}:</strong> {{ item.body }}</span>
             </li>

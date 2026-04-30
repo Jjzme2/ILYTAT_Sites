@@ -28,14 +28,14 @@ watch(() => props.prefilledService, (name) => {
         <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] mb-4 leading-[1.05]">
           Book a free<br /><em class="font-headline italic text-[#f5c518]">consultation</em>
         </h2>
-        <p class="text-[14px] text-[#55524f] leading-[1.9] mb-8">
+        <p class="text-[14px] text-[#6a6761] leading-[1.9] mb-8">
           Tell me about your business. I'll review it and get back to you within 24 hours. No sales pressure — just a straight conversation.
         </p>
         <ul class="flex flex-col gap-3.5">
           <li
             v-for="promise in ['Free quote, no obligation', 'Response within 24 hours', 'You own everything we build']"
             :key="promise"
-            class="flex items-center gap-3 text-[13px] text-[#55524f]">
+            class="flex items-center gap-3 text-[13px] text-[#6a6761]">
             <span class="w-[18px] h-[18px] rounded-sm border border-[#f5c518]/20 flex items-center justify-center flex-shrink-0">
               <span class="w-1.5 h-1.5 rounded-full bg-[#f5c518]/40" />
             </span>
@@ -51,7 +51,7 @@ watch(() => props.prefilledService, (name) => {
             <UIcon name="i-heroicons-check" class="w-5 h-5" />
           </div>
           <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-2 tracking-[-0.5px]">Message received.</p>
-          <p class="text-[13px] text-[#55524f]">I'll be in touch within 24 hours.</p>
+          <p class="text-[13px] text-[#6a6761]">I'll be in touch within 24 hours.</p>
         </div>
 
         <form v-else class="flex flex-col gap-4" @submit.prevent="handleSubmit">
