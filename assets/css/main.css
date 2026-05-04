@@ -5,14 +5,145 @@
   --font-sans: 'Inter', sans-serif;
   --font-display: 'Sora', sans-serif;
   --font-mono: 'Space Mono', monospace;
-  /* Playfair Display — used exclusively for display headlines */
   --font-headline: 'Playfair Display', 'Georgia', serif;
 
-  /* Brand */
   --color-brand-500: #f97316;
   --color-brand-600: #ea580c;
   --color-primary-500: var(--color-brand-500);
   --color-primary-600: var(--color-brand-600);
+}
+
+/* ── Theme tokens ──────────────────────────────────────────────────────────── */
+/* These custom properties are the single source of truth for all theme-
+   sensitive values. Overriding them under [data-theme="frost"] is enough
+   to repaint the entire UI — no component logic needed.                       */
+
+:root {
+  /* — Backgrounds */
+  --theme-bg:           #0d0b09;
+  --theme-surface:      #0e0c0a;
+  --theme-surface-alt:  #0c0a08;
+  --theme-surface-deep: #090705;
+  --theme-marquee-bg:   #0b0906;
+
+  /* — Text */
+  --theme-text:         #f0ece6;
+  --theme-text-hi:      #c8c4be;
+  --theme-text-body:    #6a6761;
+  --theme-text-muted:   #4a4742;
+  --theme-text-ghost:   #333040;
+  --theme-text-faint:   #252118;
+
+  /* — Accent (gold) */
+  --theme-accent:       #f5c518;
+  --theme-accent-dark:  #e8a800;
+  --theme-border-glow:  #a78bfa; /* purple */
+  --theme-btn-from:     #f7cc1e;
+  --theme-btn-to:       #e8a800;
+  --theme-cta-text:     #0a0805;
+
+  /* — Glass surfaces */
+  --glass-card-bg:      rgba(255, 255, 255, 0.042);
+  --glass-card-border:  rgba(255, 255, 255, 0.09);
+  --glass-card-inset:   rgba(255, 255, 255, 0.06);
+  --glass-deep-bg:      rgba(255, 255, 255, 0.032);
+  --glass-deep-inset-1: rgba(255, 255, 255, 0.07);
+  --glass-deep-inset-2: rgba(255, 255, 255, 0.03);
+
+  /* — Blob mesh */
+  --blob-1: rgba(245, 197, 24, 0.09);
+  --blob-2: rgba(240, 148, 32, 0.065);
+  --blob-3: rgba(245, 197, 24, 0.055);
+  --blob-4: transparent;
+
+  /* — Hero text gradient */
+  --hero-gradient: linear-gradient(110deg, #f5c518 0%, #f09420 35%, #fbbf24 60%, #f5c518 100%);
+
+  /* — Pricing highlight */
+  --price-featured-bg:     rgba(245, 197, 24, 0.038);
+  --price-featured-border: rgba(245, 197, 24, 0.26);
+  --price-featured-inset:  rgba(245, 197, 24, 0.16);
+  --price-featured-glow:   rgba(245, 197, 24, 0.055);
+
+  /* — Misc */
+  --scrollbar-color:       rgba(245, 197, 24, 0.14);
+  --scrollbar-hover:       rgba(245, 197, 24, 0.28);
+  --focus-ring:            rgba(245, 197, 24, 0.55);
+
+  /* — Mosaic (inactive in ember) */
+  --mosaic-bg:   none;
+  --mosaic-size: 48px 48px;
+}
+
+/* ── Frost theme overrides ─────────────────────────────────────────────────── */
+[data-theme="frost"] {
+  /* — Backgrounds */
+  --theme-bg:           #07091a;
+  --theme-surface:      #0b0e20;
+  --theme-surface-alt:  #090c1c;
+  --theme-surface-deep: #060816;
+  --theme-marquee-bg:   #080b18;
+
+  /* — Text */
+  --theme-text:         #eaecf8;
+  --theme-text-hi:      #9ba3d4;
+  --theme-text-body:    #6b7193;
+  --theme-text-muted:   #3d4266;
+  --theme-text-ghost:   #2e3466;
+  --theme-text-faint:   #1e2244;
+
+  /* — Accent (violet) */
+  --theme-accent:       #a78bfa;
+  --theme-accent-dark:  #7c3aed;
+  --theme-border-glow:  #f5c518; /* gold */
+  --theme-btn-from:     #a78bfa;
+  --theme-btn-to:       #6d28d9;
+  --theme-cta-text:     #f8f5ff;
+
+  /* — Glass surfaces (cool-tinted) */
+  --glass-card-bg:      rgba(180, 200, 255, 0.052);
+  --glass-card-border:  rgba(180, 200, 255, 0.12);
+  --glass-card-inset:   rgba(200, 220, 255, 0.07);
+  --glass-deep-bg:      rgba(150, 180, 255, 0.038);
+  --glass-deep-inset-1: rgba(200, 220, 255, 0.08);
+  --glass-deep-inset-2: rgba(180, 200, 255, 0.035);
+
+  /* — Blob mesh (cool) */
+  --blob-1: rgba(99,  102, 241, 0.14);
+  --blob-2: rgba(129, 140, 248, 0.10);
+  --blob-3: rgba(167, 139, 250, 0.08);
+  --blob-4: rgba(96,  165, 250, 0.06);
+
+  /* — Hero text gradient (violet shimmer) */
+  --hero-gradient: linear-gradient(110deg, #a78bfa 0%, #818cf8 35%, #c4b5fd 60%, #a78bfa 100%);
+
+  /* — Pricing highlight */
+  --price-featured-bg:     rgba(167, 139, 250, 0.038);
+  --price-featured-border: rgba(167, 139, 250, 0.26);
+  --price-featured-inset:  rgba(167, 139, 250, 0.16);
+  --price-featured-glow:   rgba(167, 139, 250, 0.055);
+
+  /* — Misc */
+  --scrollbar-color:       rgba(167, 139, 250, 0.14);
+  --scrollbar-hover:       rgba(167, 139, 250, 0.28);
+  --focus-ring:            rgba(167, 139, 250, 0.55);
+
+  /* — Mosaic grid (subtle diagonal hatching) */
+  --mosaic-bg:
+    repeating-linear-gradient(
+      135deg,
+      transparent,
+      transparent 50px,
+      rgba(180, 200, 255, 0.014) 50px,
+      rgba(180, 200, 255, 0.014) 51px
+    );
+}
+
+/* ── Base ──────────────────────────────────────────────────────────────────── */
+html {
+  background-color: var(--theme-bg);
+  background-image: var(--mosaic-bg);
+  background-size: var(--mosaic-size);
 }
 
 /* ── Page transitions ──────────────────────────────────────────────────────── */
@@ -24,11 +155,11 @@
 /* ── Scrollbar ─────────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar       { width: 3px; height: 3px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(245, 197, 24, 0.14); border-radius: 8px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(245, 197, 24, 0.28); }
+::-webkit-scrollbar-thumb { background: var(--scrollbar-color); border-radius: 8px; }
+::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-hover); }
 
 /* ── Focus ─────────────────────────────────────────────────────────────────── */
-*:focus-visible { outline: 1.5px solid rgba(245, 197, 24, 0.55); outline-offset: 3px; }
+*:focus-visible { outline: 1.5px solid var(--focus-ring); outline-offset: 3px; }
 
 /* ── Keyframes ─────────────────────────────────────────────────────────────── */
 @keyframes fade-up {
@@ -36,32 +167,27 @@
   to   { opacity: 1; transform: none; }
 }
 
-/* Ambient blob drift — hero background mesh */
 @keyframes blob-drift {
   0%, 100% { transform: translate(0px,   0px)  scale(1);    }
   33%       { transform: translate(32px, -22px) scale(1.05); }
   66%       { transform: translate(-18px, 14px) scale(0.97); }
 }
 
-/* Animated gold shimmer — hero display line */
 @keyframes gold-shimmer {
   0%   { background-position: 0%   50%; }
   50%  { background-position: 100% 50%; }
   100% { background-position: 0%   50%; }
 }
 
-/* Seamless horizontal marquee */
 @keyframes marquee-left {
   to { transform: translateX(calc(-100% / 6)); }
 }
 
-/* Gentle bob — scroll cue */
 @keyframes bob {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(7px); }
 }
 
-/* Scroll line pump */
 @keyframes scroll-line {
   0%   { transform: scaleY(0); transform-origin: top;    opacity: 0; }
   40%  { transform: scaleY(1); transform-origin: top;    opacity: 1; }
@@ -86,27 +212,25 @@
 }
 
 /* ── Glassmorphism ─────────────────────────────────────────────────────────── */
-/* Visible glass — pricing cards, testimonials, smaller surfaces */
 .glass-card {
-  background: rgba(255, 255, 255, 0.042);
+  background: var(--glass-card-bg);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--glass-card-border);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 1px 0 var(--glass-card-inset),
     0 16px 56px rgba(0, 0, 0, 0.45),
     0 4px 12px rgba(0, 0, 0, 0.2);
 }
 
-/* Deep glass — form card, CTA panel, hero proof card */
 .glass-deep {
-  background: rgba(255, 255, 255, 0.032);
+  background: var(--glass-deep-bg);
   backdrop-filter: blur(40px) saturate(150%);
   -webkit-backdrop-filter: blur(40px) saturate(150%);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  border: 1px solid var(--glass-card-border);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.07),
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.03),
+    inset 0 1px 0 var(--glass-deep-inset-1),
+    inset 0 0 0 0.5px var(--glass-deep-inset-2),
     0 32px 96px rgba(0, 0, 0, 0.55),
     0 8px 24px rgba(0, 0, 0, 0.3);
 }
@@ -118,18 +242,17 @@
   pointer-events: none;
   will-change: transform;
 }
-/* Base animation layered onto the parallax JS transform */
 .hero-blob-1 {
   width: 760px; height: 760px;
   top: -150px; left: -120px;
-  background: radial-gradient(circle, rgba(245, 197, 24, 0.09) 0%, transparent 65%);
+  background: radial-gradient(circle, var(--blob-1) 0%, transparent 65%);
   filter: blur(120px);
   animation: blob-drift 18s ease-in-out infinite;
 }
 .hero-blob-2 {
   width: 620px; height: 620px;
   top: 5%; right: -140px;
-  background: radial-gradient(circle, rgba(240, 148, 32, 0.065) 0%, transparent 65%);
+  background: radial-gradient(circle, var(--blob-2) 0%, transparent 65%);
   filter: blur(140px);
   animation: blob-drift 22s ease-in-out infinite reverse;
   animation-delay: -7s;
@@ -137,15 +260,24 @@
 .hero-blob-3 {
   width: 540px; height: 540px;
   bottom: -80px; left: 28%;
-  background: radial-gradient(circle, rgba(245, 197, 24, 0.055) 0%, transparent 65%);
+  background: radial-gradient(circle, var(--blob-3) 0%, transparent 65%);
   filter: blur(110px);
   animation: blob-drift 15s ease-in-out infinite;
   animation-delay: -10s;
 }
+/* Frost-only fourth blob — hidden in ember via --blob-4: transparent */
+.hero-blob-4 {
+  width: 420px; height: 420px;
+  bottom: 10%; left: 5%;
+  background: radial-gradient(circle, var(--blob-4) 0%, transparent 65%);
+  filter: blur(100px);
+  animation: blob-drift 20s ease-in-out infinite;
+  animation-delay: -5s;
+}
 
-/* ── Animated gold gradient text (hero serif line) ─────────────────────────── */
+/* ── Animated gradient text (hero serif line) ──────────────────────────────── */
 .hero-gold-text {
-  background: linear-gradient(110deg, #f5c518 0%, #f09420 35%, #fbbf24 60%, #f5c518 100%);
+  background: var(--hero-gradient);
   background-size: 200% 200%;
   animation: gold-shimmer 5s ease-in-out infinite;
   -webkit-background-clip: text;
@@ -162,8 +294,8 @@
 .animate-marquee:hover { animation-play-state: paused; }
 
 /* ── Utility animations ────────────────────────────────────────────────────── */
-.animate-bob         { animation: bob 2.4s ease-in-out infinite; }
-.scroll-line         { animation: scroll-line 1.8s ease-in-out infinite; }
+.animate-bob  { animation: bob 2.4s ease-in-out infinite; }
+.scroll-line  { animation: scroll-line 1.8s ease-in-out infinite; }
 
 /* ── Nav ───────────────────────────────────────────────────────────────────── */
 .nav-scrolled {
@@ -174,16 +306,19 @@
   padding-top: 14px !important;
   padding-bottom: 14px !important;
 }
+[data-theme="frost"] .nav-scrolled {
+  background: rgba(7, 9, 26, 0.94) !important;
+}
 
 .nav-cta-btn {
   font-size: 9.5px; font-weight: 700;
   letter-spacing: 2.5px; text-transform: uppercase;
-  color: #0a0805;
-  background: linear-gradient(135deg, #f7cc1e 0%, #e8a800 100%);
+  color: var(--theme-cta-text);
+  background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
   padding: 11px 24px; border-radius: 3px;
   text-decoration: none; white-space: nowrap; position: relative; overflow: hidden;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
-  box-shadow: 0 2px 16px rgba(245, 197, 24, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 .nav-cta-btn::after {
   content: '';
@@ -193,7 +328,7 @@
 }
 .nav-cta-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 5px 24px rgba(245, 197, 24, 0.34), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
@@ -201,12 +336,12 @@
   display: inline-flex; align-items: center; gap: 10px;
   font-size: 10px; font-weight: 700;
   letter-spacing: 2.5px; text-transform: uppercase;
-  color: #0a0805;
-  background: linear-gradient(135deg, #f7cc1e 0%, #e8a800 100%);
+  color: var(--theme-cta-text);
+  background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
   padding: 17px 42px; border-radius: 3px;
   text-decoration: none; position: relative; overflow: hidden;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 24px rgba(245, 197, 24, 0.24), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 .btn-primary::after {
   content: '';
@@ -216,7 +351,7 @@
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 36px rgba(245, 197, 24, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.26);
 }
 .btn-primary:active { transform: translateY(0); }
 
@@ -231,9 +366,9 @@
   transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s;
 }
 .btn-ghost:hover {
-  border-color: rgba(245, 197, 24, 0.38);
-  color: #f5c518; transform: translateY(-2px);
-  background: rgba(245, 197, 24, 0.025);
+  border-color: color-mix(in srgb, var(--theme-accent) 38%, transparent);
+  color: var(--theme-accent); transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.018);
 }
 .btn-ghost:active { transform: translateY(0); }
 
@@ -241,7 +376,7 @@
 .eyebrow {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 3px;
-  text-transform: uppercase; color: #f5c518;
+  text-transform: uppercase; color: var(--theme-accent);
   opacity: 0.72; margin-bottom: 14px; display: block;
   padding-left: 14px; position: relative;
 }
@@ -250,11 +385,10 @@
   position: absolute; left: 0; top: 50%;
   transform: translateY(-50%);
   width: 7px; height: 1px;
-  background: #f5c518; opacity: 0.9;
+  background: var(--theme-accent); opacity: 0.9;
 }
 
 /* ── Section layer system ──────────────────────────────────────────────────── */
-/* Sections "stack" on top of each other with rounded top corners + shadow  */
 .section-layer {
   position: relative;
   border-radius: 32px 32px 0 0;
@@ -269,30 +403,24 @@
 .pricing-bg {
   position: absolute; inset: 0;
   background:
-    radial-gradient(ellipse 50% 45% at 15% 25%, rgba(245, 197, 24, 0.065), transparent 65%),
-    radial-gradient(ellipse 45% 40% at 85% 75%, rgba(240, 148, 32, 0.048), transparent 60%);
+    radial-gradient(ellipse 50% 45% at 15% 25%, color-mix(in srgb, var(--theme-accent) 6.5%, transparent), transparent 65%),
+    radial-gradient(ellipse 45% 40% at 85% 75%, color-mix(in srgb, var(--theme-accent-dark) 4.8%, transparent), transparent 60%);
   pointer-events: none;
 }
 
 /* ── Pricing card — featured ───────────────────────────────────────────────── */
 .price-card-featured {
-  background: rgba(245, 197, 24, 0.038) !important;
-  border-color: rgba(245, 197, 24, 0.26) !important;
+  background: var(--price-featured-bg) !important;
+  border-color: var(--price-featured-border) !important;
   box-shadow:
-    inset 0 1px 0 rgba(245, 197, 24, 0.16),
-    0 0 0 1px rgba(245, 197, 24, 0.07),
-    0 0 60px rgba(245, 197, 24, 0.055),
-    0 32px 80px rgba(245, 197, 24, 0.055),
+    inset 0 1px 0 var(--price-featured-inset),
+    0 0 0 1px color-mix(in srgb, var(--theme-accent) 7%, transparent),
+    0 0 60px var(--price-featured-glow),
+    0 32px 80px var(--price-featured-glow),
     0 8px 24px rgba(0, 0, 0, 0.45) !important;
 }
 .price-card-featured:hover {
-  border-color: rgba(245, 197, 24, 0.44) !important;
-  box-shadow:
-    inset 0 1px 0 rgba(245, 197, 24, 0.2),
-    0 0 0 1px rgba(245, 197, 24, 0.1),
-    0 0 80px rgba(245, 197, 24, 0.1),
-    0 40px 100px rgba(245, 197, 24, 0.08),
-    0 8px 24px rgba(0, 0, 0, 0.45) !important;
+  border-color: color-mix(in srgb, var(--theme-accent) 44%, transparent) !important;
 }
 
 /* ── Tier features list ────────────────────────────────────────────────────── */
@@ -304,8 +432,9 @@
 }
 .tier-features li::before {
   content: '—'; position: absolute; left: 0; top: 6px;
-  color: rgba(245, 197, 24, 0.28); font-size: 10px;
+  color: color-mix(in srgb, var(--theme-accent) 28%, transparent); font-size: 10px;
 }
+[data-theme="frost"] .tier-features li { color: #7a85b8; }
 
 /* ── Price CTA ─────────────────────────────────────────────────────────────── */
 .price-cta {
@@ -319,14 +448,17 @@
   cursor: pointer;
 }
 .price-cta:hover:not(:disabled) {
-  border-color: rgba(245, 197, 24, 0.32);
-  color: #f5c518; background: rgba(245, 197, 24, 0.03);
+  border-color: color-mix(in srgb, var(--theme-accent) 32%, transparent);
+  color: var(--theme-accent);
+  background: color-mix(in srgb, var(--theme-accent) 3%, transparent);
 }
 .price-cta:disabled { opacity: 0.35; cursor: not-allowed; }
+[data-theme="frost"] .price-cta { color: #5a638a; }
+
 .price-cta-featured {
-  background: linear-gradient(135deg, #f7cc1e 0%, #e8a800 100%);
-  border-color: transparent; color: #0a0805;
-  box-shadow: 0 2px 16px rgba(245, 197, 24, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
+  border-color: transparent; color: var(--theme-cta-text);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
   position: relative; overflow: hidden;
 }
 .price-cta-featured::after {
@@ -336,8 +468,8 @@
   pointer-events: none;
 }
 .price-cta-featured:hover:not(:disabled) {
-  filter: brightness(1.06); color: #0a0805;
-  box-shadow: 0 6px 28px rgba(245, 197, 24, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  filter: brightness(1.06); color: var(--theme-cta-text);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.22);
 }
 
 /* ── FAQ ───────────────────────────────────────────────────────────────────── */
@@ -347,8 +479,8 @@
   transition: border-color 0.25s, background 0.25s;
 }
 .faq-item[open] {
-  border-color: rgba(245, 197, 24, 0.18);
-  background: rgba(245, 197, 24, 0.012);
+  border-color: color-mix(in srgb, var(--theme-accent) 18%, transparent);
+  background: color-mix(in srgb, var(--theme-accent) 1.2%, transparent);
 }
 .faq-item:hover:not([open]) { border-color: rgba(255, 255, 255, 0.1); }
 .faq-q {
@@ -361,12 +493,15 @@
 .faq-q::-webkit-details-marker { display: none; }
 .faq-q::after {
   content: '+'; font-size: 18px; font-weight: 300;
-  color: rgba(245, 197, 24, 0.45); flex-shrink: 0;
+  color: color-mix(in srgb, var(--theme-accent) 45%, transparent); flex-shrink: 0;
   margin-left: 16px; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); line-height: 1;
 }
 .faq-item[open] .faq-q::after { transform: rotate(45deg); }
 .faq-item[open] .faq-q { color: #ede5d8; }
+[data-theme="frost"] .faq-q          { color: #7a85b8; }
+[data-theme="frost"] .faq-item[open] .faq-q { color: #eaecf8; }
 .faq-a { padding: 0 24px 22px; font-size: 14px; color: #6e6b5f; line-height: 1.9; }
+[data-theme="frost"] .faq-a { color: #5a638a; }
 
 /* ── Forms ─────────────────────────────────────────────────────────────────── */
 .fgroup { display: flex; flex-direction: column; gap: 6px; }
@@ -375,19 +510,20 @@
   font-size: 9px; letter-spacing: 2px;
   text-transform: uppercase; color: #4e4843;
 }
+[data-theme="frost"] .fgroup label { color: #3d4266; }
 .fgroup input,
 .fgroup textarea {
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 3px; padding: 13px 16px;
-  color: #ede5d8; font-family: var(--font-sans);
+  color: var(--theme-text); font-family: var(--font-sans);
   font-size: 14px; outline: none; width: 100%;
   transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
 }
 .fgroup input:focus,
 .fgroup textarea:focus {
-  border-color: rgba(245, 197, 24, 0.45);
-  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.07), inset 0 1px 3px rgba(0, 0, 0, 0.1);
+  border-color: color-mix(in srgb, var(--theme-accent) 45%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 7%, transparent), inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 .fgroup input::placeholder,
 .fgroup textarea::placeholder { color: rgba(78, 72, 67, 0.65); }
@@ -398,13 +534,13 @@
   width: 100%; background: rgba(0, 0, 0, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-radius: 3px; padding: 13px 36px 13px 16px;
-  color: #ede5d8; font-family: var(--font-sans);
+  color: var(--theme-text); font-family: var(--font-sans);
   font-size: 14px; appearance: none; outline: none;
   cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
 }
 .select-wrap select:focus {
-  border-color: rgba(245, 197, 24, 0.45);
-  box-shadow: 0 0 0 3px rgba(245, 197, 24, 0.07);
+  border-color: color-mix(in srgb, var(--theme-accent) 45%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 7%, transparent);
 }
 .select-arrow {
   position: absolute; right: 12px; top: 50%;
@@ -413,13 +549,13 @@
 
 .submit-btn {
   width: 100%; padding: 17px;
-  background: linear-gradient(135deg, #f7cc1e 0%, #e8a800 100%);
-  color: #0a0805; border: none; border-radius: 3px;
+  background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
+  color: var(--theme-cta-text); border: none; border-radius: 3px;
   font-family: var(--font-mono); font-size: 10px;
   font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
   cursor: pointer; position: relative; overflow: hidden;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
-  box-shadow: 0 2px 20px rgba(245, 197, 24, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.24);
   margin-top: 4px;
 }
 .submit-btn::after {
@@ -430,19 +566,237 @@
 }
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 32px rgba(245, 197, 24, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.24);
 }
 .submit-btn:active:not(:disabled) { transform: translateY(0); }
 .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-/* ── Service editorial row ─────────────────────────────────────────────────── */
+/* ── Service card ──────────────────────────────────────────────────────────── */
+/* Replaces the old .service-row editorial pattern */
+.service-card {
+  position: relative; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s;
+}
+.service-card::before {
+  content: '';
+  position: absolute; left: 0; top: 16px; bottom: 16px; width: 2px;
+  background: linear-gradient(to bottom, var(--theme-btn-from), var(--theme-btn-to));
+  opacity: 0; transition: opacity 0.3s ease; border-radius: 0 1px 1px 0;
+}
+.service-card:hover::before { opacity: 0.6; }
+.service-card:hover { transform: translateY(-4px); }
+
+/* ── Service editorial row (legacy — kept for graceful degradation) ─────────── */
 .service-row { position: relative; transition: background 0.25s ease; }
 .service-row::before {
   content: ''; position: absolute;
   left: 0; top: 18px; bottom: 18px; width: 2px;
-  background: linear-gradient(to bottom, #f7cc1e, #e8a800);
-  opacity: 0; transition: opacity 0.3s ease;
-  border-radius: 1px;
+  background: linear-gradient(to bottom, var(--theme-btn-from), var(--theme-btn-to));
+  opacity: 0; transition: opacity 0.3s ease; border-radius: 1px;
 }
 .service-row:hover::before { opacity: 0.55; }
 .service-row:hover { background: rgba(255, 255, 255, 0.012); }
+
+/* ── Crack-light system ────────────────────────────────────────────────────── */
+/*
+ * Dark Kintsugi: obsidian panels with contained explosions of light.
+ *
+ * Shape layer:
+ *   .crack-wrap  — layout-only grid wrapper (no filter, no animation)
+ *   .crack-inner — clip-path polygon with overflow:hidden
+ *
+ * Light layer (inside .crack-inner via LumenSurface):
+ *   .lumen-burst — large radial explosion, animates opacity+transform only
+ *                  Both are GPU-composited — zero main-thread repaints.
+ *
+ * Color:
+ *   --ex-c1, --ex-c2 control the explosion colors.
+ *   Falls back to LumenSurface's --c1/--c2 when not set.
+ *   Override with a named class: .glow-gold, .glow-violet, etc.
+ */
+
+:root {
+  --crack-notch:    14px;
+  --crack-notch-sm:  8px;
+  --crack-notch-lg: 22px;
+}
+
+/* Explosion animation — ONLY opacity and transform → fully GPU composited */
+@keyframes lumen-burst {
+  0%, 100% { opacity: 0.20; transform: scale(0.93); }
+  50%       { opacity: 0.42; transform: scale(1.06); }
+}
+
+/* ── Named explosion color palettes ─────────────────────────────────────────
+ * Apply to the LumenSurface element (or any ancestor) to override the burst color.
+ * --ex-c1/--ex-c2 are read by .lumen-burst; they don't conflict with --c1/--c2.
+ */
+.glow-gold    { --ex-c1: oklch(0.92 0.20 92);  --ex-c2: oklch(0.80 0.17 52);  }
+.glow-violet  { --ex-c1: oklch(0.80 0.20 295); --ex-c2: oklch(0.70 0.18 260); }
+.glow-cobalt  { --ex-c1: oklch(0.76 0.18 240); --ex-c2: oklch(0.84 0.16 212); }
+.glow-rose    { --ex-c1: oklch(0.76 0.22 15);  --ex-c2: oklch(0.68 0.20 340); }
+.glow-emerald { --ex-c1: oklch(0.82 0.18 162); --ex-c2: oklch(0.76 0.15 195); }
+.glow-aurora  { --ex-c1: oklch(0.84 0.16 200); --ex-c2: oklch(0.76 0.20 295); }
+.glow-solar   { --ex-c1: oklch(0.86 0.18 58);  --ex-c2: oklch(0.74 0.22 30);  }
+.glow-ice     { --ex-c1: oklch(0.92 0.10 230); --ex-c2: oklch(0.84 0.15 205); }
+.glow-crimson { --ex-c1: oklch(0.72 0.22 30);  --ex-c2: oklch(0.62 0.20 10);  }
+.glow-lime    { --ex-c1: oklch(0.88 0.18 130); --ex-c2: oklch(0.78 0.16 155); }
+
+/* Layout-only wrapper — no filter, no animation, no visual properties */
+.crack-wrap {
+  display: grid;
+}
+
+/* Inner clipped shape — diagonal chamfer on top-right + bottom-left corners.
+   Opposite-corner cuts create compositional diagonal tension across the grid. */
+.crack-inner {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--crack-notch)) 0,
+    100% var(--crack-notch),
+    100% 100%,
+    var(--crack-notch) 100%,
+    0 calc(100% - var(--crack-notch))
+  );
+  overflow: hidden;
+  border-radius: 0 !important;
+  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* All-four-corners variant — for hero panels and major feature elements */
+.crack-inner-all {
+  clip-path: polygon(
+    0 var(--crack-notch),
+    var(--crack-notch) 0,
+    calc(100% - var(--crack-notch)) 0,
+    100% var(--crack-notch),
+    100% calc(100% - var(--crack-notch)),
+    calc(100% - var(--crack-notch)) 100%,
+    var(--crack-notch) 100%,
+    0 calc(100% - var(--crack-notch))
+  );
+}
+
+.crack-inner-sm { --crack-notch: var(--crack-notch-sm); }
+.crack-inner-lg { --crack-notch: var(--crack-notch-lg); }
+
+/* Translates up on hover — applied to crack-inner when the card is interactive */
+.crack-inner-lift:hover { transform: translateY(-5px); }
+
+/* Glowing horizontal rule — emulates a crack of light across a surface */
+.crack-line {
+  height: 1px;
+  border: none;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--theme-accent) 22%, transparent) 15%,
+    color-mix(in srgb, var(--theme-accent) 75%, white)       50%,
+    color-mix(in srgb, var(--theme-accent) 22%, transparent) 85%,
+    transparent 100%
+  );
+  box-shadow: 0 0 8px 1px color-mix(in srgb, var(--theme-accent) 30%, transparent);
+}
+
+/* Vertical crack-line variant */
+.crack-line-v {
+  width: 1px;
+  background: linear-gradient(180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--theme-accent) 22%, transparent) 15%,
+    color-mix(in srgb, var(--theme-accent) 65%, white)       50%,
+    color-mix(in srgb, var(--theme-accent) 22%, transparent) 85%,
+    transparent 100%
+  );
+  box-shadow: 0 0 6px 1px color-mix(in srgb, var(--theme-accent) 25%, transparent);
+}
+
+/* Section-level crack accent — top edge of a section glows */
+.section-crack::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--theme-accent) 28%, transparent) 20%,
+    color-mix(in srgb, var(--theme-accent) 60%, white)       50%,
+    color-mix(in srgb, var(--theme-accent) 28%, transparent) 80%,
+    transparent 100%
+  );
+  box-shadow: 0 0 12px 2px color-mix(in srgb, var(--theme-accent) 20%, transparent);
+  pointer-events: none;
+}
+
+/* ── Void theme ────────────────────────────────────────────────────────────── */
+[data-theme="void"] {
+  /* — Backgrounds */
+  --theme-bg:           #020409;
+  --theme-surface:      #040810;
+  --theme-surface-alt:  #03060d;
+  --theme-surface-deep: #020408;
+  --theme-marquee-bg:   #030710;
+
+  /* — Text */
+  --theme-text:         #e0e8ff;
+  --theme-text-hi:      #8fa4e0;
+  --theme-text-body:    #4a5888;
+  --theme-text-muted:   #2e3860;
+  --theme-text-ghost:   #1e2848;
+  --theme-text-faint:   #111c38;
+
+  /* — Accent (electric cobalt) */
+  --theme-accent:       #3b82f6;
+  --theme-accent-dark:  #1d4ed8;
+  --theme-border-glow:  #f43f5e; /* rose pink */
+  --theme-btn-from:     #60a5fa;
+  --theme-btn-to:       #1d4ed8;
+  --theme-cta-text:     #f0f4ff;
+
+  /* — Glass surfaces */
+  --glass-card-bg:      rgba(30, 60, 180, 0.042);
+  --glass-card-border:  rgba(60, 120, 255, 0.1);
+  --glass-card-inset:   rgba(100, 160, 255, 0.07);
+  --glass-deep-bg:      rgba(20, 50, 150, 0.034);
+  --glass-deep-inset-1: rgba(80, 140, 255, 0.08);
+  --glass-deep-inset-2: rgba(60, 120, 220, 0.035);
+
+  /* — Blob mesh */
+  --blob-1: rgba(59,  130, 246, 0.13);
+  --blob-2: rgba(37,   99, 235, 0.09);
+  --blob-3: rgba(99,  102, 241, 0.07);
+  --blob-4: rgba(16,  185, 129, 0.05);
+
+  /* — Hero text gradient */
+  --hero-gradient: linear-gradient(110deg, #60a5fa 0%, #818cf8 35%, #93c5fd 60%, #3b82f6 100%);
+
+  /* — Pricing highlight */
+  --price-featured-bg:     rgba(59, 130, 246, 0.038);
+  --price-featured-border: rgba(59, 130, 246, 0.26);
+  --price-featured-inset:  rgba(59, 130, 246, 0.16);
+  --price-featured-glow:   rgba(59, 130, 246, 0.055);
+
+  /* — Misc */
+  --scrollbar-color:       rgba(59, 130, 246, 0.14);
+  --scrollbar-hover:       rgba(59, 130, 246, 0.28);
+  --focus-ring:            rgba(59, 130, 246, 0.55);
+
+  /* — Mosaic (electric grid) */
+  --mosaic-bg:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 60px,
+      rgba(59, 130, 246, 0.014) 60px,
+      rgba(59, 130, 246, 0.014) 61px
+    );
+  --mosaic-size: auto;
+}
+
+[data-theme="void"] .nav-scrolled   { background: rgba(2, 4, 9, 0.94) !important; }
+[data-theme="void"] .tier-features li { color: #4a5888; }
+[data-theme="void"] .faq-q             { color: #4a5888; }
+[data-theme="void"] .faq-item[open] .faq-q { color: #e0e8ff; }
+[data-theme="void"] .faq-a             { color: #3a4878; }
+[data-theme="void"] .price-cta         { color: #3a4878; }
+[data-theme="void"] .fgroup label      { color: #2e3860; }
+[data-theme="void"] .fgroup input::placeholder,
+[data-theme="void"] .fgroup textarea::placeholder { color: rgba(46, 56, 96, 0.65); }

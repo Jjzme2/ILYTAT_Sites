@@ -16,42 +16,47 @@ watch(() => props.prefilledService, (name) => {
 </script>
 
 <template>
-  <section id="contact" class="bg-[#0c0a08] section-layer px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+  <section id="contact" class="bg-[var(--theme-surface-alt)] section-layer px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
     <div class="max-w-[1080px] mx-auto grid grid-cols-1 gap-12 items-start lg:grid-cols-[360px_1fr] lg:gap-20">
 
       <!-- Left: contact details + promise list -->
       <div data-reveal>
         <div class="flex items-center gap-4 mb-6">
-          <div class="h-px w-8 bg-[#f5c518]/25" />
+          <div class="crack-line w-8 flex-shrink-0" />
           <p class="eyebrow mb-0">Get in touch</p>
         </div>
-        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] mb-4 leading-[1.05]">
-          Book a free<br /><em class="font-headline italic text-[#f5c518]">consultation</em>
+        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] mb-4 leading-[1.05]">
+          Book a free<br /><em class="font-headline italic text-[var(--theme-accent)]">consultation</em>
         </h2>
-        <p class="text-[14px] text-[#6a6761] leading-[1.9] mb-8">
+        <p class="text-[14px] text-[var(--theme-text-body)] leading-[1.9] mb-8">
           Tell me about your business. I'll review it and get back to you within 24 hours. No sales pressure — just a straight conversation.
         </p>
         <ul class="flex flex-col gap-3.5">
           <li
             v-for="promise in ['Free quote, no obligation', 'Response within 24 hours', 'You own everything we build']"
             :key="promise"
-            class="flex items-center gap-3 text-[13px] text-[#6a6761]">
-            <span class="w-[18px] h-[18px] rounded-sm border border-[#f5c518]/20 flex items-center justify-center flex-shrink-0">
-              <span class="w-1.5 h-1.5 rounded-full bg-[#f5c518]/40" />
+            class="flex items-center gap-3 text-[13px] text-[var(--theme-text-body)]">
+            <span
+              class="w-[18px] h-[18px] flex items-center justify-center flex-shrink-0 border border-[var(--theme-accent)]/20"
+              style="clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))">
+              <span class="w-1.5 h-1.5 bg-[var(--theme-accent)] opacity-40" style="clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" />
             </span>
             {{ promise }}
           </li>
         </ul>
       </div>
 
-      <!-- Right: form card -->
-      <div class="glass-deep rounded-sm p-9 sm:p-6" data-reveal data-reveal-delay="100">
+      <!-- Right: form card — crack panel -->
+      <div class="crack-wrap" data-reveal data-reveal-delay="100">
+      <div class="crack-inner crack-inner-lg glass-deep p-9 sm:p-6">
         <div v-if="submitted" class="flex flex-col items-center py-16 px-6 text-center">
-          <div class="w-12 h-12 rounded-sm border border-[#f5c518]/25 bg-[#f5c518]/[0.05] flex items-center justify-center text-[#f5c518] mb-6">
+          <div
+            class="w-12 h-12 flex items-center justify-center text-[var(--theme-accent)] mb-6 border border-[var(--theme-accent)]/25 bg-[var(--theme-accent)]/[0.05]"
+            style="clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))">
             <UIcon name="i-heroicons-check" class="w-5 h-5" />
           </div>
-          <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-2 tracking-[-0.5px]">Message received.</p>
-          <p class="text-[13px] text-[#6a6761]">I'll be in touch within 24 hours.</p>
+          <p class="font-display text-[20px] font-bold text-[var(--theme-text)] mb-2 tracking-[-0.5px]">Message received.</p>
+          <p class="text-[13px] text-[var(--theme-text-body)]">I'll be in touch within 24 hours.</p>
         </div>
 
         <form v-else class="flex flex-col gap-4" @submit.prevent="handleSubmit">
@@ -134,6 +139,7 @@ watch(() => props.prefilledService, (name) => {
           </button>
         </form>
       </div>
+      </div><!-- /crack-wrap -->
 
     </div>
   </section>

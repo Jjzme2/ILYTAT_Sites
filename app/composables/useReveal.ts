@@ -7,6 +7,7 @@
 export function useReveal() {
   onMounted(() => {
     if (!window.IntersectionObserver) return
+    document.documentElement.classList.add('js-enabled')
 
     const io = new IntersectionObserver(
       (entries) => {

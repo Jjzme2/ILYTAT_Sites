@@ -57,6 +57,6 @@ export const siteContent = {
     subtext: 'Tell us about your business and we\'ll get back to you within 24 hours.',
 
     /** Button label. */
-    buttonLabel: 'Start the Conversation',
+    buttonLabel: 'Get Your Free Audit',
   },
 }

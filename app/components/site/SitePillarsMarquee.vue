@@ -5,14 +5,14 @@ const { pillars } = siteConfig
 </script>
 
 <template>
-  <div class="border-t border-b border-white/[0.04] bg-[#0b0906] py-4 overflow-hidden relative">
+  <div class="border-t border-b border-white/[0.04] bg-[var(--theme-marquee-bg)] py-4 overflow-hidden relative">
     <div
       class="absolute inset-y-0 left-0 w-20 z-10 pointer-events-none"
-      style="background: linear-gradient(to right, #0b0906, transparent)"
+      style="background: linear-gradient(to right, var(--theme-marquee-bg), transparent)"
       aria-hidden="true" />
     <div
       class="absolute inset-y-0 right-0 w-20 z-10 pointer-events-none"
-      style="background: linear-gradient(to left, #0b0906, transparent)"
+      style="background: linear-gradient(to left, var(--theme-marquee-bg), transparent)"
       aria-hidden="true" />
     <div class="animate-marquee" aria-hidden="true">
       <template v-for="n in 6" :key="n">
