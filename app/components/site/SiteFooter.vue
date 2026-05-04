@@ -6,40 +6,46 @@ const year = new Date().getFullYear()
 </script>
 
 <template>
-  <footer class="border-t border-[#181410] bg-[#090705]">
-    <div class="max-w-[1080px] mx-auto px-12 py-14 md:px-6 sm:px-4 grid grid-cols-1 gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
+  <footer class="bg-[var(--theme-surface-deep)] relative overflow-hidden">
+    <!-- Crack-light top border -->
+    <div class="crack-line absolute top-0 left-0 right-0" aria-hidden="true" />
+
+    <div class="max-w-[1080px] mx-auto px-12 py-16 md:px-6 sm:px-4 grid grid-cols-1 gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
       <div>
         <img
           src="https://media.ilytat.com/logo.png"
           alt="ILYTAT"
-          class="h-7 w-auto object-contain mb-4 block opacity-60 hover:opacity-100 transition-opacity duration-200">
-        <p class="text-[12px] text-[#222028] leading-[1.75] max-w-[200px]">Websites for local businesses.<br />Manteno, IL.</p>
+          class="h-7 w-auto object-contain mb-5 block opacity-50 hover:opacity-80 transition-opacity duration-300">
+        <p class="text-[12px] leading-[1.8] max-w-[200px] text-[var(--theme-text-faint)]">
+          Websites for local businesses.<br />Manteno, IL.
+        </p>
       </div>
       <div>
-        <p class="font-mono text-[9px] tracking-[2px] uppercase text-[#222028] mb-5">Navigate</p>
-        <ul class="flex flex-col gap-3">
-          <li><a href="#services" class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]">Services</a></li>
-          <li><a href="#how-it-works" class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]">How It Works</a></li>
-          <li><a href="#pricing" class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]">Pricing</a></li>
-          <li><a href="#portfolio" class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]">Portfolio</a></li>
+        <p class="font-mono text-[9px] tracking-[2.5px] uppercase mb-5 text-[var(--theme-text-ghost)]">Navigate</p>
+        <ul class="flex flex-col gap-3.5">
+          <li><a href="#services"     class="text-[12.5px] no-underline transition-colors duration-200 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]">Services</a></li>
+          <li><a href="#how-it-works" class="text-[12.5px] no-underline transition-colors duration-200 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]">How It Works</a></li>
+          <li><a href="#pricing"      class="text-[12.5px] no-underline transition-colors duration-200 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]">Pricing</a></li>
+          <li><a href="#portfolio"    class="text-[12.5px] no-underline transition-colors duration-200 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]">Portfolio</a></li>
           <li>
-            <NuxtLink to="/blog" class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]">Blog</NuxtLink>
+            <NuxtLink to="/blog" class="text-[12.5px] no-underline transition-colors duration-200 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]">Blog</NuxtLink>
           </li>
         </ul>
       </div>
       <div>
-        <p class="font-mono text-[9px] tracking-[2px] uppercase text-[#222028] mb-5">Legal</p>
-        <ul class="flex flex-col gap-3">
+        <p class="font-mono text-[9px] tracking-[2.5px] uppercase mb-5 text-[var(--theme-text-ghost)]">Legal</p>
+        <ul class="flex flex-col gap-3.5">
           <li>
-            <NuxtLink to="/privacy" class="text-[12.5px] text-[#2d2d38] no-underline transition-colors duration-200 hover:text-[#6e6b7b]">Privacy Policy</NuxtLink>
+            <NuxtLink to="/privacy" class="text-[12.5px] no-underline transition-colors duration-200 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]">Privacy Policy</NuxtLink>
           </li>
         </ul>
       </div>
     </div>
-    <div class="border-t border-[#100e0b] py-4">
+
+    <div class="border-t border-[var(--glass-card-border)] py-5">
       <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4 flex items-center justify-between flex-wrap gap-2">
-        <span class="font-mono text-[9.5px] text-[#1a1a20] uppercase tracking-[1px]">© {{ year }} ILYTAT LLC</span>
-        <span class="font-mono text-[9.5px] text-[#1a1a20] uppercase tracking-[1px]">Built by {{ founder.name }}</span>
+        <span class="font-mono text-[9.5px] uppercase tracking-[1.5px] text-[var(--theme-text-faint)]">© {{ year }} ILYTAT LLC</span>
+        <span class="font-mono text-[9.5px] uppercase tracking-[1.5px] text-[var(--theme-text-faint)]">Built by {{ founder.name }}</span>
       </div>
     </div>
   </footer>

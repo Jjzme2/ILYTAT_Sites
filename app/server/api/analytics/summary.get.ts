@@ -87,6 +87,15 @@ export default defineEventHandler(async (event) => {
       }
     }
 
+    // ── CTA breakdown (all-time) ──────────────────────────────────────────────
+    const ctaBreakdown: Record<string, number> = {}
+    for (const e of events) {
+      if (e.event === 'cta_click' && e.properties.label) {
+        const label = String(e.properties.label)
+        ctaBreakdown[label] = (ctaBreakdown[label] || 0) + 1
+      }
+    }
+
     // ── Recent events feed (last 60) ──────────────────────────────────────────
     const recent = events.slice(0, 60).map(e => ({
       id:         e.id,
@@ -104,6 +113,7 @@ export default defineEventHandler(async (event) => {
       funnel,
       conversionRate,
       packageBreakdown,
+      ctaBreakdown,
       recent,
     }
   }
@@ -117,6 +127,7 @@ export default defineEventHandler(async (event) => {
       funnel: { pricing_viewed: 0, checkout_initiated: 0, checkout_abandoned: 0, checkout_success: 0 },
       conversionRate: null,
       packageBreakdown: {},
+      ctaBreakdown: {},
       recent: [],
     }
   }
