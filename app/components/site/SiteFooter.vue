@@ -38,6 +38,9 @@ const year = new Date().getFullYear()
           <li>
             <NuxtLink to="/privacy" class="text-[12.5px] no-underline transition-colors duration-200 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]">Privacy Policy</NuxtLink>
           </li>
+          <li>
+            <NuxtLink to="/terms" class="text-[12.5px] no-underline transition-colors duration-200 text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]">Terms of Service</NuxtLink>
+          </li>
         </ul>
       </div>
     </div>

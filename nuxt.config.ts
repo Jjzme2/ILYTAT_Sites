@@ -12,6 +12,13 @@ export default defineNuxtConfig({
     compatibilityVersion: 4,
   },
 
+  experimental: {
+    // Use the browser's native View Transitions API for page navigation.
+    // Pages cross-fade natively without any JS transition overhead.
+    // Falls back to the CSS .page-enter/leave transitions in Safari <18 / Firefox <130.
+    viewTransition: true,
+  },
+
   modules: [
     '@nuxt/ui',
     '@nuxt/fonts',
@@ -45,10 +52,12 @@ export default defineNuxtConfig({
 
   fonts: {
     families: [
-      { name: 'Inter', provider: 'google' },
-      { name: 'Sora', provider: 'google', weights: [400, 600, 700, 800] },
+      // preload: true injects <link rel="preload"> for these fonts, eliminating
+      // the FOUT (flash of unstyled text) on first paint for body + heading copy.
+      { name: 'Inter',   provider: 'google', preload: true },
+      { name: 'Sora',    provider: 'google', weights: [400, 600, 700, 800], preload: true },
       { name: 'Space Mono', provider: 'google', weights: [400, 700] },
-      // Playfair Display: premium serif for display headlines
+      // Playfair Display: premium serif for italic display headlines only
       { name: 'Playfair Display', provider: 'google', weights: [400, 700, 900], styles: ['normal', 'italic'] },
     ],
   },
@@ -96,6 +105,18 @@ export default defineNuxtConfig({
     externals: {
       inline: ['@aws-sdk/client-s3'],
     },
+    // SWR route rules — stale data served instantly, revalidated in background.
+    routeRules: {
+      // Full-page HTML cache: homepage and blog listing are served from CDN edge
+      // on repeat visits; most visitors never hit the Node server at all.
+      '/':     { swr: 60   }, // 60 s — matches the promo cache TTL
+      '/blog': { swr: 300  }, // 5 min — blog listing changes infrequently
+
+      // API-level cache: Firestore not queried on every page SSR
+      '/api/projects':     { cache: { maxAge: 300,  swr: true } }, // 5 min
+      '/api/testimonials': { cache: { maxAge: 3600, swr: true } }, // 1 hr
+      '/api/promotion':    { cache: { maxAge: 60,   swr: true } }, // 1 min
+    },
   },
 
   app: {
@@ -119,7 +140,10 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: '#0f0f11' },
       ],
       link: [
-        { rel: 'icon', type: 'image/png', href: 'https://media.ilytat.com/logo.png' },
+        { rel: 'icon',        type: 'image/png', href: 'https://media.ilytat.com/logo.png' },
+        // Preconnect eliminates the DNS + TLS handshake latency on first image request
+        { rel: 'preconnect',  href: 'https://media.ilytat.com' },
+        { rel: 'dns-prefetch', href: 'https://media.ilytat.com' },
       ],
       // Plausible analytics — only injected when PLAUSIBLE_DOMAIN is set in .env
       script: process.env.PLAUSIBLE_DOMAIN

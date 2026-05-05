@@ -32,7 +32,10 @@ export function useContactForm() {
     service:           '',
     billingPreference: 'monthly',
     message:           '',
-    cfTurnstileToken:  '',
+    // In dev the Turnstile widget is skipped entirely; pre-fill with a recognisable
+    // sentinel so the schema min(1) check still passes and the submit button stays
+    // enabled. The server ignores the token value when import.meta.dev is true.
+    cfTurnstileToken:  import.meta.dev ? 'dev-bypass' : '',
     honeypot:          '',
   })
 

@@ -241,6 +241,9 @@ html {
   border-radius: 9999px;
   pointer-events: none;
   will-change: transform;
+  /* contain: paint prevents the blurred blob from triggering repaints outside
+     its own stacking context — critical with multiple blurred, animating layers */
+  contain: layout paint;
 }
 .hero-blob-1 {
   width: 760px; height: 760px;
@@ -397,6 +400,19 @@ html {
     0 -28px 72px rgba(0, 0, 0, 0.62),
     0 -1px 0 rgba(255, 255, 255, 0.055),
     0 -4px 0 rgba(255, 255, 255, 0.018);
+
+  /*
+   * content-visibility: auto tells the browser it can skip ALL rendering work
+   * (paint, layout, style recalc, backdrop-filter blurs) for sections that are
+   * off-screen.  This is the highest-leverage CSS performance primitive available
+   * for long pages with heavy visual effects.
+   *
+   * contain-intrinsic-block-size: auto 700px — "auto" means the browser remembers
+   * the real rendered height after first paint and uses it for scroll calculations,
+   * falling back to 700px on first load so the scrollbar doesn't visibly jump.
+   */
+  content-visibility: auto;
+  contain-intrinsic-block-size: auto 700px;
 }
 
 /* ── Pricing background ────────────────────────────────────────────────────── */
@@ -724,6 +740,57 @@ html {
   );
   box-shadow: 0 0 12px 2px color-mix(in srgb, var(--theme-accent) 20%, transparent);
   pointer-events: none;
+}
+
+/* ── Lumen off state ───────────────────────────────────────────────────────── */
+/*
+ * When the user disables the light effects, data-lumen="off" is set on <html>.
+ * CSS suppresses every animation and glow without removing DOM elements —
+ * the structural clip-path shapes remain, only the light is turned off.
+ *
+ * All rules use `!important` to override component-scoped styles cleanly
+ * without requiring selector specificity tricks.
+ */
+[data-lumen="off"] .lumen-burst {
+  animation: none !important;
+  opacity: 0 !important;
+}
+[data-lumen="off"] .lumen-prism {
+  opacity: 0 !important;
+}
+[data-lumen="off"] .lumen-surface::after {
+  opacity: 0 !important;
+}
+/* Crack lines become subtle static borders rather than glowing rules */
+[data-lumen="off"] .crack-line,
+[data-lumen="off"] .crack-line-v {
+  box-shadow: none !important;
+  opacity: 0.18 !important;
+}
+[data-lumen="off"] .section-crack::before {
+  box-shadow: none !important;
+  opacity: 0.12 !important;
+}
+
+/* ── prefers-reduced-motion ────────────────────────────────────────────────── */
+/*
+ * Respects the OS-level "reduce motion" setting by halting all decorative
+ * animations. Functional transitions (hover states, page transitions) are
+ * shortened rather than removed so the site remains interactive.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .lumen-burst        { animation: none !important; }
+  .hero-gold-text     { animation: none !important; }
+  .animate-bob        { animation: none !important; }
+  .scroll-line        { animation: none !important; }
+  .hero-blob-1,
+  .hero-blob-2,
+  .hero-blob-3,
+  .hero-blob-4        { animation: none !important; }
+  .animate-marquee    { animation-play-state: paused !important; }
+  .page-enter-active,
+  .page-leave-active  { transition-duration: 0.1s !important; }
+  .crack-inner        { transition-duration: 0.1s !important; }
 }
 
 /* ── Void theme ────────────────────────────────────────────────────────────── */

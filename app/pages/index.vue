@@ -110,12 +110,17 @@ useReveal()
       <PromoBanner v-if="promotion" :promotion="promotion" />
     </ClientOnly>
 
+    <!-- Above fold: eager-loaded, on the critical render path -->
     <SiteNav @toggle-palette="togglePalette" />
     <SiteHero />
     <SitePillarsMarquee />
-    <SiteServices @select-service="prefilledService = $event" />
-    <SiteProcess />
-    <SitePricing />
+
+    <!-- Below fold: Lazy prefix splits these into separate JS chunks.
+         SSR still renders full HTML — only the client hydration JS is deferred,
+         reducing initial bundle parse time without any visible pop-in. -->
+    <LazySiteServices @select-service="prefilledService = $event" />
+    <LazySiteProcess />
+    <LazySitePricing />
 
     <!-- ── Portfolio ──────────────────────────────────────────────────────── -->
     <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
@@ -184,7 +189,7 @@ useReveal()
       </div>
     </section>
 
-    <SiteAbout />
+    <LazySiteAbout />
 
     <!-- ── FAQ ───────────────────────────────────────────────────────────── -->
     <section id="faq" class="py-[100px] sm:py-16">
@@ -231,8 +236,8 @@ useReveal()
       </div>
     </div>
 
-    <SiteContact :prefilled-service="prefilledService" />
-    <SiteFooter />
+    <LazySiteContact :prefilled-service="prefilledService" />
+    <LazySiteFooter />
 
     <!-- ── Mobile explore button ─────────────────────────────────────────── -->
     <button

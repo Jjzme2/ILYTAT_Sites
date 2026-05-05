@@ -3,7 +3,9 @@ definePageMeta({ layout: false })
 
 useHead({
   title: 'Privacy Policy — ILYTAT LLC',
-  meta: [{ name: 'robots', content: 'noindex' }],
+  meta: [
+    { name: 'description', content: 'Privacy policy for ILYTAT LLC — how we collect, store, and use your information.' },
+  ],
 })
 </script>
 
@@ -15,7 +17,7 @@ useHead({
 
     <main class="privacy-body">
       <h1>Privacy Policy</h1>
-      <p class="updated">Last updated: April 1, 2026</p>
+      <p class="updated">Last updated: May 5, 2026</p>
 
       <p>
         ILYTAT LLC ("we," "us," or "our") operates the website at ilytat.com. This policy explains what
@@ -44,16 +46,53 @@ useHead({
         programs.
       </p>
 
+      <h2>Browser Storage (localStorage)</h2>
+      <p>
+        This site saves a small number of display preferences directly in your browser using
+        <strong>localStorage</strong> — a client-side storage mechanism that never leaves your device
+        and is never transmitted to our servers. The keys stored are:
+      </p>
+      <ul>
+        <li><code>ilytat-theme</code> — your chosen color theme (Ember, Frost, or Void)</li>
+        <li><code>ilytat-lumen</code> — whether the ambient kintsugi light effects are on or off</li>
+        <li><code>ilytat-promo-dismissed</code> — whether you have dismissed the promotional banner</li>
+      </ul>
+      <p>
+        You can clear these at any time by clearing your browser's site data for ilytat.com.
+      </p>
+
+      <h2>Anonymous Analytics</h2>
+      <p>
+        To help us understand how visitors use the site and which design features people find valuable, we
+        record a limited set of anonymous usage events — for example, which color theme you selected or
+        whether you toggled the light effects on or off. These events are associated with a randomly
+        generated session ID stored in <strong>sessionStorage</strong> (cleared when you close the tab)
+        and contain no personally identifiable information.
+      </p>
+      <p>
+        Analytics event data is stored in Google Firebase Firestore and is only accessible to
+        ILYTAT LLC administrators. It is used solely to improve the site experience and is never
+        shared with or sold to third parties.
+      </p>
+
       <h2>Cookies</h2>
       <p>
-        This site uses only a functional cookie to remember if you have dismissed a promotional banner.
-        No tracking cookies or advertising cookies are set.
+        This site does not set any tracking or advertising cookies. The only cookie-like mechanism in
+        use is the localStorage preference storage described above, which is not a cookie and is not
+        transmitted with HTTP requests.
       </p>
 
       <h2>Your Rights</h2>
       <p>
         You may request to view, correct, or delete any personal information we hold about you at any time.
         Contact us at the email below.
+      </p>
+
+      <h2>Changes to This Policy</h2>
+      <p>
+        We may update this policy from time to time. When we do, the "Last updated" date at the top of
+        this page will change. Continued use of the site after a change constitutes acceptance of the
+        revised policy.
       </p>
 
       <h2>Contact</h2>
@@ -65,6 +104,8 @@ useHead({
 
       <div class="privacy-back">
         <a href="/">← Back to home</a>
+        <span class="sep">·</span>
+        <a href="/terms">Terms of Service</a>
       </div>
     </main>
   </div>
@@ -131,10 +172,19 @@ h2 {
   color: #f0ece6;
 }
 
-p,
-li {
+p, li {
   color: #b8b4ae;
   font-size: 15px;
+}
+
+code {
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 1px 6px;
+  border-radius: 3px;
+  color: #f5c518;
 }
 
 ul {
@@ -160,5 +210,12 @@ a:hover {
   padding-top: 24px;
   border-top: 1px solid #2a2a32;
   font-size: 14px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.sep {
+  color: #3a3840;
 }
 </style>

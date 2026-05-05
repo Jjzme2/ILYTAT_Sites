@@ -7,6 +7,9 @@ import { useContactForm } from '~/composables/useContactForm'
 // so the Package Interest select can be pre-populated on their behalf.
 const props = defineProps<{ prefilledService?: string }>()
 
+// Build-time constant — tree-shaken to `false` in production bundles.
+const isDev = import.meta.dev
+
 const { packages, monthlyRate } = siteConfig
 const { form, submitting, submitted, handleSubmit } = useContactForm()
 
@@ -131,10 +134,10 @@ watch(() => props.prefilledService, (name) => {
               required />
           </div>
           <!-- Cloudflare Turnstile — challenges bots before the form can be submitted.
-               v-model binds the verified token; the server rejects submissions with no token. -->
-          <Turnstile v-model="form.cfTurnstileToken" class="self-start" />
+               Hidden in dev mode; the server skips verification when NODE_ENV !== production. -->
+          <Turnstile v-if="!isDev" v-model="form.cfTurnstileToken" class="self-start" />
 
-          <button type="submit" class="submit-btn" :disabled="submitting || !form.cfTurnstileToken">
+          <button type="submit" class="submit-btn" :disabled="submitting || (!isDev && !form.cfTurnstileToken)">
             {{ submitting ? 'Sending…' : 'Send Message →' }}
           </button>
         </form>

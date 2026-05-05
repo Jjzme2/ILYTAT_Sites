@@ -119,12 +119,15 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Layer 2: Cloudflare Turnstile ───────────────────────────────────────────
-  // Verify the client-side challenge token with Cloudflare's API.
-  const turnstileValid = await verifyTurnstileToken(data.cfTurnstileToken, config.turnstileSecretKey)
-  if (!turnstileValid) {
-    recordSpamAttempt('turnstile', data.email, data.name, ip, userAgent)
-    await log('warn', 'spam', 'Turnstile verification failed', { email: data.email, ip })
-    throw createError({ statusCode: 400, message: 'Bot check failed. Please refresh and try again.' })
+  // Skipped entirely in dev — import.meta.dev is tree-shaken to false in production
+  // so this branch is completely absent from prod bundles.
+  if (!import.meta.dev) {
+    const turnstileValid = await verifyTurnstileToken(data.cfTurnstileToken, config.turnstileSecretKey)
+    if (!turnstileValid) {
+      recordSpamAttempt('turnstile', data.email, data.name, ip, userAgent)
+      await log('warn', 'spam', 'Turnstile verification failed', { email: data.email, ip })
+      throw createError({ statusCode: 400, message: 'Bot check failed. Please refresh and try again.' })
+    }
   }
 
   // ── Layer 3: Gibberish detection ────────────────────────────────────────────
