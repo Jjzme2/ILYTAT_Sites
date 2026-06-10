@@ -2,14 +2,13 @@
 // ============================================================================
 // 01. IMPORTS & COMPOSABLES
 // ============================================================================
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { siteConfig } from '~/config/site.config'
 import { siteContent } from '~/utils/siteContent'
 
 definePageMeta({ layout: false })
 
 const { track } = useAnalytics()
-const toast = useToast()
 
 // ============================================================================
 // 02. FETCH LIVE DATA
@@ -75,30 +74,6 @@ useHead({
       }),
     },
   ],
-})
-
-// ============================================================================
-// 05. LIFECYCLE
-// ============================================================================
-onMounted(() => {
-  // When Stripe redirects back after a cancelled checkout, the server appends
-  // ?checkout=cancelled to the URL. Detect it, fire an analytics event, show
-  // a toast, then clean the URL so a refresh doesn't re-trigger the notice.
-  const params = new URLSearchParams(window.location.search)
-  if (params.get('checkout') === 'cancelled') {
-    track('checkout_abandoned', {
-      packageName:  params.get('pkg')   || '',
-      billingCycle: params.get('cycle') || '',
-    })
-    toast.add({
-      title:       'Checkout cancelled',
-      description: 'No charge was made. Feel free to reach out if you have questions.',
-      icon:        'i-heroicons-information-circle',
-      color:       'neutral',
-    })
-    // Preserve the hash (e.g. #pricing) while removing the query string.
-    window.history.replaceState({}, '', window.location.pathname + window.location.hash)
-  }
 })
 
 // Attaches IntersectionObserver to all [data-reveal] elements, including

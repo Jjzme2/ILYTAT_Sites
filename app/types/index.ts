@@ -14,7 +14,6 @@ export interface Package {
   id: string
   name: string
   price: number
-  priceId: string // Stripe price ID
   description: string
   features: string[]
   popular?: boolean
@@ -30,8 +29,6 @@ export interface Order {
   packageName: string
   status: OrderStatus
   amount: number
-  stripeSessionId: string
-  stripePaymentIntentId?: string
   customerEmail: string
   customerName: string
   businessName: string

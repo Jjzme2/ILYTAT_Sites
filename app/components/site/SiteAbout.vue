@@ -30,7 +30,7 @@ const founderPhotoExists = ref(true)
                style="clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))">
               <img
                 v-if="founderPhotoExists"
-                src="/founder.jpg"
+                :src="'/founder.jpg'"
                 :alt="founder.name"
                 width="56" height="56"
                 class="w-full h-full object-cover"

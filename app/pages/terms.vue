@@ -37,7 +37,7 @@ useHead({
       <p>
         Build fees are quoted as a flat one-time price and are due as specified in your SOW — typically
         50% upfront and 50% upon project completion. Recurring hosting and maintenance fees are billed
-        monthly and processed automatically through Stripe. All prices are in USD.
+        monthly via invoice. All prices are in USD.
       </p>
       <p>
         Payments are non-refundable once a project phase has begun. If you cancel a project mid-build,

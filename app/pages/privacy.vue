@@ -27,8 +27,7 @@ useHead({
       <h2>Information We Collect</h2>
       <p>
         When you submit the contact form, we collect your name, business name, email address, and optionally
-        your phone number and a description of your project. We do not collect payment information directly —
-        payments are processed through Stripe, which has its own privacy policy.
+        your phone number and a description of your project. We do not collect or store payment information.
       </p>
 
       <h2>How We Use Your Information</h2>
@@ -53,7 +52,6 @@ useHead({
         and is never transmitted to our servers. The keys stored are:
       </p>
       <ul>
-        <li><code>ilytat-theme</code> — your chosen color theme (Ember, Frost, or Void)</li>
         <li><code>ilytat-lumen</code> — whether the ambient kintsugi light effects are on or off</li>
         <li><code>ilytat-promo-dismissed</code> — whether you have dismissed the promotional banner</li>
       </ul>
