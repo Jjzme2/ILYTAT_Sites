@@ -16,6 +16,8 @@ export const siteConfig = {
         { icon: 'i-heroicons-currency-dollar', title: 'Simple, clear pricing' },
         { icon: 'i-heroicons-shield-check', title: 'Fully managed' },
         { icon: 'i-heroicons-arrow-path', title: 'Revisions included' },
+        { icon: 'i-heroicons-cpu-chip', title: 'AI-accelerated builds' },
+        { icon: 'i-heroicons-bolt', title: 'Ships in days, not months' },
     ],
 
     services: [
@@ -50,7 +52,7 @@ export const siteConfig = {
         {
             n: '02',
             title: 'We design and build it',
-            body: "You'll see the site before it's finalized. Revisions are built into every package — no surprises, no rush.",
+            body: "We use industry-leading AI tools to accelerate design, copywriting, and development — cutting build time in half and keeping costs lower than a traditional agency. Every output is reviewed and refined by a real human. You'll see the site before it's finalized, and revisions are built into every package.",
         },
         {
             n: '03',
@@ -195,6 +197,10 @@ export const siteConfig = {
         {
             q: 'Can you work with my existing logo and branding?',
             a: "Absolutely. Send over what you have — logo files, brand colors, photos — and we'll build around it. No logo yet? I can work with what you have or point you to the right person.",
+        },
+        {
+            q: 'Do you use AI to build sites?',
+            a: "Yes — and we're upfront about it. We use the best AI tools available to help with copywriting, code generation, and layout drafts. That's how we deliver faster and at a lower cost than a traditional agency. Every result is reviewed and refined by a real developer who takes ownership of the final product. You get the speed of modern tooling and the judgment of someone who actually cares about the outcome.",
         },
     ]
 }
