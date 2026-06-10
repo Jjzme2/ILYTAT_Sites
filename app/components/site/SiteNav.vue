@@ -4,18 +4,10 @@ import { useWindowScroll } from '@vueuse/core'
 
 const { track }                    = useAnalytics()
 const { y: scrollY }               = useWindowScroll()
-const { theme, setTheme }          = useTheme()
 const { lumenEnabled, toggleLumen } = useLumenPrefs()
 
 const scrolled = computed(() => scrollY.value > 56)
 
-defineEmits<{ 'toggle-palette': [] }>()
-
-const THEMES = [
-  { key: 'ember', label: 'Ember' },
-  { key: 'frost', label: 'Frost' },
-  { key: 'void',  label: 'Void'  },
-] as const
 </script>
 
 <template>
@@ -59,39 +51,6 @@ const THEMES = [
             d="M7 0 C7 0 6.5 3.5 5 5 C3.5 6.5 0 7 0 7 C0 7 3.5 7.5 5 9 C6.5 10.5 7 14 7 14 C7 14 7.5 10.5 9 9 C10.5 7.5 14 7 14 7 C14 7 10.5 6.5 9 5 C7.5 3.5 7 0 7 0 Z"
             fill="currentColor" />
         </svg>
-      </button>
-
-      <!-- 3-color theme selector -->
-      <div class="hidden sm:flex items-center rounded-none border border-[var(--glass-card-border)] bg-[var(--glass-card-bg)] p-0.5 gap-0.5 backdrop-blur-md"
-           style="clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px))">
-        <button
-          v-for="t in THEMES"
-          :key="t.key"
-          :class="[
-            'font-mono text-[8px] uppercase tracking-[1.5px] px-2.5 py-1.5 transition-all duration-200 relative',
-            theme === t.key
-              ? 'text-[var(--theme-accent)] bg-[var(--theme-accent)]/[0.12]'
-              : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]',
-          ]"
-          :title="`Switch to ${t.label} theme`"
-          @click="setTheme(t.key)">
-          {{ t.label }}
-          <span
-            v-if="theme === t.key"
-            class="absolute inset-x-1 bottom-0 h-px"
-            style="background: var(--theme-accent); box-shadow: 0 0 4px var(--theme-accent);"
-            aria-hidden="true" />
-        </button>
-      </div>
-
-      <button
-        class="hidden md:flex items-center gap-1.5 text-[10px] text-[#3f3c37] border border-[#221f1b] px-2.5 py-1.5 transition-[border-color,color] duration-200 hover:border-[var(--theme-accent)]/30 hover:text-[var(--theme-text-hi)] cursor-pointer bg-transparent tracking-[1.5px] uppercase"
-        style="clip-path: polygon(0 0, calc(100% - 5px) 0, 100% 5px, 100% 100%, 5px 100%, 0 calc(100% - 5px))"
-        title="Open command palette"
-        aria-label="Open navigation palette"
-        @click.stop="$emit('toggle-palette')">
-        <span>Search</span>
-        <kbd class="font-sans text-[9px] px-1 py-0.5 bg-[#14110e] border border-[#221f1b] text-[#3f3c37]">⌘K</kbd>
       </button>
 
       <a

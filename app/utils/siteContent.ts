@@ -47,6 +47,13 @@ export const siteContent = {
     ],
   },
 
+  // ── Contact ────────────────────────────────────────────────────────────────
+  // Update this number to your Google Voice (or real) number before publishing.
+  contact: {
+    phone: '(815) 600-3195',
+    phoneHref: 'tel:+18156003195',
+  },
+
   // ── CTA Band ───────────────────────────────────────────────────────────────
 
   cta: {

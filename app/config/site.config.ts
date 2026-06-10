@@ -37,7 +37,7 @@ export const siteConfig = {
         {
             tag: 'Local Events',
             title: 'Local Events',
-            body: 'Event pages, ticket sales, and promotion. Get your event in front of the right people.',
+            body: 'Event pages, RSVPs, and promotion. Get your event in front of the right people in Kankakee County.',
         }
     ],
 
@@ -161,9 +161,9 @@ export const siteConfig = {
             best: 'Businesses that need full functionality',
             features: [
                 'Custom Admin Dashboard / CMS',
-                'Secure User Authentication via Firebase',
-                'Dynamic Database Integration using Firebase/Supabase',
-                'Stripe / Payment Integration',
+                'Secure User Authentication',
+                'Dynamic Database Integration',
+                'Custom Forms & Booking Flows',
                 'Third-Party API Integrations'
             ],
             delivery: '3–5 weeks',

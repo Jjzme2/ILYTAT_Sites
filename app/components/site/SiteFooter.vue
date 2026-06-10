@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { siteContent } from '~/utils/siteContent'
 
-const { founder } = siteContent
+const { founder, contact } = siteContent
 const year = new Date().getFullYear()
 </script>
 
@@ -17,8 +17,13 @@ const year = new Date().getFullYear()
           alt="ILYTAT"
           class="h-7 w-auto object-contain mb-5 block opacity-50 hover:opacity-80 transition-opacity duration-300">
         <p class="text-[12px] leading-[1.8] max-w-[200px] text-[var(--theme-text-faint)]">
-          Websites for local businesses.<br />Manteno, IL.
+          Websites for local businesses.<br />Manteno, IL · Kankakee County.
         </p>
+        <a
+          :href="contact.phoneHref"
+          class="mt-3 block text-[12.5px] text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)] transition-colors duration-200 no-underline">
+          {{ contact.phone }}
+        </a>
       </div>
       <div>
         <p class="font-mono text-[9px] tracking-[2.5px] uppercase mb-5 text-[var(--theme-text-ghost)]">Navigate</p>

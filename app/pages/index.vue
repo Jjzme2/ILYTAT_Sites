@@ -3,7 +3,6 @@
 // 01. IMPORTS & COMPOSABLES
 // ============================================================================
 import { ref, onMounted } from 'vue'
-import { useMagicKeys } from '@vueuse/core'
 import { siteConfig } from '~/config/site.config'
 import { siteContent } from '~/utils/siteContent'
 
@@ -11,7 +10,6 @@ definePageMeta({ layout: false })
 
 const { track } = useAnalytics()
 const toast = useToast()
-const { Meta_K, Ctrl_K } = useMagicKeys()
 
 // ============================================================================
 // 02. FETCH LIVE DATA
@@ -23,7 +21,6 @@ const { data: testimonials } = await useFetch('/api/testimonials')
 // ============================================================================
 // 03. UI STATE
 // ============================================================================
-const paletteOpen      = ref(false)
 const prefilledService = ref('')
 
 // ============================================================================
@@ -32,13 +29,23 @@ const prefilledService = ref('')
 const { monthlyRate, priceRange } = siteConfig
 
 useHead({
-  title: 'ILYTAT — Professional Websites for Local Business',
+  title: 'ILYTAT — Web Design Kankakee County IL · Manteno, Bourbonnais, Bradley, Kankakee',
   meta: [
     {
       name:    'description',
-      content: `Custom websites built for local businesses in Illinois. You own everything. Managed hosting from ${monthlyRate}/mo.`,
+      content: `Custom websites for local businesses in Kankakee County, IL — Manteno, Bourbonnais, Bradley, Kankakee, Peotone. You own everything. Managed hosting from ${monthlyRate}/mo.`,
     },
-    { property: 'og:image', content: 'https://media.ilytat.com/logo.png' },
+    { property: 'og:title',       content: 'ILYTAT — Web Design for Kankakee County Local Businesses' },
+    { property: 'og:description', content: `Professional websites for local businesses in Manteno, Bourbonnais, Bradley, Kankakee & Peotone. Custom-built, fast, and fully managed.` },
+    { property: 'og:image',       content: 'https://media.ilytat.com/og-preview.png' },
+    { property: 'og:image:width',  content: '1200' },
+    { property: 'og:image:height', content: '630' },
+    { property: 'og:type',        content: 'website' },
+    { property: 'og:url',         content: 'https://ilytat.com' },
+    { name: 'twitter:card',       content: 'summary_large_image' },
+    { name: 'twitter:title',      content: 'ILYTAT — Web Design for Kankakee County Local Businesses' },
+    { name: 'twitter:description', content: 'Professional websites for local businesses in Kankakee County, IL. Custom-built, fast, and fully managed.' },
+    { name: 'twitter:image',      content: 'https://media.ilytat.com/og-preview.png' },
   ],
   script: [
     {
@@ -55,7 +62,14 @@ useHead({
           addressRegion:   'IL',
           addressCountry:  'US',
         },
-        areaServed:  { '@type': 'State', name: 'Illinois' },
+        telephone:   siteContent.contact.phone,
+        areaServed:  [
+          { '@type': 'City', name: 'Manteno', containedIn: 'Kankakee County, IL' },
+          { '@type': 'City', name: 'Bourbonnais', containedIn: 'Kankakee County, IL' },
+          { '@type': 'City', name: 'Bradley', containedIn: 'Kankakee County, IL' },
+          { '@type': 'City', name: 'Kankakee', containedIn: 'Kankakee County, IL' },
+          { '@type': 'City', name: 'Peotone', containedIn: 'Will County, IL' },
+        ],
         priceRange,
         serviceType: 'Web Design',
       }),
@@ -64,17 +78,7 @@ useHead({
 })
 
 // ============================================================================
-// 05. METHODS
-// ============================================================================
-function togglePalette(): void {
-  paletteOpen.value = !paletteOpen.value
-}
-
-// useMagicKeys handles Cmd/Ctrl+K — SSR-safe and no manual listener cleanup.
-watch([Meta_K, Ctrl_K], ([mk, ck]) => { if (mk || ck) togglePalette() })
-
-// ============================================================================
-// 06. LIFECYCLE
+// 05. LIFECYCLE
 // ============================================================================
 onMounted(() => {
   // When Stripe redirects back after a cancelled checkout, the server appends
@@ -106,12 +110,22 @@ useReveal()
   <div class="relative min-h-screen bg-[var(--theme-bg)] text-[var(--theme-text)] font-sans leading-relaxed overflow-x-hidden">
     <div class="grain" aria-hidden="true" />
 
+    <!-- Founding Five — hardcoded, dismissible via localStorage -->
+    <ClientOnly>
+      <PromoBanner :promotion="{
+        id: 'founding-five-2025',
+        message: 'Founding client rate available for the first 5 Kankakee County businesses.',
+        ctaText: 'See pricing →',
+        ctaUrl: '#pricing',
+      }" />
+    </ClientOnly>
+
     <ClientOnly>
       <PromoBanner v-if="promotion" :promotion="promotion" />
     </ClientOnly>
 
     <!-- Above fold: eager-loaded, on the critical render path -->
-    <SiteNav @toggle-palette="togglePalette" />
+    <SiteNav />
     <SiteHero />
     <SitePillarsMarquee />
 
@@ -238,20 +252,5 @@ useReveal()
 
     <LazySiteContact :prefilled-service="prefilledService" />
     <LazySiteFooter />
-
-    <!-- ── Mobile explore button ─────────────────────────────────────────── -->
-    <button
-      class="fixed bottom-5 left-1/2 -translate-x-1/2 z-[150] md:hidden flex items-center gap-2 text-[10px] font-semibold text-[#6e6b5f] bg-[#13100d] border border-[#211e1a] px-4 py-2.5 rounded-sm shadow-[0_4px_24px_rgba(0,0,0,.6)] transition-[transform,box-shadow] duration-200 active:scale-95 hover:border-white/[0.12] tracking-[2px] uppercase"
-      aria-label="Open navigation"
-      @click="togglePalette">
-      <UIcon name="i-heroicons-magnifying-glass" class="w-3.5 h-3.5 text-[#4e4843]" />
-      <span>Explore</span>
-    </button>
-
-    <ClientOnly>
-      <Teleport to="body">
-        <SiteCommandPalette v-if="paletteOpen" @close="paletteOpen = false" />
-      </Teleport>
-    </ClientOnly>
   </div>
 </template>

@@ -12,7 +12,7 @@ import { siteConfig } from '~/config/site.config'
 import { useCheckout } from '~/composables/useCheckout'
 
 const { packages, monthlyRate, subscriptions } = siteConfig
-const { billingCycle, hostingTier, checkoutLoading, startCheckout } = useCheckout()
+const { billingCycle, hostingTier } = useCheckout()
 const { track } = useAnalytics()
 
 // Derive the displayed hosting rate from the selected tier — prevents
@@ -147,24 +147,10 @@ onUnmounted(() => pricingObserver.value?.disconnect())
             class="font-mono text-[9px] tracking-[1.5px] text-[#222028] uppercase mt-5 mb-5 border-t border-white/[0.05] pt-4">
             Delivered in {{ pkg.delivery }}
           </p>
-          <button class="price-cta" :class="{ 'price-cta-featured': pkg.featured }" :disabled="checkoutLoading !== null"
-            @click="startCheckout(pkg)">
-            <span v-if="checkoutLoading === pkg.name" class="flex items-center justify-center gap-2">
-              <svg class="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
-              </svg>
-              Redirecting…
-            </span>
-            <template v-else>
-              <span v-if="pkg.includeStartingAt" @click="navigateTo('#contact')" class="cursor-pointer">
-                Let's talk
-              </span>
-              <span v-else>
-                Buy Now
-              </span>
-            </template>
-          </button>
+          <a href="#contact" class="price-cta" :class="{ 'price-cta-featured': pkg.featured }"
+            @click="track('cta_click', { label: 'Get Started', location: 'pricing', package: pkg.name })">
+            Get Started →
+          </a>
         </div>
       </div>
 

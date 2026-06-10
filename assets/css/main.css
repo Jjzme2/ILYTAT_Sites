@@ -460,6 +460,7 @@ html {
   letter-spacing: 2.5px; text-transform: uppercase;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.012); color: #6e6b5f;
+  text-decoration: none;
   transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s, background 0.25s;
   cursor: pointer;
 }
