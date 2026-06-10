@@ -148,7 +148,10 @@ html {
 
 /* ── Page transitions ──────────────────────────────────────────────────────── */
 .page-enter-active,
-.page-leave-active { transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+.page-leave-active {
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1),
+              transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
 .page-enter-from,
 .page-leave-to     { opacity: 0; transform: translateY(10px); }
 
@@ -168,9 +171,9 @@ html {
 }
 
 @keyframes blob-drift {
-  0%, 100% { transform: translate(0px,   0px)  scale(1);    }
-  33%       { transform: translate(32px, -22px) scale(1.05); }
-  66%       { transform: translate(-18px, 14px) scale(0.97); }
+  0%, 100% { transform: translate(0px,   0px);  }
+  33%       { transform: translate(32px, -22px); }
+  66%       { transform: translate(-18px, 14px); }
 }
 
 @keyframes gold-shimmer {
@@ -588,31 +591,6 @@ html {
 .submit-btn:active:not(:disabled) { transform: translateY(0); }
 .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
 
-/* ── Service card ──────────────────────────────────────────────────────────── */
-/* Replaces the old .service-row editorial pattern */
-.service-card {
-  position: relative; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), border-color 0.3s;
-}
-.service-card::before {
-  content: '';
-  position: absolute; left: 0; top: 16px; bottom: 16px; width: 2px;
-  background: linear-gradient(to bottom, var(--theme-btn-from), var(--theme-btn-to));
-  opacity: 0; transition: opacity 0.3s ease; border-radius: 0 1px 1px 0;
-}
-.service-card:hover::before { opacity: 0.6; }
-.service-card:hover { transform: translateY(-4px); }
-
-/* ── Service editorial row (legacy — kept for graceful degradation) ─────────── */
-.service-row { position: relative; transition: background 0.25s ease; }
-.service-row::before {
-  content: ''; position: absolute;
-  left: 0; top: 18px; bottom: 18px; width: 2px;
-  background: linear-gradient(to bottom, var(--theme-btn-from), var(--theme-btn-to));
-  opacity: 0; transition: opacity 0.3s ease; border-radius: 1px;
-}
-.service-row:hover::before { opacity: 0.55; }
-.service-row:hover { background: rgba(255, 255, 255, 0.012); }
-
 /* ── Crack-light system ────────────────────────────────────────────────────── */
 /*
  * Dark Kintsugi: obsidian panels with contained explosions of light.
@@ -771,6 +749,32 @@ html {
 [data-lumen="off"] .section-crack::before {
   box-shadow: none !important;
   opacity: 0.12 !important;
+}
+
+/* ── Mobile performance overrides ─────────────────────────────────────────── */
+/*
+ * On touch devices / narrow viewports the hero blobs and heavy backdrop-filter
+ * blurs are the #1 GPU cost. Removing them on mobile has zero visible impact —
+ * the blobs are too big to read on a phone and the glass surfaces still look
+ * correct without the expensive blur step.
+ */
+@media (max-width: 768px) {
+  /* Kill all 4 blobs — they're invisible at mobile scale and burn GPU/battery */
+  .hero-blob { display: none !important; }
+
+  /* Reduce backdrop-filter blur radius — full blur on a phone GPU is expensive */
+  .glass-card {
+    backdrop-filter: blur(8px) saturate(130%);
+    -webkit-backdrop-filter: blur(8px) saturate(130%);
+  }
+  .glass-deep {
+    backdrop-filter: blur(12px) saturate(120%);
+    -webkit-backdrop-filter: blur(12px) saturate(120%);
+  }
+  .nav-scrolled {
+    backdrop-filter: blur(16px) saturate(130%) !important;
+    -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+  }
 }
 
 /* ── prefers-reduced-motion ────────────────────────────────────────────────── */

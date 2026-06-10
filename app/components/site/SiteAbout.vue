@@ -1,38 +1,12 @@
 <script setup lang="ts">
-/**
- * SiteAbout — founder story, philosophy, stats, and phone CTA.
- *
- * Phone href is assembled client-side from char codes to avoid
- * exposing the number as plain text to scrapers in the HTML source.
- * Founder photo is verified with a HEAD request before rendering —
- * if the file is absent, the founder's initial is shown instead.
- */
-import { ref, computed, onMounted } from 'vue'
+import { ref } from 'vue'
 import { siteContent } from '~/utils/siteContent'
 import { siteConfig } from '~/config/site.config'
 
-const { founder } = siteContent
+const { founder, contact } = siteContent
 const { aboutStats } = siteConfig
 
-// Char codes for the phone number — assembled only in the browser.
-const PHONE_CHARS = [55, 48, 56, 54, 50, 55, 49, 56, 53, 52]
-const phoneHref   = computed(() => `tel:+1${String.fromCharCode(...PHONE_CHARS)}`)
-
-const FOUNDER_PHOTO_PATH = '/founder.jpg'
-const founderPhotoExists = ref(false)
-const founderPhotoSrc    = ref('')
-
-onMounted(async () => {
-  try {
-    const res = await fetch(FOUNDER_PHOTO_PATH, { method: 'HEAD' })
-    if (res.ok) {
-      founderPhotoSrc.value    = FOUNDER_PHOTO_PATH
-      founderPhotoExists.value = true
-    }
-  } catch {
-    founderPhotoExists.value = false
-  }
-})
+const founderPhotoExists = ref(true)
 </script>
 
 <template>
@@ -54,7 +28,13 @@ onMounted(async () => {
           <div class="flex items-center gap-4">
             <div class="w-[56px] h-[56px] overflow-hidden flex-shrink-0 bg-[var(--glass-deep-bg)] flex items-center justify-center border border-[var(--glass-card-border)]"
                style="clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))">
-              <img v-if="founderPhotoExists" :src="founderPhotoSrc" :alt="founder.name" class="w-full h-full object-cover">
+              <img
+                v-if="founderPhotoExists"
+                src="/founder.jpg"
+                :alt="founder.name"
+                width="56" height="56"
+                class="w-full h-full object-cover"
+                @error="founderPhotoExists = false">
               <em v-else class="font-serif italic font-light text-[var(--theme-accent)] text-2xl select-none">{{ founder.name.charAt(0) }}</em>
             </div>
             <div>
@@ -92,11 +72,9 @@ onMounted(async () => {
               <div class="crack-line w-10" />
             </div>
           </div>
-          <ClientOnly>
-            <a :href="phoneHref" class="btn-primary">
-              <UIcon name="i-heroicons-phone" class="w-3.5 h-3.5 flex-shrink-0" /> Call or Text
-            </a>
-          </ClientOnly>
+          <a :href="contact.phoneHref" class="btn-primary">
+            <UIcon name="i-heroicons-phone" class="w-3.5 h-3.5 flex-shrink-0" /> Call or Text
+          </a>
         </div>
 
       </div>
