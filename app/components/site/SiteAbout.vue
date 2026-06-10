@@ -1,12 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
 import { siteContent } from '~/utils/siteContent'
 import { siteConfig } from '~/config/site.config'
 
 const { founder, contact } = siteContent
 const { aboutStats } = siteConfig
-
-const founderPhotoExists = ref(true)
 </script>
 
 <template>
@@ -29,12 +26,11 @@ const founderPhotoExists = ref(true)
             <div class="w-[56px] h-[56px] overflow-hidden flex-shrink-0 bg-[var(--glass-deep-bg)] flex items-center justify-center border border-[var(--glass-card-border)]"
                style="clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))">
               <img
-                v-if="founderPhotoExists"
-                :src="'/founder.jpg'"
+                v-if="founder.photo"
+                :src="founder.photo"
                 :alt="founder.name"
                 width="56" height="56"
-                class="w-full h-full object-cover"
-                @error="founderPhotoExists = false">
+                class="w-full h-full object-cover">
               <em v-else class="font-serif italic font-light text-[var(--theme-accent)] text-2xl select-none">{{ founder.name.charAt(0) }}</em>
             </div>
             <div>
