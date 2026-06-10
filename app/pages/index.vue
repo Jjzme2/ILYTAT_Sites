@@ -137,7 +137,7 @@ useReveal()
     <LazySitePricing />
 
     <!-- ── Portfolio ──────────────────────────────────────────────────────── -->
-    <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+    <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16" style="content-visibility:auto;contain-intrinsic-block-size:auto 600px">
       <header class="mb-16" data-reveal>
         <p class="eyebrow">Recent Work</p>
         <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] leading-[1.05]">
@@ -206,7 +206,7 @@ useReveal()
     <LazySiteAbout />
 
     <!-- ── FAQ ───────────────────────────────────────────────────────────── -->
-    <section id="faq" class="py-[100px] sm:py-16">
+    <section id="faq" class="py-[100px] sm:py-16" style="content-visibility:auto;contain-intrinsic-block-size:auto 600px">
       <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
         <header class="mb-16" data-reveal>
           <p class="eyebrow">Common Questions</p>

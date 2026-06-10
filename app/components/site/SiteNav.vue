@@ -26,6 +26,7 @@ const scrolled = computed(() => scrollY.value > 56)
     <img
       src="https://media.ilytat.com/logo.png"
       alt="ILYTAT"
+      width="120" height="36"
       class="block h-9 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-200">
 
     <div class="flex items-center gap-4 sm:gap-3">

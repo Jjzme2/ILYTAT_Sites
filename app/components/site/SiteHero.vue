@@ -129,9 +129,10 @@ const blob4Style = computed(() => {
       </div>
 
       <!-- ── Right column: Fortune Orb in crack panel ───────────────────── -->
+      <!-- Hidden on mobile — saves 280px of vertical scroll depth before services -->
       <div
-        class="flex-shrink-0 [animation:fade-up_0.8s_0.72s_ease_both]"
-        aria-label="Interactive ILYTAT fortune symbol">
+        class="hidden lg:flex-shrink-0 lg:block [animation:fade-up_0.8s_0.72s_ease_both]"
+        aria-label="ILYTAT symbol">
         <!-- Mobile divider -->
         <div class="lg:hidden crack-line mb-8" aria-hidden="true" />
 

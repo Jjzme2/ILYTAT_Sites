@@ -15,6 +15,7 @@ const year = new Date().getFullYear()
         <img
           src="https://media.ilytat.com/logo.png"
           alt="ILYTAT"
+          width="120" height="28"
           class="h-7 w-auto object-contain mb-5 block opacity-50 hover:opacity-80 transition-opacity duration-300">
         <p class="text-[12px] leading-[1.8] max-w-[200px] text-[var(--theme-text-faint)]">
           Websites for local businesses.<br />Manteno, IL · Kankakee County.

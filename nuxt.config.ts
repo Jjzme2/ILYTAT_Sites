@@ -54,11 +54,11 @@ export default defineNuxtConfig({
     families: [
       // preload: true injects <link rel="preload"> for these fonts, eliminating
       // the FOUT (flash of unstyled text) on first paint for body + heading copy.
-      { name: 'Inter',   provider: 'google', preload: true },
-      { name: 'Sora',    provider: 'google', weights: [400, 600, 700, 800], preload: true },
-      { name: 'Space Mono', provider: 'google', weights: [400, 700] },
-      // Playfair Display: premium serif for italic display headlines only
-      { name: 'Playfair Display', provider: 'google', weights: [400, 700, 900], styles: ['normal', 'italic'] },
+      { name: 'Inter',      provider: 'google', preload: true },
+      { name: 'Sora',       provider: 'google', weights: [400, 600, 700, 800], preload: true },
+      { name: 'Space Mono', provider: 'google', weights: [400, 700], preload: true },
+      // Playfair Display: used only for italic serif headlines — skip normal style + 900 weight
+      { name: 'Playfair Display', provider: 'google', weights: [400, 700], styles: ['italic'] },
     ],
   },
 
@@ -116,34 +116,43 @@ export default defineNuxtConfig({
       '/api/projects':     { cache: { maxAge: 300,  swr: true } }, // 5 min
       '/api/testimonials': { cache: { maxAge: 3600, swr: true } }, // 1 hr
       '/api/promotion':    { cache: { maxAge: 60,   swr: true } }, // 1 min
+      // Fortune is deterministic per-IP per-day; cache for 15 min at the edge.
+      // The client also caches the result in localStorage, so repeat visitors
+      // never hit this endpoint at all.
+      '/api/fortune':      { cache: { maxAge: 900,  swr: true } }, // 15 min
     },
   },
 
   app: {
     head: {
-      title: 'ILYTAT — Professional Websites for Local Business',
+      title: 'ILYTAT — Web Design Kankakee County IL',
       meta: [
         { charset: 'utf-8' },
         { name: 'viewport', content: 'width=device-width, initial-scale=1' },
         {
           name: 'description',
-          content: 'Custom websites built for local businesses in Illinois. You own everything. Managed hosting from $89/mo.',
+          content: 'Custom websites for local businesses in Kankakee County, IL — Manteno, Bourbonnais, Bradley, Kankakee, Peotone. You own everything. Managed hosting from $89/mo.',
         },
-        { property: 'og:title', content: 'ILYTAT — Professional Websites for Local Business' },
-        {
-          property: 'og:description',
-          content: 'Websites built for local businesses. One flat build price. $89/month for everything else.',
-        },
-        { property: 'og:type', content: 'website' },
-        { property: 'og:image', content: 'https://media.ilytat.com/logo.png' },
-        { name: 'twitter:card', content: 'summary_large_image' },
-        { name: 'theme-color', content: '#0f0f11' },
+        { property: 'og:title',       content: 'ILYTAT — Web Design for Kankakee County Local Businesses' },
+        { property: 'og:description', content: 'Professional websites for local businesses in Manteno, Bourbonnais, Bradley, Kankakee & Peotone. Custom-built, fast, and fully managed.' },
+        { property: 'og:type',        content: 'website' },
+        { property: 'og:image',       content: 'https://media.ilytat.com/og-preview.png' },
+        { property: 'og:image:width',  content: '1200' },
+        { property: 'og:image:height', content: '630' },
+        { name: 'twitter:card',       content: 'summary_large_image' },
+        { name: 'twitter:image',      content: 'https://media.ilytat.com/og-preview.png' },
+        { name: 'robots',             content: 'index, follow' },
+        { name: 'theme-color',        content: '#0f0f11' },
       ],
       link: [
         { rel: 'icon',        type: 'image/png', href: 'https://media.ilytat.com/logo.png' },
         // Preconnect eliminates the DNS + TLS handshake latency on first image request
         { rel: 'preconnect',  href: 'https://media.ilytat.com' },
         { rel: 'dns-prefetch', href: 'https://media.ilytat.com' },
+        // Preload the logo — it's in the nav on every page, above the fold
+        { rel: 'preload', as: 'image', href: 'https://media.ilytat.com/logo.png', fetchpriority: 'high' },
+        // Canonical — avoids duplicate-content penalties for www vs non-www
+        { rel: 'canonical', href: process.env.SITE_URL || 'https://ilytat.com' },
       ],
       // Plausible analytics — only injected when PLAUSIBLE_DOMAIN is set in .env
       script: process.env.PLAUSIBLE_DOMAIN
