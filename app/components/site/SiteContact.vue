@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { watch } from 'vue'
 import { siteConfig } from '~/config/site.config'
+import { siteContent } from '~/utils/siteContent'
 import { useContactForm } from '~/composables/useContactForm'
 
 // When a visitor clicks a service row, the parent passes the service name here
@@ -26,17 +27,17 @@ watch(() => props.prefilledService, (name) => {
       <div data-reveal>
         <div class="flex items-center gap-4 mb-6">
           <div class="crack-line w-8 flex-shrink-0" />
-          <p class="eyebrow mb-0">Get in touch</p>
+          <p class="eyebrow mb-0">Free Audit</p>
         </div>
         <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] mb-4 leading-[1.05]">
-          Book a free<br /><em class="font-headline italic text-[var(--theme-accent)]">consultation</em>
+          Book a free<br /><em class="font-headline italic text-[var(--theme-accent)]">audit</em>
         </h2>
         <p class="text-[14px] text-[var(--theme-text-body)] leading-[1.9] mb-8">
-          Tell me about your business. I'll review it and get back to you within 24 hours. No sales pressure — just a straight conversation.
+          Tell me about your business. I'll look it over and get back to you within 24 hours with honest feedback — no sales pressure.
         </p>
         <ul class="flex flex-col gap-3.5">
           <li
-            v-for="promise in ['Free quote, no obligation', 'Response within 24 hours', 'You own everything we build']"
+            v-for="promise in ['Free audit, no obligation', 'Response within 24 hours', 'You own everything we build']"
             :key="promise"
             class="flex items-center gap-3 text-[13px] text-[var(--theme-text-body)]">
             <span
@@ -47,6 +48,14 @@ watch(() => props.prefilledService, (name) => {
             {{ promise }}
           </li>
         </ul>
+        <div class="mt-8 pt-6 border-t border-[var(--glass-card-border)]">
+          <p class="font-mono text-[9px] tracking-[2.5px] uppercase mb-3 text-[var(--theme-text-ghost)]">Prefer to call or text?</p>
+          <a
+            :href="siteContent.contact.phoneHref"
+            class="text-[15px] font-semibold text-[var(--theme-text)] hover:text-[var(--theme-accent)] transition-colors duration-200 no-underline">
+            {{ siteContent.contact.phone }}
+          </a>
+        </div>
       </div>
 
       <!-- Right: form card — crack panel -->

@@ -81,7 +81,7 @@ const blob4Style = computed(() => {
           class="inline-flex items-center gap-2.5 px-4 py-2 mb-10 border border-[var(--theme-accent)]/[0.14] bg-[var(--theme-accent)]/[0.04] backdrop-blur-md [animation:fade-up_0.8s_ease_both]"
           style="clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))">
           <span class="w-1.5 h-1.5 bg-[var(--theme-accent)]" style="box-shadow: 0 0 8px var(--theme-accent)" aria-hidden="true" />
-          <span class="font-mono text-[9px] tracking-[3px] uppercase text-[var(--theme-text-muted)]">Manteno, IL — Est. 2024</span>
+          <span class="font-mono text-[9px] tracking-[3px] uppercase text-[var(--theme-text-muted)]">Based in Manteno · Serving Kankakee County</span>
         </div>
 
         <h1 class="mb-8">
@@ -123,7 +123,7 @@ const blob4Style = computed(() => {
         <div class="flex items-center gap-6 mt-16 [animation:fade-up_0.8s_0.62s_ease_both]">
           <div class="crack-line w-20 flex-shrink-0" />
           <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-[var(--theme-text-faint)]">
-            Illinois-based · Custom-built · No contracts
+            Manteno · Bourbonnais · Bradley · Kankakee · Peotone
           </span>
         </div>
       </div>

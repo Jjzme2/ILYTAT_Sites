@@ -102,7 +102,7 @@ function reset(): void {
 </script>
 
 <template>
-  <div class="orb-root" :aria-label="orbState === 'idle' ? 'Touch for fortune' : 'Your daily fortune'">
+  <div class="orb-root" :aria-label="orbState === 'idle' ? 'ILYTAT symbol' : 'Your daily fortune'">
 
     <!-- ── SVG Yin-Yang ──────────────────────────────────────────────────── -->
     <button
@@ -146,13 +146,6 @@ function reset(): void {
         <!-- Outer border ring -->
         <circle class="orb-border" cx="100" cy="100" r="96" />
       </svg>
-
-      <!-- ── Idle label ─────────────────────────────────────────────────── -->
-      <Transition name="fade-label">
-        <span v-if="orbState === 'idle'" class="orb-label" aria-hidden="true">
-          Touch for fortune
-        </span>
-      </Transition>
 
       <!-- ── Center pulse dot (idle) ───────────────────────────────────── -->
       <span
