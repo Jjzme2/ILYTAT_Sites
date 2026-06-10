@@ -47,14 +47,6 @@ interface Inquiry {
   createdAt:    string
 }
 
-interface PaymentFailure {
-  id:            string
-  customerEmail: string
-  amount:        number
-  errorMessage:  string
-  createdAt:     string
-}
-
 interface AnalyticsEvent {
   event:     string
   createdAt: string
@@ -103,14 +95,13 @@ function areaTag(area: string): string {
 // ── Email builder ─────────────────────────────────────────────────────────────
 
 function buildEmail(opts: {
-  date:       string
-  logs:       LogEntry[]
-  orders:     Order[]
-  inquiries:  Inquiry[]
-  failures:   PaymentFailure[]
-  analytics:  { pricingViewed: number; initiated: number; abandoned: number; paid: number; convRate: string }
+  date:      string
+  logs:      LogEntry[]
+  orders:    Order[]
+  inquiries: Inquiry[]
+  analytics: { pricingViewed: number; contactSubmits: number }
 }): { subject: string; html: string } {
-  const { date, logs, orders, inquiries, failures, analytics } = opts
+  const { date, logs, orders, inquiries, analytics } = opts
 
   const criticals = logs.filter(l => l.level === 'critical')
   const errors    = logs.filter(l => l.level === 'error')
@@ -212,31 +203,17 @@ function buildEmail(opts: {
         </table>` : '<p style="margin:0;font-size:13px;color:#6b7280;">No new inquiries in the last 24 hours.</p>'}
     </div>`
 
-  // ── Payment failures ──────────────────────────────────────────────────────
-  const failuresSection = failures.length ? `
-    <div style="margin-bottom:32px;padding:16px 20px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;">
-      <h2 style="font-size:15px;font-weight:700;color:#9a3412;margin:0 0 12px;">⚠️ Payment Failures (${failures.length})</h2>
-      ${failures.map(f => `
-        <div style="font-size:13px;margin-bottom:8px;">
-          <strong>${f.customerEmail || 'Unknown'}</strong> — $${(f.amount || 0).toFixed(2)} —
-          <span style="color:#dc2626;">${f.errorMessage}</span>
-          <span style="color:#9ca3af;font-size:11px;margin-left:8px;">${ct(f.createdAt)}</span>
-        </div>`).join('')}
-    </div>` : ''
-
   // ── Analytics ─────────────────────────────────────────────────────────────
   const analyticsSection = `
     <div style="margin-bottom:32px;">
       <h2 style="font-size:15px;font-weight:700;color:#111827;margin:0 0 12px;padding-bottom:8px;border-bottom:2px solid #f5c518;">
-        📊 Checkout Funnel (24h)
+        📊 Site Activity (24h)
       </h2>
       <table style="width:100%;border-collapse:collapse;">
         <tr>
           ${[
-            { label: 'Pricing Views',     val: analytics.pricingViewed, color: '#f5c518' },
-            { label: 'Checkout Clicks',   val: analytics.initiated,     color: '#f5c518' },
-            { label: 'Abandoned',         val: analytics.abandoned,     color: '#f97316' },
-            { label: 'Paid',              val: analytics.paid,          color: '#16a34a' },
+            { label: 'Pricing Views',    val: analytics.pricingViewed,  color: '#f5c518' },
+            { label: 'Contact Submits',  val: analytics.contactSubmits, color: '#16a34a' },
           ].map(s => `
             <td style="text-align:center;padding:16px 8px;background:#f9fafb;border:1px solid #f3f4f6;border-radius:6px;margin:4px;">
               <div style="font-size:28px;font-weight:800;color:${s.color};">${s.val}</div>
@@ -244,7 +221,6 @@ function buildEmail(opts: {
             </td>`).join('')}
         </tr>
       </table>
-      <p style="margin:12px 0 0;font-size:13px;color:#6b7280;">Conversion rate (clicked → paid): <strong style="color:#111827;">${analytics.convRate}</strong></p>
     </div>`
 
   const html = `
@@ -278,7 +254,6 @@ function buildEmail(opts: {
           ${alertSection}
           ${ordersSection}
           ${inquiriesSection}
-          ${failuresSection}
           ${analyticsSection}
         </div>
 
@@ -315,11 +290,10 @@ export default defineEventHandler(async (event) => {
   })
 
   // ── Fetch data in parallel ────────────────────────────────────────────────
-  const [rawLogs, rawOrders, rawInquiries, rawFailures, analyticsRes] = await Promise.allSettled([
-    firestoreRunQuery({ collectionId: 'logs',             whereField: 'createdAt', whereOp: 'GREATER_THAN_OR_EQUAL', whereValue: since, orderByField: 'createdAt', orderByDir: 'DESCENDING', limit: 500 }),
-    firestoreRunQuery({ collectionId: 'orders',           whereField: 'createdAt', whereOp: 'GREATER_THAN_OR_EQUAL', whereValue: since, orderByField: 'createdAt', orderByDir: 'DESCENDING', limit: 100 }),
-    firestoreRunQuery({ collectionId: 'inquiries',        whereField: 'createdAt', whereOp: 'GREATER_THAN_OR_EQUAL', whereValue: since, orderByField: 'createdAt', orderByDir: 'DESCENDING', limit: 100 }),
-    firestoreRunQuery({ collectionId: 'payment_failures', whereField: 'createdAt', whereOp: 'GREATER_THAN_OR_EQUAL', whereValue: since, orderByField: 'createdAt', orderByDir: 'DESCENDING', limit: 100 }),
+  const [rawLogs, rawOrders, rawInquiries, analyticsRes] = await Promise.allSettled([
+    firestoreRunQuery({ collectionId: 'logs',      whereField: 'createdAt', whereOp: 'GREATER_THAN_OR_EQUAL', whereValue: since, orderByField: 'createdAt', orderByDir: 'DESCENDING', limit: 500 }),
+    firestoreRunQuery({ collectionId: 'orders',    whereField: 'createdAt', whereOp: 'GREATER_THAN_OR_EQUAL', whereValue: since, orderByField: 'createdAt', orderByDir: 'DESCENDING', limit: 100 }),
+    firestoreRunQuery({ collectionId: 'inquiries', whereField: 'createdAt', whereOp: 'GREATER_THAN_OR_EQUAL', whereValue: since, orderByField: 'createdAt', orderByDir: 'DESCENDING', limit: 100 }),
     firestoreRequest('GET', 'analytics_events?pageSize=300&orderBy=createdAt%20desc'),
   ])
 
@@ -328,31 +302,25 @@ export default defineEventHandler(async (event) => {
     ? (rawLogs.value as LogEntry[]).sort((a, b) => (a.priority ?? 3) - (b.priority ?? 3))
     : []
 
-  const orders: Order[]             = rawOrders.status    === 'fulfilled' ? rawOrders.value    as Order[]            : []
-  const inquiries: Inquiry[]        = rawInquiries.status === 'fulfilled' ? rawInquiries.value as Inquiry[]          : []
-  const failures: PaymentFailure[]  = rawFailures.status  === 'fulfilled' ? rawFailures.value  as PaymentFailure[]   : []
+  const orders: Order[]      = rawOrders.status    === 'fulfilled' ? rawOrders.value    as Order[]    : []
+  const inquiries: Inquiry[] = rawInquiries.status === 'fulfilled' ? rawInquiries.value as Inquiry[] : []
 
-  // ── Analytics: compute 24h funnel ─────────────────────────────────────────
-  const analytics = { pricingViewed: 0, initiated: 0, abandoned: 0, paid: 0, convRate: '—' }
+  // ── Analytics: compute 24h counts ────────────────────────────────────────
+  const analytics = { pricingViewed: 0, contactSubmits: 0 }
   if (analyticsRes.status === 'fulfilled') {
     const docs: Array<{ fields: Record<string, unknown> }> = analyticsRes.value.documents || []
     for (const doc of docs) {
       const e = doc.fields as unknown as { event: { stringValue: string }; createdAt: { stringValue: string } }
-      const evtName  = e.event?.stringValue ?? ''
-      const evtTime  = e.createdAt?.stringValue ?? ''
+      const evtName = e.event?.stringValue ?? ''
+      const evtTime = e.createdAt?.stringValue ?? ''
       if (evtTime < since) continue
-      if (evtName === 'pricing_viewed')     analytics.pricingViewed++
-      if (evtName === 'checkout_initiated') analytics.initiated++
-      if (evtName === 'checkout_abandoned') analytics.abandoned++
-      if (evtName === 'checkout_success')   analytics.paid++
+      if (evtName === 'pricing_viewed') analytics.pricingViewed++
+      if (evtName === 'contact_submit') analytics.contactSubmits++
     }
-    analytics.convRate = analytics.initiated > 0
-      ? `${Math.round((analytics.paid / analytics.initiated) * 100)}%`
-      : '—'
   }
 
   // ── Build & send ──────────────────────────────────────────────────────────
-  const { subject, html } = buildEmail({ date: dateLabel, logs, orders, inquiries, failures, analytics })
+  const { subject, html } = buildEmail({ date: dateLabel, logs, orders, inquiries, analytics })
 
   const res = await fetch('https://api.resend.com/emails', {
     method: 'POST',
@@ -375,8 +343,7 @@ export default defineEventHandler(async (event) => {
     logs:      logs.length,
     orders:    orders.length,
     inquiries: inquiries.length,
-    failures:  failures.length,
   })
 
-  return { ok: true, sent: true, counts: { logs: logs.length, orders: orders.length, inquiries: inquiries.length, failures: failures.length } }
+  return { ok: true, sent: true, counts: { logs: logs.length, orders: orders.length, inquiries: inquiries.length } }
 })

@@ -582,9 +582,7 @@ interface AnalyticsSummary {
   allCounts: Record<string, number>
   day30Counts: Record<string, number>
   day7Counts: Record<string, number>
-  funnel: { pricing_viewed: number; checkout_initiated: number; checkout_abandoned: number; checkout_success: number }
-  conversionRate: number | null
-  packageBreakdown: Record<string, number>
+  ctaBreakdown: Record<string, number>
   recent: Array<{ id: string; event: string; properties: Record<string, unknown>; sessionId: string; createdAt: string }>
   error?: string
 }
@@ -858,26 +856,16 @@ function onGlobalKeydown(e: KeyboardEvent) {
           <!-- ── Summary cards ── -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px;">
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.funnel.checkout_success }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Paid checkouts<br><span style="font-size:10px;">(last 30 days)</span></p>
-            </div>
-            <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.funnel.checkout_initiated }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Checkout clicks<br><span style="font-size:10px;">(last 30 days)</span></p>
-            </div>
-            <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;" :style="{ color: analytics.conversionRate !== null && analytics.conversionRate >= 50 ? '#4ade80' : '#f97316' }">
-                {{ analytics.conversionRate !== null ? analytics.conversionRate + '%' : '—' }}
-              </p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Conversion rate<br><span style="font-size:10px;">(initiated → paid)</span></p>
-            </div>
-            <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.day30Counts['contact_submit'] || 0 }}</p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:#4ade80;">{{ analytics.day30Counts['contact_submit'] || 0 }}</p>
               <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Contact submits<br><span style="font-size:10px;">(last 30 days)</span></p>
             </div>
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.funnel.pricing_viewed }}</p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.day30Counts['pricing_viewed'] || 0 }}</p>
               <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Pricing views<br><span style="font-size:10px;">(last 30 days)</span></p>
+            </div>
+            <div class="record-card" style="text-align:center;padding:16px 12px;">
+              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.day30Counts['cta_click'] || 0 }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">CTA clicks<br><span style="font-size:10px;">(last 30 days)</span></p>
             </div>
             <div class="record-card" style="text-align:center;padding:16px 12px;">
               <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.total }}</p>
@@ -885,43 +873,20 @@ function onGlobalKeydown(e: KeyboardEvent) {
             </div>
           </div>
 
-          <!-- ── Checkout funnel ── -->
-          <div class="record-card" style="margin-bottom:20px;">
-            <p class="dash-hint" style="font-weight:600;margin-bottom:14px;">Checkout funnel (last 30 days)</p>
-            <div class="funnel-container">
-              <div
-                v-for="(step, i) in [
-                  { label: 'Pricing viewed', key: 'pricing_viewed' },
-                  { label: 'Buy Now clicked', key: 'checkout_initiated' },
-                  { label: 'Abandoned', key: 'checkout_abandoned' },
-                  { label: 'Paid', key: 'checkout_success' },
-                ]"
-                :key="step.key"
-                style="flex:1;padding:12px 10px;text-align:center;font-size:12px;border-right:1px solid rgba(255,255,255,0.05);"
-                :style="{ background: i === 3 ? 'rgba(74,222,128,0.12)' : i === 2 ? 'rgba(249,115,22,0.1)' : 'rgba(245,197,24,0.07)' }"
-              >
-                <p style="font-size:22px;font-weight:700;margin:0;" :style="{ color: i === 3 ? '#4ade80' : i === 2 ? '#f97316' : '#f5c518' }">
-                  {{ analytics.funnel[step.key as keyof typeof analytics.funnel] }}
-                </p>
-                <p style="color:#8e8ba0;margin:4px 0 0;line-height:1.3;">{{ step.label }}</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- ── Package breakdown ── -->
-          <div v-if="Object.keys(analytics.packageBreakdown).length" class="record-card" style="margin-bottom:20px;">
-            <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">Package interest (all-time checkout clicks)</p>
+          <!-- ── CTA breakdown ── -->
+          <div v-if="analytics.ctaBreakdown && Object.keys(analytics.ctaBreakdown).length" class="record-card" style="margin-bottom:20px;">
+            <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">CTA clicks by label (all-time)</p>
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div
-                v-for="[pkg, count] in Object.entries(analytics.packageBreakdown).sort((a,b) => (b[1] as number) - (a[1] as number))"
-                :key="pkg"
+                v-for="[label, count] in Object.entries(analytics.ctaBreakdown).sort((a,b) => (b[1] as number) - (a[1] as number))"
+                :key="label"
                 style="display:flex;align-items:center;gap:10px;"
               >
-                <span style="width:90px;font-size:13px;font-weight:600;">{{ pkg }}</span>
+                <span style="width:120px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ label }}</span>
                 <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:4px;height:20px;overflow:hidden;">
                   <div
                     style="height:100%;background:#f5c518;border-radius:4px;transition:width 0.4s;"
-                    :style="{ width: Math.round((count as number) / Math.max(...Object.values(analytics.packageBreakdown) as number[]) * 100) + '%' }"
+                    :style="{ width: Math.round((count as number) / Math.max(...Object.values(analytics.ctaBreakdown) as number[]) * 100) + '%' }"
                   />
                 </div>
                 <span style="font-size:13px;color:#8e8ba0;width:24px;text-align:right;">{{ count }}</span>

@@ -63,15 +63,6 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    stripeSecretKey: process.env.STRIPE_SECRET_KEY,
-    stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET,
-    stripePriceStarterBuild: process.env.STRIPE_PRICE_STARTER_BUILD,
-    stripePriceProfessionalBuild: process.env.STRIPE_PRICE_PROFESSIONAL_BUILD,
-    stripePricePremiumBuild: process.env.STRIPE_PRICE_PREMIUM_BUILD,
-    stripePriceHostingMonthly: process.env.STRIPE_PRICE_HOSTING_MONTHLY,
-    stripePriceHostingYearly: process.env.STRIPE_PRICE_HOSTING_YEARLY,
-    stripePricePremiumHostingMonthly: process.env.STRIPE_PRICE_PREMIUM_HOSTING_MONTHLY,
-    stripePricePremiumHostingYearly: process.env.STRIPE_PRICE_PREMIUM_HOSTING_YEARLY,
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || 'ILYTAT Inquiries <noreply@ilytat.com>',
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || '',
@@ -86,7 +77,6 @@ export default defineNuxtConfig({
     r2SecretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
     r2BucketName: process.env.R2_BUCKET_NAME || 'ilytat-internal',
     public: {
-      stripePublishableKey: process.env.STRIPE_PUBLISHABLE_KEY,
       firebaseApiKey: process.env.FIREBASE_API_KEY,
       firebaseAuthDomain: process.env.FIREBASE_AUTH_DOMAIN,
       firebaseProjectId: process.env.FIREBASE_PROJECT_ID,
