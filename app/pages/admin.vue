@@ -118,7 +118,7 @@ async function getAdminHeaders(): Promise<Record<string, string>> {
 }
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
-const activeTab = ref<'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs' | 'blog' | 'security'>('portfolio')
+const activeTab = ref<'dashboard' | 'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs' | 'blog' | 'security'>('dashboard')
 
 // ── Internal Docs ─────────────────────────────────────────────────────────────
 interface DocEntry { key: string; name: string; lastModified?: string }
@@ -722,6 +722,7 @@ const paletteIdx    = ref(0)
 const paletteInput  = ref<HTMLInputElement | null>(null)
 
 const ALL_COMMANDS: PaletteCommand[] = [
+  { id: 'nav-dashboard',    group: 'Navigate', label: 'Go to Dashboard',    action: () => { activeTab.value = 'dashboard' } },
   { id: 'nav-portfolio',    group: 'Navigate', label: 'Go to Portfolio',    action: () => { activeTab.value = 'portfolio' } },
   { id: 'nav-promotions',   group: 'Navigate', label: 'Go to Promotions',   action: () => { activeTab.value = 'promotions' } },
   { id: 'nav-testimonials', group: 'Navigate', label: 'Go to Testimonials', action: () => { activeTab.value = 'testimonials' } },
@@ -819,7 +820,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
           <button
-            v-for="tab in ['portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'logs', 'health', 'docs', 'blog', 'security']" :key="tab"
+            v-for="tab in ['dashboard', 'portfolio', 'promotions', 'testimonials', 'inquiries', 'analytics', 'logs', 'health', 'docs', 'blog', 'security']" :key="tab"
             class="dash-tab" :class="{ active: activeTab === (tab as typeof activeTab) }"
             @click="activeTab = (tab as typeof activeTab)">
             {{ tab }}
@@ -835,6 +836,93 @@ function onGlobalKeydown(e: KeyboardEvent) {
       <div v-if="adminError" style="background:#f87171;color:#fff;padding:10px 20px;font-size:13px;font-family:monospace;white-space:pre-wrap;position:sticky;top:0;z-index:100;">
         ⚠ {{ adminError }}
       </div>
+
+      <!-- ── DASHBOARD tab ── -->
+      <section v-if="activeTab === 'dashboard'" class="dash-section" style="max-width:960px;">
+        <h2>Overview</h2>
+        <p class="dash-hint">Here's a quick look at what's happening. New inquiries are highlighted — reply directly from here.</p>
+
+        <!-- Stats -->
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;">
+          <div class="record-card" style="text-align:center;padding:16px 12px;">
+            <p style="font-size:32px;font-weight:700;margin:0;" :style="{ color: inquiries.filter(i => i.status === 'new').length > 0 ? '#f5c518' : '#4ade80' }">
+              {{ inquiries.filter(i => i.status === 'new').length }}
+            </p>
+            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">New inquiries</p>
+          </div>
+          <div class="record-card" style="text-align:center;padding:16px 12px;">
+            <p style="font-size:32px;font-weight:700;margin:0;color:#f5c518;">{{ inquiries.length }}</p>
+            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Total inquiries</p>
+          </div>
+          <div class="record-card" style="text-align:center;padding:16px 12px;">
+            <p style="font-size:32px;font-weight:700;margin:0;color:#f5c518;">{{ projects.filter(p => p.visible).length }}</p>
+            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Live projects</p>
+          </div>
+          <div class="record-card" style="text-align:center;padding:16px 12px;">
+            <p style="font-size:32px;font-weight:700;margin:0;color:#f5c518;">{{ testimonials.filter(t => t.visible).length }}</p>
+            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Testimonials</p>
+          </div>
+        </div>
+
+        <!-- New inquiries -->
+        <div v-if="inquiries.filter(i => i.status === 'new').length" class="record-card" style="margin-bottom:20px;">
+          <p style="font-size:11px;font-weight:700;color:#f5c518;margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">🔔 Needs a reply</p>
+          <div style="display:flex;flex-direction:column;gap:0;">
+            <div
+              v-for="inq in inquiries.filter(i => i.status === 'new').slice(0, 5)"
+              :key="inq.id"
+              style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #1e1e24;"
+            >
+              <div style="min-width:0;">
+                <p style="margin:0;font-size:13px;font-weight:600;color:#f0ece6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ inq.name }} — {{ inq.businessName }}</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#68667a;">{{ inq.service || 'General inquiry' }} · {{ inq.email }}</p>
+              </div>
+              <div style="display:flex;gap:6px;flex-shrink:0;margin-top:1px;">
+                <a :href="`mailto:${inq.email}`" class="submit-btn" style="padding:4px 12px;font-size:11px;text-decoration:none;">Reply →</a>
+                <button class="badge-btn badge-off" style="font-size:11px;" @click="markInquiryRead(inq.id)">Done</button>
+              </div>
+            </div>
+          </div>
+          <button class="badge-btn badge-off" style="margin-top:12px;font-size:12px;" @click="activeTab = 'inquiries'">View all inquiries →</button>
+        </div>
+
+        <!-- Recent inquiries (all, when no unread) -->
+        <div v-else-if="inquiries.length" class="record-card" style="margin-bottom:20px;">
+          <p style="font-size:11px;font-weight:700;color:#8e8ba0;margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">Recent inquiries</p>
+          <div style="display:flex;flex-direction:column;gap:0;">
+            <div
+              v-for="inq in inquiries.slice(0, 3)"
+              :key="inq.id"
+              style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #1e1e24;"
+            >
+              <div style="min-width:0;">
+                <p style="margin:0;font-size:13px;font-weight:600;color:#f0ece6;">{{ inq.name }} — {{ inq.businessName }}</p>
+                <p style="margin:3px 0 0;font-size:11px;color:#68667a;">{{ inq.service || 'General inquiry' }} · {{ new Date(inq.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</p>
+              </div>
+              <a :href="`mailto:${inq.email}`" class="badge-btn badge-off" style="font-size:11px;flex-shrink:0;text-decoration:none;margin-top:1px;">Reply →</a>
+            </div>
+          </div>
+          <button class="badge-btn badge-off" style="margin-top:12px;font-size:12px;" @click="activeTab = 'inquiries'">View all inquiries →</button>
+        </div>
+
+        <div v-else class="record-card" style="margin-bottom:20px;text-align:center;padding:32px 20px;">
+          <p style="font-size:14px;color:#68667a;margin:0;">No inquiries yet. Share your contact form link to start getting leads.</p>
+        </div>
+
+        <!-- Quick actions -->
+        <div class="record-card">
+          <p style="font-size:10px;font-weight:700;color:#68667a;margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">Quick actions</p>
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <button class="submit-btn" style="padding:8px 16px;font-size:12px;" @click="activeTab = 'inquiries'">All Inquiries</button>
+            <button class="badge-btn badge-off" style="font-size:12px;" @click="activeTab = 'portfolio'">Portfolio</button>
+            <button class="badge-btn badge-off" style="font-size:12px;" @click="activeTab = 'testimonials'">Testimonials</button>
+            <button class="badge-btn badge-off" style="font-size:12px;" @click="activeTab = 'promotions'">Promotions</button>
+            <button class="badge-btn badge-off" style="font-size:12px;" @click="activeTab = 'blog'">Blog</button>
+            <button class="badge-btn badge-off" style="font-size:12px;" @click="activeTab = 'analytics'">Analytics</button>
+            <button class="badge-btn badge-off" style="font-size:12px;" @click="activeTab = 'logs'">Logs</button>
+          </div>
+        </div>
+      </section>
 
       <!-- ── ANALYTICS tab ── -->
       <section v-if="activeTab === 'analytics'" class="dash-section">

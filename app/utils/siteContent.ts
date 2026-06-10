@@ -3,7 +3,13 @@
  * Edit this file to update text on the homepage without touching component code.
  */
 
+import { businessConfig } from '~/config/business.config'
+
 export const siteContent = {
+  // ── Contact ────────────────────────────────────────────────────────────────
+  // Sourced from business.config.ts — edit there, not here.
+  contact: businessConfig.contact,
+
   // ── About / Founder ────────────────────────────────────────────────────────
 
   founder: {
@@ -45,13 +51,6 @@ export const siteContent = {
         body: "Simplicity and scalability. You get a site that works as hard as you do, documented so well that anyone could step in and manage it.",
       },
     ],
-  },
-
-  // ── Contact ────────────────────────────────────────────────────────────────
-  // Update this number to your Google Voice (or real) number before publishing.
-  contact: {
-    phone: '(815) 600-3195',
-    phoneHref: 'tel:+18156003195',
   },
 
   // ── CTA Band ───────────────────────────────────────────────────────────────
