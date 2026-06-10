@@ -12,8 +12,8 @@ export const businessConfig = {
 
   contact: {
     /** Display-formatted phone number shown in UI. */
-    phone:     '(815) 600-3195',
-    phoneHref: 'tel:+18156003195',
+    phone:     '(708) 627-1854',
+    phoneHref: 'tel:+17086271854',
 
     /** Primary support email. */
     email:     'support@ilytat.com',

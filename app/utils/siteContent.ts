@@ -16,6 +16,9 @@ export const siteContent = {
     name: 'JJ',
     title: 'Founder, ILYTAT LLC',
 
+    /** URL to a headshot photo. Leave empty to show the initial letter fallback. */
+    photo: '',
+
     /** Large pull-quote displayed beside the founder photo. */
     philosophy:
       'Every business deserves a real presence online — one that actually sounds like them and works the way their customers expect.',
