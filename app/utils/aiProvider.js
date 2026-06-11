@@ -79,7 +79,9 @@ export async function generateQuote(answers) {
       return await callGemini(userMessage)
     }
     catch (e) {
+      // Log full details so Vercel function logs show exactly why Gemini failed
       console.warn('[aiProvider] Gemini failed, trying OpenCloud:', e.message)
+      console.warn('[aiProvider] Gemini key present:', !!providers.gemini.key, '| key prefix:', providers.gemini.key?.slice(0, 8))
     }
   }
 
