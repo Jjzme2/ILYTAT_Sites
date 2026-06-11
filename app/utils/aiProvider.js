@@ -9,6 +9,8 @@ const providers = {
   opencloud: {
     url: (process.env.OPENCLOUD_BASE_URL ?? '') + '/v1/chat/completions',
     key: process.env.OPENCLOUD_API_KEY,
+    // Required by all OpenAI-compatible APIs — set OPENCLOUD_MODEL in your env
+    model: process.env.OPENCLOUD_MODEL ?? 'gpt-4o-mini',
   },
 }
 
@@ -47,6 +49,7 @@ async function callOpenCloud(userMessage) {
     },
     signal: AbortSignal.timeout(15_000),
     body: JSON.stringify({
+      model: providers.opencloud.model,
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
         { role: 'user',   content: userMessage },
