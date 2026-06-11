@@ -23,12 +23,12 @@ if (!providers.gemini.key) {
 {
   const missing = [
     !process.env.OPENCLOUD_BASE_URL && "OPENCLOUD_BASE_URL",
-    !providers.opencloud.key        && "OPENCLOUD_API_KEY",
+    !providers.opencloud.key && "OPENCLOUD_API_KEY",
   ].filter(Boolean);
   if (missing.length) {
     console.warn(
       `[aiProvider] OpenRouter fallback disabled — missing env var(s): ${missing.join(", ")}. ` +
-      "Add them in Vercel → Project Settings → Environment Variables.",
+        "Add them in Vercel → Project Settings → Environment Variables.",
     );
   }
 }
@@ -73,7 +73,7 @@ async function callOpenCloud(userMessage) {
       "Content-Type": "application/json",
       Authorization: `Bearer ${providers.opencloud.key}`,
       // OpenRouter requires HTTP-Referer to identify the calling app
-      "HTTP-Referer": "https://ilytat.com",
+      "HTTP-Referer": "https://sites.ilytat.com",
       "X-Title": "ILYTAT LLC",
     },
     signal: AbortSignal.timeout(25_000),
@@ -120,12 +120,12 @@ export async function generateQuote(answers) {
 
   const missing = [
     !process.env.OPENCLOUD_BASE_URL && "OPENCLOUD_BASE_URL",
-    !providers.opencloud.key        && "OPENCLOUD_API_KEY",
+    !providers.opencloud.key && "OPENCLOUD_API_KEY",
   ].filter(Boolean);
   if (missing.length) {
     console.error(
       `[aiProvider] No fallback available — Gemini failed and OpenRouter is not configured. ` +
-      `Missing: ${missing.join(", ")}`,
+        `Missing: ${missing.join(", ")}`,
     );
   }
   throw new Error("No AI provider configured or available. Please try again.");

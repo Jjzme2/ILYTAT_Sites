@@ -3,7 +3,7 @@
  *
  * Scheduled via vercel.json — runs every Monday at 10 AM CT (15:00 UTC).
  * Can also be triggered manually:
- *   curl -H "x-cron-secret: <CRON_SECRET>" https://ilytat.com/api/cron/weekly-blog
+ *   curl -H "x-cron-secret: <CRON_SECRET>" https://sites.ilytat.com/api/cron/weekly-blog
  *
  * Reads the saved blog plan from adminConfig/blog-plan.
  * Falls back to a rotating default topic if no plan was saved.
@@ -11,107 +11,116 @@
  * and sends a notification email.
  */
 
-import { createAiBlogPost }                        from '~/server/utils/generateBlog'
-import { firestoreRequest, fromFirestoreFields, toFirestoreFields } from '~/server/utils/firebaseAdmin'
-import { log }                                     from '~/server/utils/logger'
+import { createAiBlogPost } from "~/server/utils/generateBlog";
+import {
+  firestoreRequest,
+  fromFirestoreFields,
+  toFirestoreFields,
+} from "~/server/utils/firebaseAdmin";
+import { log } from "~/server/utils/logger";
 
 // ── Default fallback topics (rotates by week-of-year) ────────────────────────
 
 const DEFAULT_TOPICS = [
-  'Why every local business in Kankakee County needs a professional website in 2025',
-  'How to tell if your current website is hurting your business',
-  'What to look for when hiring a web designer for your small business',
+  "Why every local business in Kankakee County needs a professional website in 2025",
+  "How to tell if your current website is hurting your business",
+  "What to look for when hiring a web designer for your small business",
   'The real cost of a "free" website builder for your local business',
-  'How fast-loading websites win more customers for local service businesses',
-  'Why your Google Business Profile and website need to work together',
-  'What questions to ask before signing a web design contract',
-  'How a blog can drive new customers to your local business',
-  'Mobile-first websites: why it matters more than ever for local businesses',
-  'The difference between a website template and a custom-built site',
-  'How ILYTAT helped a Kankakee County business grow their online presence',
-  'Common website mistakes local businesses make — and how to fix them',
-]
+  "How fast-loading websites win more customers for local service businesses",
+  "Why your Google Business Profile and website need to work together",
+  "What questions to ask before signing a web design contract",
+  "How a blog can drive new customers to your local business",
+  "Mobile-first websites: why it matters more than ever for local businesses",
+  "The difference between a website template and a custom-built site",
+  "How ILYTAT helped a Kankakee County business grow their online presence",
+  "Common website mistakes local businesses make — and how to fix them",
+];
 
 function defaultTopic(): string {
-  const week = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000))
-  return DEFAULT_TOPICS[week % DEFAULT_TOPICS.length]!
+  const week = Math.floor(Date.now() / (7 * 24 * 60 * 60 * 1000));
+  return DEFAULT_TOPICS[week % DEFAULT_TOPICS.length]!;
 }
 
 // ── Auth guard ────────────────────────────────────────────────────────────────
 
-function isAuthorised(event: Parameters<typeof defineEventHandler>[0] extends (e: infer E) => unknown ? E : never): boolean {
-  const config = useRuntimeConfig()
-  const secret = config.cronSecret as string
-  if (!secret) return false
-  const vercelCron = getHeader(event, 'x-vercel-cron')
-  const provided   = getHeader(event, 'x-cron-secret')
-  return vercelCron === '1' || provided === secret
+function isAuthorised(
+  event: Parameters<typeof defineEventHandler>[0] extends (e: infer E) => unknown ? E : never,
+): boolean {
+  const config = useRuntimeConfig();
+  const secret = config.cronSecret as string;
+  if (!secret) return false;
+  const vercelCron = getHeader(event, "x-vercel-cron");
+  const provided = getHeader(event, "x-cron-secret");
+  return vercelCron === "1" || provided === secret;
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export default defineEventHandler(async (event) => {
   if (!isAuthorised(event)) {
-    throw createError({ statusCode: 401, message: 'Unauthorized' })
+    throw createError({ statusCode: 401, message: "Unauthorized" });
   }
 
-  if (!process.env.GEMINI_API_KEY && !(process.env.OPENCLOUD_API_KEY && process.env.OPENCLOUD_BASE_URL)) {
-    await log('warn', 'cron', 'weekly-blog skipped: no AI provider configured')
-    return { skipped: true, reason: 'No AI provider configured' }
+  if (
+    !process.env.GEMINI_API_KEY &&
+    !(process.env.OPENCLOUD_API_KEY && process.env.OPENCLOUD_BASE_URL)
+  ) {
+    await log("warn", "cron", "weekly-blog skipped: no AI provider configured");
+    return { skipped: true, reason: "No AI provider configured" };
   }
 
-  const config = useRuntimeConfig()
+  const config = useRuntimeConfig();
 
   // ── Read saved plan ─────────────────────────────────────────────────────────
-  let focalPoint      = defaultTopic()
-  let additionalNotes = ''
+  let focalPoint = defaultTopic();
+  let additionalNotes = "";
 
   try {
-    const planDoc = await firestoreRequest('GET', 'adminConfig/blog-plan')
-    const plan    = fromFirestoreFields(planDoc.fields || {})
+    const planDoc = await firestoreRequest("GET", "adminConfig/blog-plan");
+    const plan = fromFirestoreFields(planDoc.fields || {});
     if (plan.focalPoint && String(plan.focalPoint).trim()) {
-      focalPoint      = String(plan.focalPoint).trim()
-      additionalNotes = String(plan.additionalNotes ?? '').trim()
+      focalPoint = String(plan.focalPoint).trim();
+      additionalNotes = String(plan.additionalNotes ?? "").trim();
     }
-  }
-  catch {
+  } catch {
     // No plan saved yet — use the default topic
   }
 
   // ── Generate & save ─────────────────────────────────────────────────────────
-  let result: { id: string; title: string; slug: string }
+  let result: { id: string; title: string; slug: string };
 
   try {
     result = await createAiBlogPost({
       focalPoint,
       additionalNotes,
-      status: 'draft',
-    })
-  }
-  catch (err) {
-    const msg = err instanceof Error ? err.message : String(err)
-    await log('error', 'cron', `weekly-blog generation failed: ${msg}`)
-    throw createError({ statusCode: 500, message: msg })
+      status: "draft",
+    });
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    await log("error", "cron", `weekly-blog generation failed: ${msg}`);
+    throw createError({ statusCode: 500, message: msg });
   }
 
   // ── Clear the plan so next week starts fresh ────────────────────────────────
-  const now = new Date().toISOString()
-  firestoreRequest('PATCH', 'adminConfig/blog-plan', {
-    fields: toFirestoreFields({ focalPoint: '', additionalNotes: '', weekOf: '', updatedAt: now }),
-  }).catch(() => { /* non-fatal */ })
+  const now = new Date().toISOString();
+  firestoreRequest("PATCH", "adminConfig/blog-plan", {
+    fields: toFirestoreFields({ focalPoint: "", additionalNotes: "", weekOf: "", updatedAt: now }),
+  }).catch(() => {
+    /* non-fatal */
+  });
 
   // ── Email notification ──────────────────────────────────────────────────────
-  const resendKey   = config.resendApiKey    as string
-  const notifyEmail = config.notificationEmail as string
-  const siteUrl     = config.public.siteUrl  as string
+  const resendKey = config.resendApiKey as string;
+  const notifyEmail = config.notificationEmail as string;
+  const siteUrl = config.public.siteUrl as string;
 
   if (resendKey && notifyEmail) {
-    fetch('https://api.resend.com/emails', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}` },
+    fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${resendKey}` },
       body: JSON.stringify({
-        from:    config.resendFrom as string,
-        to:      [notifyEmail],
+        from: config.resendFrom as string,
+        to: [notifyEmail],
         subject: `New AI draft ready: "${result.title}"`,
         html: `
           <p>Your weekly AI blog post has been saved as a <strong>draft</strong>.</p>
@@ -129,10 +138,12 @@ export default defineEventHandler(async (event) => {
           </p>
         `.trim(),
       }),
-    }).catch(() => { /* non-fatal */ })
+    }).catch(() => {
+      /* non-fatal */
+    });
   }
 
-  await log('info', 'cron', `weekly-blog generated: "${result.title}" (${result.id})`)
+  await log("info", "cron", `weekly-blog generated: "${result.title}" (${result.id})`);
 
-  return { success: true, id: result.id, title: result.title, slug: result.slug }
-})
+  return { success: true, id: result.id, title: result.title, slug: result.slug };
+});

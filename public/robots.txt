@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /admin
 
-Sitemap: https://ilytat.com/sitemap.xml
+Sitemap: https://sites.ilytat.com/sitemap.xml
