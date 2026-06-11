@@ -36,7 +36,14 @@ const QUESTIONS = [
 ] as const
 
 type Phase = 'questions' | 'loading' | 'result' | 'submitted'
-type QuoteResult = { tier: string; price: string; summary: string; addHosting: boolean; nextStep: string }
+type QuoteResult = {
+  tier:       string
+  price:      string
+  summary:    string
+  addHosting: boolean
+  nextStep:   string
+  message:    string
+}
 
 const phase       = ref<Phase>('questions')
 const currentStep = ref(0)
@@ -48,6 +55,26 @@ const leadPhone   = ref('')
 const error       = ref('')
 const submitting  = ref(false)
 
+// ─── Typewriter ───────────────────────────────────────────────────────────────
+const typedMessage = ref('')
+const typingDone   = ref(false)
+
+function startTypewriter(text: string) {
+  typedMessage.value = ''
+  typingDone.value = false
+  let i = 0
+  const tick = setInterval(() => {
+    if (i < text.length) {
+      typedMessage.value += text[i++]
+    }
+    else {
+      typingDone.value = true
+      clearInterval(tick)
+    }
+  }, 18)
+}
+
+// ─── Wizard logic ─────────────────────────────────────────────────────────────
 const currentQuestion = computed(() => QUESTIONS[currentStep.value])
 
 const isAnswered = computed(() => {
@@ -81,7 +108,6 @@ async function next() {
     return
   }
 
-  // Last step complete — call AI
   phase.value = 'loading'
   error.value = ''
   try {
@@ -90,6 +116,7 @@ async function next() {
       body: { answers: answers.value },
     })
     phase.value = 'result'
+    startTypewriter(quote.value.message ?? '')
   }
   catch (e: unknown) {
     error.value = e instanceof Error ? e.message : 'Something went wrong. Please try again.'
@@ -149,7 +176,6 @@ async function submitLead() {
         <!-- ── Questions ─────────────────────────────────────────────────── -->
         <div v-if="phase === 'questions'" class="glass-deep rounded-sm p-8 sm:p-6" data-reveal>
 
-          <!-- Progress dots -->
           <div class="flex items-center gap-2 mb-8">
             <div
               v-for="(_, i) in QUESTIONS"
@@ -171,7 +197,6 @@ async function submitLead() {
             Select all that apply
           </p>
 
-          <!-- Option buttons -->
           <div class="flex flex-col gap-2.5">
             <button
               v-for="option in currentQuestion.options"
@@ -185,7 +210,6 @@ async function submitLead() {
               @click="selectOption(option)"
             >
               <span class="flex items-center gap-3">
-                <!-- Circle for radio, square for multiselect -->
                 <span
                   class="flex-shrink-0 flex items-center justify-center transition-all duration-200"
                   :class="[
@@ -204,7 +228,6 @@ async function submitLead() {
 
           <p v-if="error" class="mt-4 text-[13px] text-red-400">{{ error }}</p>
 
-          <!-- Nav -->
           <div class="flex items-center justify-between mt-8">
             <button
               v-if="currentStep > 0"
@@ -227,8 +250,37 @@ async function submitLead() {
         </div>
 
         <!-- ── Loading ───────────────────────────────────────────────────── -->
-        <div v-else-if="phase === 'loading'" class="glass-deep rounded-sm p-12 text-center" data-reveal>
-          <div class="w-10 h-10 border-2 border-[var(--theme-accent)] border-t-transparent rounded-full animate-spin mx-auto mb-6" />
+        <div v-else-if="phase === 'loading'" class="glass-deep rounded-sm p-14 text-center">
+
+          <!-- Orbital ring animation -->
+          <div class="relative w-28 h-28 mx-auto mb-10">
+            <!-- Ambient glow -->
+            <div
+              class="absolute inset-0 rounded-full animate-ping"
+              style="background: radial-gradient(circle, color-mix(in srgb, var(--theme-accent) 18%, transparent), transparent); animation-duration: 2s"
+            />
+            <!-- Outer ring -->
+            <div
+              class="absolute inset-0 rounded-full animate-spin"
+              style="border: 2px solid transparent; border-top-color: var(--theme-accent); border-right-color: color-mix(in srgb, var(--theme-accent) 35%, transparent); animation-duration: 2.4s"
+            />
+            <!-- Mid ring (reverse) -->
+            <div
+              class="absolute inset-3.5 rounded-full animate-spin"
+              style="border: 2px solid transparent; border-top-color: color-mix(in srgb, var(--theme-accent) 70%, transparent); border-left-color: color-mix(in srgb, var(--theme-accent) 25%, transparent); animation-duration: 1.7s; animation-direction: reverse"
+            />
+            <!-- Inner ring -->
+            <div
+              class="absolute inset-7 rounded-full animate-spin"
+              style="border: 1.5px solid transparent; border-top-color: color-mix(in srgb, var(--theme-accent) 50%, transparent); animation-duration: 1.1s"
+            />
+            <!-- Core pulse -->
+            <div
+              class="absolute inset-10 rounded-full animate-pulse"
+              style="background: color-mix(in srgb, var(--theme-accent) 30%, transparent); animation-duration: 1.2s"
+            />
+          </div>
+
           <p class="font-display text-[20px] font-bold text-[var(--theme-text)] mb-2 tracking-[-0.3px]">
             Analyzing your needs…
           </p>
@@ -240,6 +292,23 @@ async function submitLead() {
         <!-- ── Result + Lead form ────────────────────────────────────────── -->
         <div v-else-if="phase === 'result' && quote" class="flex flex-col gap-5" data-reveal>
 
+          <!-- AI message with typewriter effect -->
+          <div
+            class="glass-deep rounded-sm px-6 py-5"
+            style="border-color: color-mix(in srgb, var(--theme-accent) 16%, transparent)"
+          >
+            <p class="font-mono text-[10px] tracking-[2px] uppercase mb-3" style="color: color-mix(in srgb, var(--theme-accent) 55%, transparent)">
+              AI Analysis
+            </p>
+            <p class="text-[15px] leading-[1.88] text-(--theme-text)">
+              {{ typedMessage }}<span
+                v-if="!typingDone"
+                class="inline-block w-0.5 h-[1em] align-middle ml-px animate-pulse"
+                style="background: var(--theme-accent)"
+              />
+            </p>
+          </div>
+
           <!-- Quote result card -->
           <div
             class="glass-deep rounded-sm p-7 sm:p-5"
@@ -250,7 +319,7 @@ async function submitLead() {
                 <p class="font-mono text-[10px] tracking-[2px] uppercase mb-1" style="color: color-mix(in srgb, var(--theme-accent) 60%, transparent)">
                   Recommended Package
                 </p>
-                <h3 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px] text-[var(--theme-text)]">
+                <h3 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px] text-(--theme-text)">
                   {{ quote.tier }}
                 </h3>
               </div>
@@ -266,13 +335,12 @@ async function submitLead() {
               {{ quote.summary }}
             </p>
 
-            <!-- Hosting upsell — shown only when AI recommends it -->
             <div
               v-if="quote.addHosting"
               class="mt-4 px-4 py-3 rounded-sm flex items-start gap-3"
               style="background: color-mix(in srgb, var(--theme-accent) 7%, transparent); border: 1px solid color-mix(in srgb, var(--theme-accent) 18%, transparent)"
             >
-              <UIcon name="i-heroicons-sparkles" class="w-4 h-4 flex-shrink-0 mt-0.5 text-[var(--theme-accent)]" />
+              <UIcon name="i-heroicons-sparkles" class="w-4 h-4 shrink-0 mt-0.5 text-(--theme-accent)" />
               <p class="text-[13px]" style="color: var(--theme-text-body)">
                 <span class="text-[var(--theme-text)] font-medium">Add managed hosting for $89/mo</span> — JJ keeps your site fast, secure, and updated. No tech headaches.
               </p>
