@@ -54,8 +54,12 @@ export default defineNuxtConfig({
     families: [
       // preload: true injects <link rel="preload"> for these fonts, eliminating
       // the FOUT (flash of unstyled text) on first paint for body + heading copy.
-      { name: 'Inter',      provider: 'google', preload: true },
-      { name: 'Sora',       provider: 'google', weights: [400, 600, 700, 800], preload: true },
+      // display:optional — prevents the font swap from registering as a new LCP event
+      // on slow connections. On fast connections the preload fires early enough that
+      // the font is ready before the initial render window closes (≈100 ms).
+      // Inter and Sora are the largest text on the page; late swaps are the #1 LCP killer.
+      { name: 'Inter',      provider: 'google', preload: true, display: 'optional' },
+      { name: 'Sora',       provider: 'google', weights: [400, 600, 700, 800], preload: true, display: 'optional' },
       // display:optional — font used only for small accent labels; no swap means no CLS
       { name: 'Space Mono', provider: 'google', weights: [400, 700], display: 'optional' },
       // Playfair Display: the LCP element ("local business.") uses this italic face.
