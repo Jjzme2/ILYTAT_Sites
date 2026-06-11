@@ -1,8 +1,9 @@
 /**
  * generateBlog.ts
  *
- * Calls the Gemini API to write a blog post for ILYTAT, then persists it
- * as a Firestore document in `blog_posts`.
+ * Calls the AI to write a blog post for ILYTAT, then persists it to Firestore.
+ * Provider order: Gemini (primary) → OpenCloud/OpenRouter (fallback).
+ * Pattern mirrors app/utils/aiProvider.js.
  *
  * Called by:
  *   - POST /api/admin/generate-blog  (manual admin trigger)
@@ -22,9 +23,9 @@ export interface GeneratedBlog {
   accentColor: string
 }
 
-// ── Brand context injected into every prompt ──────────────────────────────────
+// ── System prompt (injected into every generation) ────────────────────────────
 
-const BRAND_CONTEXT = `
+const SYSTEM_PROMPT = `
 ILYTAT LLC is a boutique web design agency based in Manteno, Illinois. We serve small
 businesses in Kankakee County — Manteno, Bourbonnais, Bradley, Kankakee, Peotone —
 and surrounding areas in northeast Illinois.
@@ -38,66 +39,15 @@ What we do:
   real estate, nonprofits
 
 Brand voice: professional but warm, plainspoken, practical. Never condescending.
-We write for business owners, not developers. Avoid jargon; explain trade-offs simply.
+Write for business owners, not developers. Avoid jargon; explain trade-offs simply.
 
 Blog purpose:
 - Establish ILYTAT as the go-to web authority for Kankakee County businesses
 - Help owners make confident decisions about their web presence
 - Drive inbound leads by answering questions they are already Googling
-`.trim()
 
-// ── Gemini REST call ──────────────────────────────────────────────────────────
-
-export async function callGemini(apiKey: string, prompt: string): Promise<string> {
-  const model = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash'
-  const url   = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`
-
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }],
-      generationConfig: {
-        temperature: 0.75,
-        maxOutputTokens: 4096,
-        responseMimeType: 'application/json',
-      },
-    }),
-  })
-
-  if (!res.ok) {
-    const err = await res.text().catch(() => res.statusText)
-    throw new Error(`Gemini API error ${res.status}: ${err}`)
-  }
-
-  const data = await res.json()
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) throw new Error(`Gemini returned no content: ${JSON.stringify(data).slice(0, 300)}`)
-  return text
-}
-
-// ── Blog generation ───────────────────────────────────────────────────────────
-
-export async function generateBlogPost(opts: {
-  focalPoint:      string
-  additionalNotes?: string
-  apiKey:          string
-}): Promise<GeneratedBlog> {
-  const today = new Date().toLocaleDateString('en-US', {
-    timeZone: 'America/Chicago',
-    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
-  })
-
-  const prompt = `
-${BRAND_CONTEXT}
-
-Today is ${today}.
-
-Write one blog post for the ILYTAT website with this focal point:
-"${opts.focalPoint}"
-${opts.additionalNotes ? `\nExtra context from the team:\n${opts.additionalNotes}` : ''}
-
-Return ONLY a single valid JSON object — no markdown fences, no commentary outside the JSON:
+When given a focal point, write one complete blog post and return ONLY a single valid
+JSON object — no markdown fences, no commentary outside the JSON:
 
 {
   "title":       "Blog post title, 50–70 characters, compelling and specific",
@@ -105,19 +55,155 @@ Return ONLY a single valid JSON object — no markdown fences, no commentary out
   "excerpt":     "2–3 sentence summary for the listing page, 120–160 characters",
   "content":     "Full post as HTML. Use only: <h2> <h3> <p> <ul> <ol> <li> <strong> <em> <blockquote>. No <html>/<body>/<head> wrappers.",
   "tags":        ["tag1", "tag2", "tag3"],
-  "accentColor": "One hex color from this list only: #6366f1 #10b981 #f59e0b #ef4444 #8b5cf6 #06b6d4"
+  "accentColor": "Exactly one hex from this list: #6366f1 #10b981 #f59e0b #ef4444 #8b5cf6 #06b6d4"
 }
 
 Content requirements:
-- 700–1 000 words inside the content field
+- 700–1000 words inside the content field
 - Open with a locally-relevant hook (Kankakee County or a specific city when natural)
 - At least two <h2> section headings
 - At least one <ul> or <ol> list
-- Close with a short call-to-action paragraph mentioning ILYTAT by name
+- Close with a short CTA paragraph mentioning ILYTAT by name
 - Tone: warm, practical, no tech jargon
 `.trim()
 
-  const raw = await callGemini(opts.apiKey, prompt)
+// ── Startup config warnings ───────────────────────────────────────────────────
+
+if (!process.env.GEMINI_API_KEY) {
+  console.warn('[generateBlog] GEMINI_API_KEY is not set — primary provider disabled.')
+}
+{
+  const missing = [
+    !process.env.OPENCLOUD_BASE_URL && 'OPENCLOUD_BASE_URL',
+    !process.env.OPENCLOUD_API_KEY  && 'OPENCLOUD_API_KEY',
+  ].filter(Boolean)
+  if (missing.length) {
+    console.warn(`[generateBlog] OpenRouter fallback disabled — missing: ${missing.join(', ')}`)
+  }
+}
+
+// ── Provider: Gemini ──────────────────────────────────────────────────────────
+
+async function callGemini(userMessage: string): Promise<string> {
+  const model = process.env.GEMINI_MODEL    ?? 'gemini-2.0-flash'
+  const key   = process.env.GEMINI_API_KEY
+  if (!key) throw new Error('GEMINI_API_KEY not set')
+
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+    {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      signal:  AbortSignal.timeout(40_000),
+      body: JSON.stringify({
+        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+        contents: [{ role: 'user', parts: [{ text: userMessage }] }],
+        generationConfig: {
+          temperature:      0.75,
+          maxOutputTokens:  4096,
+          responseMimeType: 'application/json',
+        },
+      }),
+    },
+  )
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`Gemini ${res.status}: ${body}`)
+  }
+
+  const data = await res.json()
+  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text
+  if (!text) {
+    const reason = data?.candidates?.[0]?.finishReason ?? 'unknown'
+    throw new Error(`Gemini empty response (finishReason: ${reason})`)
+  }
+  return text
+}
+
+// ── Provider: OpenCloud / OpenRouter ─────────────────────────────────────────
+
+async function callOpenCloud(userMessage: string): Promise<string> {
+  const baseUrl = process.env.OPENCLOUD_BASE_URL
+  const key     = process.env.OPENCLOUD_API_KEY
+  const model   = process.env.OPENCLOUD_MODEL ?? 'gpt-4o-mini'
+
+  if (!baseUrl || !key) throw new Error('OpenCloud not configured')
+
+  const res = await fetch(`${baseUrl}/v1/chat/completions`, {
+    method:  'POST',
+    headers: {
+      'Content-Type':  'application/json',
+      'Authorization': `Bearer ${key}`,
+      'HTTP-Referer':  'https://ilytat.com',
+      'X-Title':       'ILYTAT LLC',
+    },
+    signal: AbortSignal.timeout(40_000),
+    body: JSON.stringify({
+      model,
+      messages: [
+        { role: 'system', content: SYSTEM_PROMPT },
+        { role: 'user',   content: userMessage   },
+      ],
+      response_format: { type: 'json_object' },
+    }),
+  })
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`OpenCloud ${res.status}: ${body}`)
+  }
+
+  const data = await res.json()
+  const text = data?.choices?.[0]?.message?.content
+  if (!text) throw new Error('OpenCloud returned empty response')
+  return text
+}
+
+// ── Unified AI call with fallback ─────────────────────────────────────────────
+
+async function callAI(userMessage: string): Promise<string> {
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      return await callGemini(userMessage)
+    }
+    catch (e) {
+      console.warn('[generateBlog] Gemini failed, trying OpenCloud:', (e as Error).message)
+    }
+  }
+
+  if (process.env.OPENCLOUD_API_KEY && process.env.OPENCLOUD_BASE_URL) {
+    return await callOpenCloud(userMessage)
+  }
+
+  const missing = [
+    !process.env.OPENCLOUD_BASE_URL && 'OPENCLOUD_BASE_URL',
+    !process.env.OPENCLOUD_API_KEY  && 'OPENCLOUD_API_KEY',
+  ].filter(Boolean)
+  if (missing.length) {
+    console.error(`[generateBlog] No fallback available — missing: ${missing.join(', ')}`)
+  }
+  throw new Error('No AI provider available. Configure GEMINI_API_KEY or OPENCLOUD_API_KEY.')
+}
+
+// ── Blog generation ───────────────────────────────────────────────────────────
+
+export async function generateBlogPost(opts: {
+  focalPoint:       string
+  additionalNotes?: string
+}): Promise<GeneratedBlog> {
+  const today = new Date().toLocaleDateString('en-US', {
+    timeZone: 'America/Chicago',
+    weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+  })
+
+  const userMessage = [
+    `Today is ${today}.`,
+    `Write a blog post with this focal point: "${opts.focalPoint}"`,
+    opts.additionalNotes ? `Extra context from the team:\n${opts.additionalNotes}` : '',
+  ].filter(Boolean).join('\n\n')
+
+  const raw = await callAI(userMessage)
 
   let parsed: GeneratedBlog
   try {
@@ -125,12 +211,12 @@ Content requirements:
   }
   catch {
     const match = raw.match(/\{[\s\S]*\}/)
-    if (!match) throw new Error(`Gemini returned non-JSON: ${raw.slice(0, 300)}`)
+    if (!match) throw new Error(`AI returned non-JSON: ${raw.slice(0, 300)}`)
     parsed = JSON.parse(match[0])
   }
 
   if (!parsed.title || !parsed.slug || !parsed.content) {
-    throw new Error(`Gemini response missing required fields: ${JSON.stringify(parsed).slice(0, 300)}`)
+    throw new Error(`AI response missing required fields: ${JSON.stringify(parsed).slice(0, 300)}`)
   }
 
   const validAccents = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4']
@@ -148,10 +234,9 @@ Content requirements:
 // ── Persist to Firestore ──────────────────────────────────────────────────────
 
 export async function createAiBlogPost(opts: {
-  focalPoint:      string
+  focalPoint:       string
   additionalNotes?: string
-  status?:         'draft' | 'published'
-  apiKey:          string
+  status?:          'draft' | 'published'
 }): Promise<{ id: string; title: string; slug: string }> {
   const blog   = await generateBlogPost(opts)
   const now    = new Date().toISOString()

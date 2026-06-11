@@ -12,9 +12,8 @@ import { log }               from '~/server/utils/logger'
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 
-  const config = useRuntimeConfig()
-  if (!config.geminiApiKey) {
-    throw createError({ statusCode: 503, message: 'GEMINI_API_KEY is not configured on this server.' })
+  if (!process.env.GEMINI_API_KEY && !(process.env.OPENCLOUD_API_KEY && process.env.OPENCLOUD_BASE_URL)) {
+    throw createError({ statusCode: 503, message: 'No AI provider configured (GEMINI_API_KEY or OPENCLOUD_API_KEY + OPENCLOUD_BASE_URL required).' })
   }
 
   const body = await readBody(event)
@@ -31,7 +30,6 @@ export default defineEventHandler(async (event) => {
       focalPoint,
       additionalNotes: String(body.additionalNotes ?? '').trim(),
       status,
-      apiKey: config.geminiApiKey as string,
     })
 
     await log('info', 'api', `Admin triggered AI blog: "${result.title}" → ${result.id} (${status})`)

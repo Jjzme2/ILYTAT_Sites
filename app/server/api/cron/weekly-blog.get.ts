@@ -55,12 +55,12 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
 
-  const config = useRuntimeConfig()
-
-  if (!config.geminiApiKey) {
-    await log('warn', 'cron', 'weekly-blog skipped: GEMINI_API_KEY not set')
-    return { skipped: true, reason: 'GEMINI_API_KEY not configured' }
+  if (!process.env.GEMINI_API_KEY && !(process.env.OPENCLOUD_API_KEY && process.env.OPENCLOUD_BASE_URL)) {
+    await log('warn', 'cron', 'weekly-blog skipped: no AI provider configured')
+    return { skipped: true, reason: 'No AI provider configured' }
   }
+
+  const config = useRuntimeConfig()
 
   // ── Read saved plan ─────────────────────────────────────────────────────────
   let focalPoint      = defaultTopic()
@@ -86,7 +86,6 @@ export default defineEventHandler(async (event) => {
       focalPoint,
       additionalNotes,
       status: 'draft',
-      apiKey: config.geminiApiKey as string,
     })
   }
   catch (err) {
