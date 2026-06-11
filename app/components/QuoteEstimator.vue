@@ -304,7 +304,7 @@ async function submitLead() {
             <p class="font-mono text-[10px] tracking-[2px] uppercase mb-3" style="color: color-mix(in srgb, var(--theme-accent) 55%, transparent)">
               AI Analysis
             </p>
-            <p class="text-[15px] leading-[1.88] text-(--theme-text)">
+            <p class="text-[15px] leading-[1.88]" style="color: var(--theme-text)">
               {{ typedMessage }}<span
                 v-if="!typingDone"
                 class="inline-block w-0.5 h-[1em] align-middle ml-px animate-pulse"
@@ -323,7 +323,7 @@ async function submitLead() {
                 <p class="font-mono text-[10px] tracking-[2px] uppercase mb-1" style="color: color-mix(in srgb, var(--theme-accent) 60%, transparent)">
                   Recommended Package
                 </p>
-                <h3 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px] text-(--theme-text)">
+                <h3 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px]" style="color: var(--theme-text)">
                   {{ quote.tier }}
                 </h3>
               </div>
