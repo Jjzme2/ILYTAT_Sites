@@ -1,38 +1,52 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useWindowScroll, useMouseInElement } from '@vueuse/core'
+import { ref } from 'vue'
 import { siteConfig } from '~/config/site.config'
 
 const { track } = useAnalytics()
 const { monthlyRate } = siteConfig
-const { y: scrollY } = useWindowScroll()
 
-const heroRef = ref<HTMLElement | null>(null)
-const { elementX: mouseX, elementY: mouseY, isOutside } = useMouseInElement(heroRef)
+const heroRef  = ref<HTMLElement | null>(null)
+const blob1Ref = ref<HTMLElement | null>(null)
+const blob2Ref = ref<HTMLElement | null>(null)
+const blob3Ref = ref<HTMLElement | null>(null)
+const blob4Ref = ref<HTMLElement | null>(null)
 
-const blob1Style = computed(() => {
-  const sy = scrollY.value * 0.08
-  const mx = isOutside.value ? 0 : (mouseX.value - 540) * 0.012
-  const my = isOutside.value ? 0 : (mouseY.value - 360) * 0.009
-  return { translate: `${mx}px ${-sy + my}px` }
-})
-const blob2Style = computed(() => {
-  const sy = scrollY.value * 0.05
-  const mx = isOutside.value ? 0 : (mouseX.value - 540) * -0.007
-  const my = isOutside.value ? 0 : (mouseY.value - 360) * 0.005
-  return { translate: `${mx}px ${-sy + my}px` }
-})
-const blob3Style = computed(() => {
-  const sy = scrollY.value * 0.13
-  const mx = isOutside.value ? 0 : (mouseX.value - 540) * 0.016
-  const my = isOutside.value ? 0 : (mouseY.value - 360) * -0.01
-  return { translate: `${mx}px ${-sy + my}px` }
-})
-const blob4Style = computed(() => {
-  const sy = scrollY.value * 0.06
-  const mx = isOutside.value ? 0 : (mouseX.value - 540) * -0.009
-  const my = isOutside.value ? 0 : (mouseY.value - 360) * 0.007
-  return { translate: `${mx}px ${-sy + my}px` }
+onMounted(() => {
+  const hero = heroRef.value
+  if (!hero) return
+
+  let raf: number | null = null
+  let sy = window.scrollY
+  let mx = 0, my = 0, inside = false
+
+  function apply() {
+    raf = null
+    const cmx = inside ? mx : 0
+    const cmy = inside ? my : 0
+    blob1Ref.value!.style.translate = `${(cmx - 540) *  0.012}px ${(-sy * 0.08) + (cmy - 360) *  0.009}px`
+    blob2Ref.value!.style.translate = `${(cmx - 540) * -0.007}px ${(-sy * 0.05) + (cmy - 360) *  0.005}px`
+    blob3Ref.value!.style.translate = `${(cmx - 540) *  0.016}px ${(-sy * 0.13) + (cmy - 360) * -0.01}px`
+    blob4Ref.value!.style.translate = `${(cmx - 540) * -0.009}px ${(-sy * 0.06) + (cmy - 360) *  0.007}px`
+  }
+
+  function schedule() { if (raf === null) raf = requestAnimationFrame(apply) }
+
+  const onScroll    = () => { sy = window.scrollY; schedule() }
+  const onMove      = (e: PointerEvent) => { mx = e.clientX; my = e.clientY; inside = true; schedule() }
+  const onLeave     = () => { inside = false; schedule() }
+
+  window.addEventListener('scroll', onScroll, { passive: true })
+  hero.addEventListener('pointermove', onMove as EventListener, { passive: true })
+  hero.addEventListener('pointerleave', onLeave, { passive: true })
+
+  apply()
+
+  onUnmounted(() => {
+    if (raf !== null) cancelAnimationFrame(raf)
+    window.removeEventListener('scroll', onScroll)
+    hero.removeEventListener('pointermove', onMove as EventListener)
+    hero.removeEventListener('pointerleave', onLeave)
+  })
 })
 </script>
 
@@ -42,10 +56,10 @@ const blob4Style = computed(() => {
     class="relative min-h-screen flex flex-col justify-center px-12 pt-[120px] pb-24 overflow-hidden md:px-6 md:pt-[100px] sm:px-4 sm:pt-[88px]">
 
     <!-- Ambient blobs -->
-    <div class="hero-blob hero-blob-1" :style="blob1Style" aria-hidden="true" />
-    <div class="hero-blob hero-blob-2" :style="blob2Style" aria-hidden="true" />
-    <div class="hero-blob hero-blob-3" :style="blob3Style" aria-hidden="true" />
-    <div class="hero-blob hero-blob-4" :style="blob4Style" aria-hidden="true" />
+    <div ref="blob1Ref" class="hero-blob hero-blob-1" aria-hidden="true" />
+    <div ref="blob2Ref" class="hero-blob hero-blob-2" aria-hidden="true" />
+    <div ref="blob3Ref" class="hero-blob hero-blob-3" aria-hidden="true" />
+    <div ref="blob4Ref" class="hero-blob hero-blob-4" aria-hidden="true" />
 
     <!-- SVG fracture-map watermark -->
     <svg

@@ -16,7 +16,12 @@
       "mcp__claude_ai_Vercel__list_deployments",
       "WebFetch(domain:pagespeed.web.dev)",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Jjzet\\\\Projects\\\\ILYTAT_Sites-main\\\\ILYTAT_Sites-main\" -Recurse -Force)",
-      "Bash(Select-Object Name, FullName)"
+      "Bash(Select-Object Name, FullName)",
+      "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\Jjzet\\\\Projects\\\\ILYTAT_Sites-main\\\\ILYTAT_Sites-main\" -Recurse -Include \"logo*\" -ErrorAction SilentlyContinue)",
+      "Bash(Get-ChildItem \"c:\\\\Users\\\\Jjzet\\\\Projects\\\\ILYTAT_Sites-main\\\\ILYTAT_Sites-main\\\\app\" -Recurse -Filter \"*.ts\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(dir \"c:\\\\Users\\\\Jjzet\\\\Projects\\\\ILYTAT_Sites-main\\\\ILYTAT_Sites-main\\\\app\\\\components\\\\blog\")",
+      "Bash(xargs wc -l)"
     ]
   }
 }

@@ -295,6 +295,7 @@ html {
 .animate-marquee {
   display: flex;
   width: max-content;
+  will-change: transform;
   animation: marquee-left 36s linear infinite;
 }
 .animate-marquee:hover { animation-play-state: paused; }

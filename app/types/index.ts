@@ -117,3 +117,10 @@ export interface BlogPost {
   createdAt: Date
   updatedAt: Date
 }
+
+export interface BlogPlan {
+  focalPoint: string
+  additionalNotes: string
+  weekOf: string
+  updatedAt?: string
+}
