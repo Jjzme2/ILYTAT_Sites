@@ -56,9 +56,12 @@ export default defineNuxtConfig({
       // the FOUT (flash of unstyled text) on first paint for body + heading copy.
       { name: 'Inter',      provider: 'google', preload: true },
       { name: 'Sora',       provider: 'google', weights: [400, 600, 700, 800], preload: true },
-      { name: 'Space Mono', provider: 'google', weights: [400, 700] },
-      // Playfair Display: used only for italic serif headlines — skip normal style + 900 weight
-      { name: 'Playfair Display', provider: 'google', weights: [400, 700], styles: ['italic'] },
+      // display:optional — font used only for small accent labels; no swap means no CLS
+      { name: 'Space Mono', provider: 'google', weights: [400, 700], display: 'optional' },
+      // Playfair Display: the LCP element ("local business.") uses this italic face.
+      // Preloading ensures it's ready before FCP, eliminating the font-swap CLS and
+      // the 2-second LCP gap that appears when the font arrives late on slow networks.
+      { name: 'Playfair Display', provider: 'google', weights: [400, 700], styles: ['italic'], preload: true },
     ],
   },
 

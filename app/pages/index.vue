@@ -90,19 +90,17 @@ useReveal()
   <div class="relative min-h-screen bg-[var(--theme-bg)] text-[var(--theme-text)] font-sans leading-relaxed overflow-x-hidden">
     <div class="grain" aria-hidden="true" />
 
-    <!-- Founding Five — hardcoded, dismissible via localStorage -->
-    <ClientOnly>
-      <PromoBanner :promotion="{
-        id: 'founding-five-2025',
-        message: 'Founding client rate available for the first 5 Kankakee County businesses.',
-        ctaText: 'See pricing →',
-        ctaUrl: '#pricing',
-      }" />
-    </ClientOnly>
+    <!-- Founding Five — hardcoded, dismissible via localStorage.
+         Rendered in SSR so it's in initial HTML — avoids CLS from client-only insertion.
+         PromoBanner starts visible:true and hides in onMounted if localStorage says dismissed. -->
+    <PromoBanner :promotion="{
+      id: 'founding-five-2025',
+      message: 'Founding client rate available for the first 5 Kankakee County businesses.',
+      ctaText: 'See pricing →',
+      ctaUrl: '#pricing',
+    }" />
 
-    <ClientOnly>
-      <PromoBanner v-if="promotion" :promotion="promotion" />
-    </ClientOnly>
+    <PromoBanner v-if="promotion" :promotion="promotion" />
 
     <!-- Above fold: eager-loaded, on the critical render path -->
     <SiteNav />
