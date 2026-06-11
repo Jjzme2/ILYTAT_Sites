@@ -63,6 +63,9 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
+    geminiApiKey:     process.env.GEMINI_API_KEY,
+    opencloudBaseUrl: process.env.OPENCLOUD_BASE_URL,
+    opencloudApiKey:  process.env.OPENCLOUD_API_KEY,
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || 'ILYTAT Inquiries <noreply@ilytat.com>',
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || '',
