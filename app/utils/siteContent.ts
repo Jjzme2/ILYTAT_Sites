@@ -29,7 +29,7 @@ export const siteContent = {
 
     /** Why ILYTAT exists. */
     origin:
-      "I didn't start ILYTAT to run an agency. I started it because I'm genuinely good at building clean, fast, high-performance websites — and I saw a real gap in what local businesses around here were getting.",
+      "I didn't start ILYTAT to run an agency. I started it because I'm genuinely good at building clean, fast websites that actually show up on Google — and I saw a real gap in what local businesses around here were getting.",
 
     /** The problem ILYTAT solves. */
     problem:
@@ -63,7 +63,7 @@ export const siteContent = {
     headline: "Your business deserves a website\nthat actually works for you.",
 
     /** Supporting line beneath the headline. */
-    subtext: 'Tell us about your business and we\'ll get back to you within 24 hours.',
+    subtext: "Tell me about your business and I'll get back to you within 24 hours.",
 
     /** Button label. */
     buttonLabel: 'Get Your Free Audit',

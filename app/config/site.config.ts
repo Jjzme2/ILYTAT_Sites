@@ -44,25 +44,25 @@ export const siteConfig = {
         {
             tag: 'Custom Software',
             title: 'Custom Software & Apps',
-            body: 'Booking systems, internal tools, customer portals, or anything beyond a standard website. If you can describe it, we can scope and build it.',
+            body: 'Booking systems, internal tools, customer portals, or anything beyond a standard website. If you can describe it, I can scope and build it.',
         }
     ],
 
     steps: [
         {
             n: '01',
-            title: 'Tell us about your business',
-            body: "Fill out the form below. Share your services, your goals, any materials you have. The more we know, the better the result.",
+            title: 'Tell me about your business',
+            body: "Fill out the form below. Share your services, your goals, any materials you have. The more I understand your situation, the better the result.",
         },
         {
             n: '02',
-            title: 'We design and build it',
-            body: "We use industry-leading AI tools to accelerate design, copywriting, and development — cutting build time in half and keeping costs lower than a traditional agency. Every output is reviewed and refined by a real human. You'll see the site before it's finalized, and revisions are built into every package.",
+            title: 'I design and build it',
+            body: "I use the best AI tools available to speed up design, copywriting, and first drafts — delivering faster and at a lower cost than a traditional agency. Every output is reviewed and refined by me personally. You'll see the site before it's finalized, and revisions are built into every package.",
         },
         {
             n: '03',
             title: 'Your site goes live — and stays live',
-            body: `We launch your site and handle everything technical. Hosting, SSL, domain, and small updates are covered for ${monthlyRate}/month. First month is free.`,
+            body: `I launch your site and handle everything technical. Hosting, SSL, domain, and small updates are covered for ${monthlyRate}/month. First month is free.`,
         },
     ],
 
@@ -167,11 +167,11 @@ export const siteConfig = {
             note: 'one-time build',
             best: 'Businesses that need full functionality',
             features: [
-                'Custom Admin Dashboard / CMS',
-                'Secure User Authentication',
-                'Dynamic Database Integration',
+                'Your Own Control Panel to Manage Content',
+                'Member Login & User Accounts',
+                'Live Data — Inventory, Bookings, or Anything That Changes',
                 'Custom Forms & Booking Flows',
-                'Third-Party API Integrations'
+                'Connections to Your Existing Tools (Payments, Scheduling, CRM)'
             ],
             delivery: '3–5 weeks',
             featured: false,
@@ -181,7 +181,7 @@ export const siteConfig = {
     faqs: [
         {
             q: 'Do I need to already have a domain?',
-            a: `No — domain registration and management are included in the ${monthlyRate}/month plan. If you already own a domain, we'll point it to your new site at no extra cost.`,
+            a: `No — domain registration and management are included in the ${monthlyRate}/month plan. If you already own a domain, I'll point it to your new site at no extra cost.`,
         },
         {
             q: `When does the ${monthlyRate}/month start?`,
@@ -197,15 +197,15 @@ export const siteConfig = {
         },
         {
             q: 'Will you help me set up Google Business Profile?',
-            a: "Yes — I'm happy to walk you through it or do it for you. Mention it in your inquiry and we'll include it in the conversation.",
+            a: "Yes — I'm happy to walk you through it or do it for you. Mention it in your inquiry and I'll include it in the conversation.",
         },
         {
             q: 'Can you work with my existing logo and branding?',
-            a: "Absolutely. Send over what you have — logo files, brand colors, photos — and we'll build around it. No logo yet? I can work with what you have or point you to the right person.",
+            a: "Absolutely. Send over what you have — logo files, brand colors, photos — and I'll build around it. No logo yet? I can work with what you have or point you to the right person.",
         },
         {
             q: 'Do you use AI to build sites?',
-            a: "Yes — and we're upfront about it. We use the best AI tools available to help with copywriting, code generation, and layout drafts. That's how we deliver faster and at a lower cost than a traditional agency. Every result is reviewed and refined by a real developer who takes ownership of the final product. You get the speed of modern tooling and the judgment of someone who actually cares about the outcome.",
+            a: "Yes — and I'm upfront about it. I use the best AI tools available to help with copywriting, layout drafts, and first-pass content. That's how I deliver faster and at a lower cost than a traditional agency. Every result is reviewed and refined by me personally. You get the speed of modern tooling with the judgment of someone who actually cares about the outcome.",
         },
     ]
 }

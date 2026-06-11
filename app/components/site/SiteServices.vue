@@ -12,7 +12,7 @@ const glowClasses = useExplosionColors(services.length)
   <section id="services" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
 
     <header class="mb-16" data-reveal>
-      <p class="eyebrow">What We Build</p>
+      <p class="eyebrow">What I Build</p>
       <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] leading-[1.05]">
         Sites that work as hard
         <br>

@@ -1417,7 +1417,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
                   <p class="record-title">{{ p.title }}</p>
                   <p class="record-meta">{{ p.industry }} · order {{ p.order }}</p>
                   <p class="record-body">{{ p.description }}</p>
-                  <p v-if="p.url" class="record-url"><a :href="p.url" target="_blank">{{ p.url }}</a></p>
+                  <p v-if="p.url" class="record-url"><a :href="/^https?:\/\//i.test(p.url) ? p.url : 'https://' + p.url" target="_blank" rel="noopener noreferrer">{{ p.url }}</a></p>
                 </div>
               </div>
               <div class="record-actions">

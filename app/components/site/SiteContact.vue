@@ -37,7 +37,7 @@ watch(() => props.prefilledService, (name) => {
         </p>
         <ul class="flex flex-col gap-3.5">
           <li
-            v-for="promise in ['Free audit, no obligation', 'Response within 24 hours', 'You own everything we build']"
+            v-for="promise in ['Free audit, no obligation', 'Response within 24 hours', 'You own everything I build']"
             :key="promise"
             class="flex items-center gap-3 text-[13px] text-[var(--theme-text-body)]">
             <span
