@@ -109,14 +109,15 @@ useReveal()
     <main>
     <SiteHero />
     <SitePillarsMarquee />
-    <SitePerformanceStrip />
 
     <!-- Below fold: Lazy prefix splits these into separate JS chunks.
          SSR still renders full HTML — only the client hydration JS is deferred,
          reducing initial bundle parse time without any visible pop-in. -->
+    <LazySitePerformanceStrip />
     <LazySiteServices @select-service="prefilledService = $event" />
     <LazySiteProcess />
     <LazySitePricing />
+    <LazyQuoteEstimator />
 
     <!-- ── Portfolio ──────────────────────────────────────────────────────── -->
     <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16" style="content-visibility:auto;contain-intrinsic-block-size:auto 600px">

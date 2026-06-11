@@ -152,13 +152,54 @@ onUnmounted(() => pricingObserver.value?.disconnect())
             Get Started →
           </a>
         </div>
+
+        <!-- Custom Software — full-width card spanning all columns -->
+        <div
+          class="col-span-full glass-deep rounded-sm px-5 py-7 sm:px-7 sm:py-9 relative hover:border-white/13 transition-[border-color,box-shadow] duration-300"
+          data-reveal
+          :data-reveal-delay="packages.length * 100">
+          <p class="font-mono text-[9px] text-[#333040] uppercase tracking-[2px] mb-5">Custom Software</p>
+          <div class="flex flex-col lg:flex-row lg:items-start gap-8">
+            <!-- Price + tagline -->
+            <div class="shrink-0 lg:w-[220px]">
+              <div class="flex items-baseline gap-2 mb-1.5">
+                <span class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-[#f0ece6]">Custom</span>
+              </div>
+              <span class="font-mono text-[11.5px] font-bold text-[#f5c518]/70 block mb-1">scoped per project</span>
+              <span class="text-[11px] text-[#333040] leading-snug block">Quoted after a discovery call</span>
+              <p class="text-[11.5px] text-[#f5c518]/50 mt-5 leading-snug">
+                Best for: Teams that need something built from scratch
+              </p>
+            </div>
+            <!-- Features -->
+            <div class="flex-1">
+              <ul class="tier-features">
+                <li>Booking Systems &amp; Customer Portals</li>
+                <li>Internal Tools &amp; Admin Dashboards</li>
+                <li>Automations &amp; Third-Party Integrations</li>
+                <li>User Accounts &amp; Secure Login</li>
+                <li>Anything That Needs a Database or Custom Logic</li>
+              </ul>
+            </div>
+            <!-- Delivery + CTA -->
+            <div class="shrink-0 flex flex-col gap-4 lg:pt-[3px]">
+              <p class="font-mono text-[9px] tracking-[1.5px] text-[#222028] uppercase border-t border-white/5 pt-4 lg:border-0 lg:pt-0">
+                Delivered per scope
+              </p>
+              <a
+                href="#contact"
+                class="price-cta"
+                @click="track('cta_click', { label: 'Scope My Project', location: 'pricing', package: 'Custom Software' })">
+                Scope My Project →
+              </a>
+            </div>
+          </div>
+        </div>
       </div>
 
       <p class="mt-10 text-[12.5px] text-[#333040] leading-[1.85]" data-reveal>
         Every site includes managed hosting, SSL, and your domain — starting free on month one.
       </p>
     </div>
-
-    <LazyQuoteEstimator />
   </section>
 </template>
