@@ -109,6 +109,7 @@ useReveal()
     <main>
     <SiteHero />
     <SitePillarsMarquee />
+    <SitePerformanceStrip />
 
     <!-- Below fold: Lazy prefix splits these into separate JS chunks.
          SSR still renders full HTML — only the client hydration JS is deferred,
@@ -122,7 +123,7 @@ useReveal()
     <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16" style="content-visibility:auto;contain-intrinsic-block-size:auto 600px">
       <header class="mb-16" data-reveal>
         <p class="eyebrow">Recent Work</p>
-        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] leading-[1.05]">
+        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-text) leading-[1.05]">
           Built for businesses like yours
         </h2>
       </header>
@@ -137,10 +138,10 @@ useReveal()
           :href="proj.url ? normalizeUrl(proj.url) : undefined"
           :target="proj.url ? '_blank' : undefined"
           :rel="proj.url ? 'noopener noreferrer' : undefined">
-          <div class="aspect-video bg-[#080810] flex items-center justify-center overflow-hidden relative flex-shrink-0">
+          <div class="aspect-video bg-[#080810] flex items-center justify-center overflow-hidden relative shrink-0">
             <img v-if="proj.imageUrl" :src="proj.imageUrl" :alt="proj.title" loading="lazy" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]">
             <UIcon v-else name="i-heroicons-photo" class="w-8 h-8 opacity-[0.05]" />
-            <div v-if="proj.imageUrl" class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+            <div v-if="proj.imageUrl" class="absolute inset-0 bg-linear-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
           </div>
           <div class="px-6 pt-5 pb-6 flex flex-col gap-1.5">
             <span class="font-mono text-[8px] tracking-[2.5px] uppercase block" style="color: color-mix(in srgb, var(--theme-accent) 38%, transparent)">{{ proj.industry }}</span>
@@ -166,7 +167,7 @@ useReveal()
       <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
         <header class="mb-16" data-reveal>
           <p class="eyebrow">Common Questions</p>
-          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] leading-[1.05]">Straight answers</h2>
+          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-text) leading-[1.05]">Straight answers</h2>
         </header>
         <div class="max-w-[680px] flex flex-col gap-1">
           <details
@@ -184,17 +185,17 @@ useReveal()
 
     <!-- ── CTA Band ───────────────────────────────────────────────────────── -->
     <div class="relative mx-12 my-[100px] overflow-hidden rounded-sm md:mx-6 md:my-16 sm:mx-4 sm:my-12" data-reveal>
-      <div class="absolute inset-0 bg-white/[0.022] backdrop-blur-2xl border border-white/[0.08]" />
+      <div class="absolute inset-0 bg-white/[0.022] backdrop-blur-2xl border border-white/8" />
       <div class="absolute top-0 left-0 right-0 h-px" style="background: linear-gradient(to right, transparent, var(--theme-accent), transparent); opacity: 0.6" />
-      <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/[0.04] to-transparent" />
+      <div class="absolute bottom-0 left-0 right-0 h-px bg-linear-to-r from-transparent via-white/4 to-transparent" />
       <div
         class="absolute inset-0 pointer-events-none"
         style="background: radial-gradient(ellipse 55% 110% at 50% -10%, color-mix(in srgb, var(--theme-accent) 5.5%, transparent), transparent)"
         aria-hidden="true" />
-      <div class="relative z-[1] text-center px-12 py-24 sm:px-6 sm:py-16">
+      <div class="relative z-1 text-center px-12 py-24 sm:px-6 sm:py-16">
         <p class="eyebrow justify-center">Ready to start?</p>
         <h2
-          class="font-display text-[clamp(28px,4.2vw,56px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.04] text-[var(--theme-text)]"
+          class="font-display text-[clamp(28px,4.2vw,56px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.04] text-(--theme-text)"
           style="white-space: pre-line">{{ siteContent.cta.headline }}</h2>
         <p class="text-[15px] mb-10 max-w-[440px] mx-auto leading-[1.88]" style="color: var(--theme-text-body)">{{ siteContent.cta.subtext }}</p>
         <a
