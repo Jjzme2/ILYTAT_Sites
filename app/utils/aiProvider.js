@@ -28,7 +28,7 @@ async function callGemini(userMessage) {
   const res = await fetch(`${providers.gemini.url}?key=${providers.gemini.key}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    signal: AbortSignal.timeout(10_000),
+    signal: AbortSignal.timeout(25_000),
     body: JSON.stringify({
       system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
       contents: [{ role: 'user', parts: [{ text: userMessage }] }],
@@ -48,8 +48,11 @@ async function callOpenCloud(userMessage) {
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${providers.opencloud.key}`,
+      // OpenRouter requires HTTP-Referer to identify the calling app
+      'HTTP-Referer': 'https://ilytat.com',
+      'X-Title': 'ILYTAT LLC',
     },
-    signal: AbortSignal.timeout(15_000),
+    signal: AbortSignal.timeout(25_000),
     body: JSON.stringify({
       model: providers.opencloud.model,
       messages: [
@@ -81,9 +84,7 @@ export async function generateQuote(answers) {
       return await callGemini(userMessage)
     }
     catch (e) {
-      // Log full details so Vercel function logs show exactly why Gemini failed
       console.warn('[aiProvider] Gemini failed, trying OpenCloud:', e.message)
-      console.warn('[aiProvider] Gemini key present:', !!providers.gemini.key, '| key prefix:', providers.gemini.key?.slice(0, 8))
     }
   }
 
