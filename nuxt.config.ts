@@ -56,7 +56,7 @@ export default defineNuxtConfig({
       // the FOUT (flash of unstyled text) on first paint for body + heading copy.
       { name: 'Inter',      provider: 'google', preload: true },
       { name: 'Sora',       provider: 'google', weights: [400, 600, 700, 800], preload: true },
-      { name: 'Space Mono', provider: 'google', weights: [400, 700], preload: true },
+      { name: 'Space Mono', provider: 'google', weights: [400, 700] },
       // Playfair Display: used only for italic serif headlines — skip normal style + 900 weight
       { name: 'Playfair Display', provider: 'google', weights: [400, 700], styles: ['italic'] },
     ],

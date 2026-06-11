@@ -763,18 +763,34 @@ html {
   /* Kill all 4 blobs — they're invisible at mobile scale and burn GPU/battery */
   .hero-blob { display: none !important; }
 
-  /* Reduce backdrop-filter blur radius — full blur on a phone GPU is expensive */
+  /* gold-shimmer animates background-position which is not GPU-composited — it
+     forces a paint on every frame. Freeze it at initial position on mobile. */
+  .hero-gold-text { animation: none; }
+
+  /* bob animation on the scroll indicator is decorative — skip on mobile */
+  .animate-bob { animation: none; }
+
+  /* Drop backdrop-filter entirely on card surfaces — even 8px blur is expensive
+     on mid-range mobile GPUs. Cards still look correct with border + shadow alone. */
   .glass-card {
-    backdrop-filter: blur(8px) saturate(130%);
-    -webkit-backdrop-filter: blur(8px) saturate(130%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
   .glass-deep {
-    backdrop-filter: blur(12px) saturate(120%);
-    -webkit-backdrop-filter: blur(12px) saturate(120%);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
   .nav-scrolled {
-    backdrop-filter: blur(16px) saturate(130%) !important;
-    -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+  }
+
+  /* Hero fade-up delays hide the h1 from Lighthouse's LCP measurement until
+     ~1 s after paint. Remove delays on mobile so heading text is visible
+     immediately; keep a short duration so the entrance still reads as intentional. */
+  [class*="fade-up"] {
+    animation-delay: 0s !important;
+    animation-duration: 0.35s !important;
   }
 }
 

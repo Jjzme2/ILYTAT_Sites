@@ -12,8 +12,11 @@ const { init }       = useTheme()
 const { initLumen }  = useLumenPrefs()
 
 onMounted(() => {
-  init()            // restore persisted Ember/Frost/Void theme
-  initLumen()       // restore lumen light on/off preference
-  useLumenTracker() // register single global pointer tracker for Lumen surfaces
+  init()       // restore persisted Ember/Frost/Void theme
+  initLumen()  // restore lumen light on/off preference
+  // Lumen is pointer-driven — skip on touch-only devices (no hover = no pointermove)
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) {
+    useLumenTracker()
+  }
 })
 </script>

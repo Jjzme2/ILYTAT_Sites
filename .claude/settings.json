@@ -21,7 +21,9 @@
       "Bash(Get-ChildItem \"c:\\\\Users\\\\Jjzet\\\\Projects\\\\ILYTAT_Sites-main\\\\ILYTAT_Sites-main\\\\app\" -Recurse -Filter \"*.ts\")",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(dir \"c:\\\\Users\\\\Jjzet\\\\Projects\\\\ILYTAT_Sites-main\\\\ILYTAT_Sites-main\\\\app\\\\components\\\\blog\")",
-      "Bash(xargs wc -l)"
+      "Bash(xargs wc -l)",
+      "Bash(xargs grep -l \"NuxtImg\\\\|img\")",
+      "Bash(xargs ls -la)"
     ]
   }
 }

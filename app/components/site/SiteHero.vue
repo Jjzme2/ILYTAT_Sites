@@ -15,6 +15,10 @@ onMounted(() => {
   const hero = heroRef.value
   if (!hero) return
 
+  // Blobs are hidden via CSS on mobile — skip the RAF loop entirely to avoid
+  // burning CPU writing inline styles to display:none elements.
+  if (window.matchMedia('(max-width: 768px)').matches) return
+
   let raf: number | null = null
   let sy = window.scrollY
   let mx = 0, my = 0, inside = false
