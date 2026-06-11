@@ -40,6 +40,11 @@ export const siteConfig = {
             tag: 'Local Events',
             title: 'Local Events',
             body: 'Event pages, RSVPs, and promotion. Get your event in front of the right people in Kankakee County.',
+        },
+        {
+            tag: 'Custom Software',
+            title: 'Custom Software & Apps',
+            body: 'Booking systems, internal tools, customer portals, or anything beyond a standard website. If you can describe it, we can scope and build it.',
         }
     ],
 

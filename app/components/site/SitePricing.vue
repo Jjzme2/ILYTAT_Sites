@@ -108,7 +108,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
       <!-- Pricing cards -->
       <div class="grid grid-cols-1 gap-4 items-start sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="(pkg, i) in packages" :key="pkg.name"
-          class="glass-deep rounded-sm px-5 py-7 sm:px-7 sm:py-9 relative transition-[border-color,transform] duration-300 hover:-translate-y-1"
+          class="glass-deep rounded-sm px-5 py-7 sm:px-7 sm:py-9 relative transition-[border-color,box-shadow] duration-300"
           :class="pkg.featured ? 'price-card-featured' : 'hover:border-white/[0.13]'" data-reveal
           :data-reveal-delay="i * 100">
           <div v-if="pkg.featured"

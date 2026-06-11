@@ -5,7 +5,11 @@ import {
   signInWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
   type User,
+  type ActionCodeSettings,
 } from '~/utils/firebase'
 import {
   getFirestore,
@@ -32,6 +36,28 @@ const loginEmail = ref('')
 const loginPassword = ref('')
 const loginError = ref('')
 const loginLoading = ref(false)
+const showPassword = ref(false)
+
+// TOTP 2FA state
+const totpEnabled   = ref(false)  // whether 2FA is configured on the server
+const totpStep      = ref(false)  // true = waiting for TOTP code after Firebase auth
+const totpCode      = ref('')
+const totpVerified  = ref(false)  // cleared on logout
+
+// Magic sign-in link
+const magicLinkMode    = ref(false)
+const magicLinkEmail   = ref('')
+const magicLinkSent    = ref(false)
+const magicLinkLoading = ref(false)
+const magicLinkError   = ref('')
+
+// TOTP setup state (security tab)
+const totpSetupQr      = ref('')
+const totpSetupSecret  = ref('')
+const totpSetupCode    = ref('')
+const totpSetupLoading = ref(false)
+const totpSetupError   = ref('')
+const totpSetupSuccess = ref('')
 
 // Global error banner — any failed write/read surfaces here
 const adminError = ref('')
@@ -74,9 +100,14 @@ onMounted(() => {
   const auth = useFirebaseAuth()
   onAuthStateChanged(auth, (u) => {
     user.value = u
-    if (u) loadAll()
+    if (u) {
+      checkTotpStatus().then(() => {
+        if (!totpEnabled.value || totpVerified.value) loadAll()
+      })
+    }
   })
   window.addEventListener('keydown', onGlobalKeydown)
+  handleMagicLinkCallback()
 })
 
 onUnmounted(() => {
@@ -88,6 +119,7 @@ async function login() {
   loginLoading.value = true
   try {
     await signInWithEmailAndPassword(useFirebaseAuth(), loginEmail.value, loginPassword.value)
+    // onAuthStateChanged fires and sets user.value; then we check TOTP status.
   }
   catch (e: unknown) {
     loginError.value = 'Invalid email or password.'
@@ -98,9 +130,100 @@ async function login() {
   }
 }
 
+async function checkTotpStatus() {
+  try {
+    const h   = await getAdminHeaders()
+    const res = await $fetch<{ enabled: boolean }>('/api/admin/totp-status', { headers: h })
+    totpEnabled.value = res.enabled
+    if (res.enabled) {
+      // Check if we already have a valid session from a previous login this tab session
+      const existing = sessionStorage.getItem('totp-session')
+      if (existing) {
+        totpVerified.value = true
+      }
+      else {
+        totpStep.value = true
+      }
+    }
+  }
+  catch {
+    // If the status check fails, proceed without 2FA
+    totpEnabled.value = false
+  }
+}
+
+async function submitTotp() {
+  totpSetupError.value = ''
+  try {
+    const h   = await getAdminHeaders()
+    const res = await $fetch<{ sessionToken: string }>('/api/admin/totp-verify', {
+      method: 'POST',
+      headers: h,
+      body: { code: totpCode.value },
+    })
+    sessionStorage.setItem('totp-session', res.sessionToken)
+    totpVerified.value = true
+    totpStep.value = false
+    loadAll()
+  }
+  catch {
+    loginError.value = 'Invalid code — check your authenticator app and try again.'
+  }
+}
+
 async function logout() {
+  sessionStorage.removeItem('totp-session')
+  totpVerified.value = false
+  totpStep.value     = false
+  totpEnabled.value  = false
+  totpCode.value     = ''
   await signOut(useFirebaseAuth())
   user.value = null
+}
+
+// ── Magic sign-in link ────────────────────────────────────────────────────────
+const MAGIC_LINK_EMAIL_KEY = 'admin-magic-email'
+
+async function sendMagicLink() {
+  magicLinkLoading.value = true
+  magicLinkError.value   = ''
+  try {
+    const config = useRuntimeConfig()
+    const actionCodeSettings: ActionCodeSettings = {
+      url:             `${config.public.siteUrl}/admin`,
+      handleCodeInApp: true,
+    }
+    await sendSignInLinkToEmail(useFirebaseAuth(), magicLinkEmail.value, actionCodeSettings)
+    localStorage.setItem(MAGIC_LINK_EMAIL_KEY, magicLinkEmail.value)
+    magicLinkSent.value = true
+  }
+  catch (e: unknown) {
+    magicLinkError.value = e instanceof Error ? e.message : 'Failed to send sign-in link'
+  }
+  finally {
+    magicLinkLoading.value = false
+  }
+}
+
+// Called on mount — completes the sign-in if the URL contains a magic link.
+async function handleMagicLinkCallback() {
+  const auth = useFirebaseAuth()
+  if (!isSignInWithEmailLink(auth, window.location.href)) return
+  let email = localStorage.getItem(MAGIC_LINK_EMAIL_KEY)
+  if (!email) {
+    email = window.prompt('Please enter your email to complete sign-in:') ?? ''
+  }
+  if (!email) return
+  try {
+    await signInWithEmailLink(auth, email, window.location.href)
+    localStorage.removeItem(MAGIC_LINK_EMAIL_KEY)
+    // Clean the link params from the URL
+    window.history.replaceState({}, document.title, '/admin')
+  }
+  catch (e: unknown) {
+    loginError.value = 'Magic link sign-in failed — it may have expired. Try again.'
+    console.error(e)
+  }
 }
 
 // ── Firestore helpers ─────────────────────────────────────────────────────────
@@ -109,12 +232,16 @@ function db() {
 }
 
 // ── Admin fetch helper ────────────────────────────────────────────────────────
-// Attaches the current user's Firebase ID token to requests so protected
-// admin API routes can verify the caller is authenticated.
+// Attaches the Firebase ID token (and TOTP session token when 2FA is active)
+// to protected admin API requests.
 async function getAdminHeaders(): Promise<Record<string, string>> {
-  const auth = useFirebaseAuth()
+  const auth  = useFirebaseAuth()
   const token = await auth.currentUser?.getIdToken()
-  return token ? { Authorization: `Bearer ${token}` } : {}
+  if (!token) return {}
+  const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
+  const session = sessionStorage.getItem('totp-session')
+  if (session) headers['X-TOTP-Session'] = session
+  return headers
 }
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
@@ -708,6 +835,75 @@ async function deleteSpamAttempt(id: string) {
   }
 }
 
+// ── TOTP Setup ────────────────────────────────────────────────────────────────
+async function totpGenerateSecret() {
+  totpSetupLoading.value = true
+  totpSetupError.value   = ''
+  totpSetupSuccess.value = ''
+  try {
+    const res = await $fetch<{ secret: string; qrDataUrl: string }>('/api/admin/totp-setup', {
+      method: 'POST',
+      headers: await getAdminHeaders(),
+      body: { action: 'generate' },
+    })
+    totpSetupSecret.value = res.secret
+    totpSetupQr.value     = res.qrDataUrl
+    totpSetupCode.value   = ''
+  }
+  catch (e: unknown) {
+    totpSetupError.value = e instanceof Error ? e.message : String(e)
+  }
+  finally {
+    totpSetupLoading.value = false
+  }
+}
+
+async function totpSaveSecret() {
+  totpSetupLoading.value = true
+  totpSetupError.value   = ''
+  try {
+    await $fetch('/api/admin/totp-setup', {
+      method: 'POST',
+      headers: await getAdminHeaders(),
+      body: { action: 'save', secret: totpSetupSecret.value, code: totpSetupCode.value },
+    })
+    totpEnabled.value      = true
+    totpSetupSuccess.value = '2FA enabled! You will be asked for a code on your next login.'
+    totpSetupQr.value      = ''
+    totpSetupSecret.value  = ''
+    totpSetupCode.value    = ''
+  }
+  catch (e: unknown) {
+    totpSetupError.value = e instanceof Error ? e.message : String(e)
+  }
+  finally {
+    totpSetupLoading.value = false
+  }
+}
+
+async function totpDisable() {
+  if (!confirm('Disable 2FA? This will remove the TOTP secret.')) return
+  totpSetupLoading.value = true
+  totpSetupError.value   = ''
+  try {
+    await $fetch('/api/admin/totp-setup', {
+      method: 'POST',
+      headers: await getAdminHeaders(),
+      body: { action: 'disable' },
+    })
+    totpEnabled.value      = false
+    totpVerified.value     = false
+    sessionStorage.removeItem('totp-session')
+    totpSetupSuccess.value = '2FA has been disabled.'
+  }
+  catch (e: unknown) {
+    totpSetupError.value = e instanceof Error ? e.message : String(e)
+  }
+  finally {
+    totpSetupLoading.value = false
+  }
+}
+
 // ── Command Palette ────────────────────────────────────────────────────────────
 interface PaletteCommand {
   id: string
@@ -804,18 +1000,80 @@ function onGlobalKeydown(e: KeyboardEvent) {
         </div>
         <div class="fgroup">
           <label>Password</label>
-          <input v-model="loginPassword" type="password" placeholder="••••••••" required>
+          <div class="password-field">
+            <input v-model="loginPassword" :type="showPassword ? 'text' : 'password'" placeholder="••••••••" required>
+            <button type="button" class="pw-toggle" :aria-label="showPassword ? 'Hide password' : 'Show password'" @click="showPassword = !showPassword">
+              <svg v-if="!showPassword" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/>
+              </svg>
+              <svg v-else xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/>
+              </svg>
+            </button>
+          </div>
         </div>
         <p v-if="loginError" class="form-error">{{ loginError }}</p>
         <button type="submit" class="submit-btn" :disabled="loginLoading">
           {{ loginLoading ? 'Signing in…' : 'Sign In' }}
         </button>
       </form>
+
+      <div class="login-divider"><span>or</span></div>
+
+      <!-- Magic link -->
+      <div v-if="!magicLinkMode && !magicLinkSent">
+        <button class="magic-link-btn" @click="magicLinkMode = true">Email me a sign-in link</button>
+      </div>
+      <form v-else-if="magicLinkMode && !magicLinkSent" class="login-form" style="margin-top:0;" @submit.prevent="sendMagicLink">
+        <div class="fgroup">
+          <label>Your email</label>
+          <input v-model="magicLinkEmail" type="email" placeholder="you@example.com" required>
+        </div>
+        <p v-if="magicLinkError" class="form-error">{{ magicLinkError }}</p>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button type="submit" class="submit-btn" :disabled="magicLinkLoading">
+            {{ magicLinkLoading ? 'Sending…' : 'Send Link' }}
+          </button>
+          <button type="button" class="back-link" style="display:inline;margin-top:0;" @click="magicLinkMode = false">Cancel</button>
+        </div>
+      </form>
+      <div v-else-if="magicLinkSent" style="background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:14px 16px;margin-top:4px;">
+        <p style="font-size:13px;color:#4ade80;margin:0;line-height:1.6;">
+          Link sent to <strong>{{ magicLinkEmail }}</strong>. Check your inbox and click the link to sign in.
+        </p>
+      </div>
+
       <a href="/" class="back-link">← Back to site</a>
     </div>
 
-    <!-- Admin dashboard -->
-    <div v-else class="dashboard">
+    <!-- 2FA step — shown after Firebase auth when TOTP is enabled -->
+    <div v-else-if="totpStep" class="login-screen">
+      <p class="admin-logo">ILYTAT<span>.com</span></p>
+      <h1>Two-Factor Auth</h1>
+      <p style="font-size:13px;color:#8e8ba0;margin-bottom:24px;line-height:1.6;">Enter the 6-digit code from your authenticator app.</p>
+      <form class="login-form" @submit.prevent="submitTotp">
+        <div class="fgroup">
+          <label>Authenticator Code</label>
+          <input
+            v-model="totpCode"
+            type="text"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+            placeholder="000000"
+            maxlength="6"
+            pattern="\d{6}"
+            style="letter-spacing:6px;font-size:22px;text-align:center;font-family:'Space Mono',monospace;"
+            required
+          >
+        </div>
+        <p v-if="loginError" class="form-error">{{ loginError }}</p>
+        <button type="submit" class="submit-btn">Verify</button>
+      </form>
+      <button class="back-link" style="background:none;border:none;cursor:pointer;" @click="logout">← Back to sign in</button>
+    </div>
+
+    <!-- Admin dashboard — only shown after both Firebase auth and TOTP are cleared -->
+    <div v-else-if="user && (!totpEnabled || totpVerified)" class="dashboard">
       <header class="dash-header">
         <a href="/" class="admin-logo">ILYTAT<span>.com</span></a>
         <nav class="dash-tabs">
@@ -1522,6 +1780,58 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
 
       <!-- ── SECURITY tab ── -->
       <section v-if="activeTab === 'security'" class="dash-section" style="max-width:1000px;">
+        <!-- TOTP 2FA setup -->
+        <h2>Two-Factor Authentication</h2>
+        <p class="dash-hint">Require a time-based one-time code (Google Authenticator, Authy, etc.) on every admin login.</p>
+
+        <div class="record-card" style="margin-bottom:32px;flex-direction:column;gap:16px;">
+          <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+            <span style="font-size:13px;color:#8e8ba0;">Status:</span>
+            <span
+              style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;"
+              :style="totpEnabled ? 'background:#16a34a22;color:#4ade80;border:1px solid #4ade8044;' : 'background:#f871711a;color:#f87171;border:1px solid #f8717133;'"
+            >{{ totpEnabled ? 'Enabled' : 'Disabled' }}</span>
+            <button v-if="!totpEnabled" class="submit-btn" style="padding:6px 14px;font-size:12px;" :disabled="totpSetupLoading" @click="totpGenerateSecret">
+              {{ totpSetupLoading ? 'Generating…' : 'Set Up 2FA' }}
+            </button>
+            <button v-else class="danger-btn" :disabled="totpSetupLoading" @click="totpDisable">
+              {{ totpSetupLoading ? 'Disabling…' : 'Disable 2FA' }}
+            </button>
+          </div>
+
+          <!-- QR code setup flow -->
+          <template v-if="totpSetupQr">
+            <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
+              <div>
+                <p style="font-size:12px;color:#8e8ba0;margin-bottom:8px;">Scan with your authenticator app:</p>
+                <img :src="totpSetupQr" alt="TOTP QR code" style="width:160px;height:160px;border-radius:8px;border:1px solid #2a2a32;">
+              </div>
+              <div style="flex:1;min-width:200px;">
+                <p style="font-size:12px;color:#8e8ba0;margin-bottom:4px;">Or enter the secret manually:</p>
+                <code style="font-family:'Space Mono',monospace;font-size:12px;color:#f5c518;word-break:break-all;display:block;margin-bottom:16px;">{{ totpSetupSecret }}</code>
+                <div class="fgroup" style="max-width:200px;">
+                  <label>Verify — enter the 6-digit code</label>
+                  <input
+                    v-model="totpSetupCode"
+                    type="text"
+                    inputmode="numeric"
+                    placeholder="000000"
+                    maxlength="6"
+                    style="letter-spacing:4px;text-align:center;font-family:'Space Mono',monospace;"
+                  >
+                </div>
+                <button class="submit-btn" style="margin-top:12px;" :disabled="totpSetupLoading || totpSetupCode.length !== 6" @click="totpSaveSecret">
+                  {{ totpSetupLoading ? 'Saving…' : 'Enable 2FA' }}
+                </button>
+              </div>
+            </div>
+          </template>
+
+          <p v-if="totpSetupError" class="form-error">{{ totpSetupError }}</p>
+          <p v-if="totpSetupSuccess" style="font-size:13px;color:#4ade80;">{{ totpSetupSuccess }}</p>
+        </div>
+
+        <!-- Security log -->
         <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px;flex-wrap:wrap;">
           <h2 class="dash-title" style="margin:0;">Security Log</h2>
           <button class="submit-btn" style="padding:6px 14px;font-size:12px;" :disabled="spamLoading" @click="loadSpamAttempts">
@@ -1665,6 +1975,63 @@ h1 {
 }
 
 .login-form { display: flex; flex-direction: column; gap: 16px; }
+
+.password-field {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-field input {
+  width: 100%;
+  padding-right: 40px;
+}
+
+.pw-toggle {
+  position: absolute;
+  right: 10px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #68667a;
+  padding: 4px;
+  line-height: 0;
+  transition: color 0.15s;
+}
+
+.pw-toggle:hover { color: #f0ece6; }
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 16px;
+  color: #3a3840;
+  font-size: 12px;
+}
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: #2a2a32;
+}
+
+.magic-link-btn {
+  width: 100%;
+  background: transparent;
+  border: 1px solid #2a2a32;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  color: #8e8ba0;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+.magic-link-btn:hover {
+  border-color: rgba(245, 197, 24, 0.3);
+  color: #f0ece6;
+}
 
 .back-link {
   display: block;

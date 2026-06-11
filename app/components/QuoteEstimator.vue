@@ -7,7 +7,7 @@ const QUESTIONS = [
     key:     'businessType',
     label:   'What type of business do you run?',
     type:    'radio' as const,
-    options: ['Restaurant/Food', 'Service Business', 'Retail/Shop', 'Health/Wellness', 'Other'],
+    options: ['Restaurant/Food', 'Service Business', 'Retail/Shop', 'Health/Wellness', 'Custom Software / App', 'Other'],
   },
   {
     key:     'websiteSituation',
@@ -102,17 +102,11 @@ function selectOption(option: string) {
   }
 }
 
-async function next() {
-  if (!isAnswered.value) return
-  if (currentStep.value < QUESTIONS.length - 1) {
-    currentStep.value++
-    return
-  }
+const isCustomSoftware = computed(() => answers.value.businessType === 'Custom Software / App')
 
+async function fetchQuote() {
   phase.value = 'loading'
   error.value = ''
-  // nextTick ensures the loading animation renders before the fetch starts —
-  // without it Vue batches both phase changes and the loading state never paints
   await nextTick()
   try {
     quote.value = await $fetch<QuoteResult>('/api/get-quote', {
@@ -126,6 +120,23 @@ async function next() {
     error.value = e instanceof Error ? e.message : 'Something went wrong. Please try again.'
     phase.value = 'questions'
   }
+}
+
+async function next() {
+  if (!isAnswered.value) return
+
+  // Custom Software / App — skip website-specific questions, go straight to result
+  if (isCustomSoftware.value && currentStep.value === 0) {
+    await fetchQuote()
+    return
+  }
+
+  if (currentStep.value < QUESTIONS.length - 1) {
+    currentStep.value++
+    return
+  }
+
+  await fetchQuote()
 }
 
 function prev() {
@@ -248,7 +259,7 @@ async function submitLead() {
               :disabled="!isAnswered"
               @click="next"
             >
-              {{ currentStep < QUESTIONS.length - 1 ? 'Next →' : 'Get My Quote →' }}
+              {{ isCustomSoftware && currentStep === 0 ? 'Get Started →' : currentStep < QUESTIONS.length - 1 ? 'Next →' : 'Get My Quote →' }}
             </button>
           </div>
         </div>
@@ -347,13 +358,13 @@ async function submitLead() {
             <div class="flex items-start justify-between gap-4 mb-5">
               <div>
                 <p class="font-mono text-[10px] tracking-[2px] uppercase mb-1" style="color: color-mix(in srgb, var(--theme-accent) 60%, transparent)">
-                  Recommended Package
+                  {{ quote.tier === 'Custom Software' ? 'Project Type' : 'Recommended Package' }}
                 </p>
                 <h3 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px]" style="color: var(--theme-text)">
                   {{ quote.tier }}
                 </h3>
               </div>
-              <div class="text-right flex-shrink-0">
+              <div v-if="quote.tier !== 'Custom Software'" class="text-right flex-shrink-0">
                 <p class="font-display text-[clamp(20px,2.8vw,28px)] font-extrabold text-[var(--theme-accent)] tracking-[-0.5px]">
                   {{ quote.price }}
                 </p>
@@ -379,10 +390,19 @@ async function submitLead() {
             <p class="mt-5 text-[13px] font-medium text-[var(--theme-text)] leading-[1.7]">
               {{ quote.nextStep }}
             </p>
+
+            <!-- Custom software: contact CTA instead of lead form -->
+            <a
+              v-if="quote.tier === 'Custom Software'"
+              href="#contact"
+              class="btn-primary w-full mt-5 flex items-center justify-center no-underline"
+            >
+              Let's talk about your project →
+            </a>
           </div>
 
-          <!-- Lead capture form -->
-          <div class="glass-deep rounded-sm p-7 sm:p-5">
+          <!-- Lead capture form — only for standard packages -->
+          <div v-if="quote.tier !== 'Custom Software'" class="glass-deep rounded-sm p-7 sm:p-5">
             <h4 class="font-display text-[17px] font-bold text-[var(--theme-text)] tracking-[-0.3px] mb-1">
               Lock in this quote
             </h4>
@@ -449,8 +469,13 @@ async function submitLead() {
             Got it, {{ leadName }}!
           </h3>
           <p class="text-[15px] leading-[1.88] max-w-[360px] mx-auto" style="color: var(--theme-text-body)">
-            JJ will reach out within 1 business day to discuss your
-            <span class="text-[var(--theme-text)] font-medium">{{ quote?.tier }}</span> package.
+            <template v-if="quote?.tier === 'Custom Software'">
+              JJ will reach out within 1 business day to schedule a scoping call for your project.
+            </template>
+            <template v-else>
+              JJ will reach out within 1 business day to discuss your
+              <span class="text-[var(--theme-text)] font-medium">{{ quote?.tier }}</span> package.
+            </template>
           </p>
         </div>
 

@@ -21,7 +21,7 @@ defineProps<{
         v-for="(t, i) in testimonials"
         :key="t.id"
         palette="rose-teal"
-        class="glass-deep rounded-sm flex flex-col transition-[border-color,transform,box-shadow] duration-300 hover:border-white/[0.14] hover:-translate-y-1.5 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)]"
+        class="glass-deep rounded-sm flex flex-col transition-[border-color,box-shadow] duration-300 hover:border-white/[0.14] hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)]"
         data-reveal
         :data-reveal-delay="i * 100">
         <span class="absolute top-0 right-5 font-serif text-[96px] leading-none text-[#f5c518]/[0.055] select-none pointer-events-none translate-y-[-8px]" aria-hidden="true">"</span>

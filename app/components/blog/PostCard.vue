@@ -41,12 +41,11 @@ function formatDate(d: Date | string | null | undefined) {
 .post-card {
   display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;
   background: #13131a; border: 1px solid #2a2a32; text-decoration: none;
-  transition: border-color .2s, transform .2s, box-shadow .2s;
+  transition: border-color .2s, box-shadow .2s;
 }
 .post-card:hover {
   border-color: var(--accent, #6366f1);
-  transform: translateY(-2px);
-  box-shadow: 0 8px 30px rgba(0,0,0,.3);
+  box-shadow: 0 4px 18px rgba(0,0,0,.25);
 }
 
 .post-cover { aspect-ratio: 16/9; overflow: hidden; }

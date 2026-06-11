@@ -24,8 +24,12 @@ import {
   GoogleAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
   updateProfile,
   type User,
+  type ActionCodeSettings,
 } from 'firebase/auth'
 import { getStorage } from 'firebase/storage'
 
@@ -93,7 +97,11 @@ export {
   GoogleAuthProvider,
   signInWithPopup,
   sendPasswordResetEmail,
+  sendSignInLinkToEmail,
+  isSignInWithEmailLink,
+  signInWithEmailLink,
   updateProfile,
   type User,
+  type ActionCodeSettings,
   type QueryConstraint,
 }

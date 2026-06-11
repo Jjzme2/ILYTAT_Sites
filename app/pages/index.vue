@@ -22,6 +22,11 @@ const { data: testimonials } = await useFetch('/api/testimonials')
 // ============================================================================
 const prefilledService = ref('')
 
+function normalizeUrl(url: string): string {
+  if (!url) return ''
+  return /^https?:\/\//i.test(url) ? url : `https://${url}`
+}
+
 // ============================================================================
 // 04. SEO
 // ============================================================================
@@ -127,9 +132,9 @@ useReveal()
           :key="proj.id"
           as="a"
           palette="azure-sand"
-          class="glass-deep rounded-sm flex flex-col no-underline text-inherit transition-[border-color,transform,box-shadow] duration-300 group"
-          :class="proj.url ? 'hover:border-[rgba(245,197,24,0.22)] hover:-translate-y-1.5 hover:shadow-[0_20px_60px_rgba(0,0,0,0.5)]' : ''"
-          :href="proj.url || undefined"
+          class="glass-deep rounded-sm flex flex-col no-underline text-inherit transition-[border-color,box-shadow] duration-300 group"
+          :class="proj.url ? 'hover:border-[rgba(245,197,24,0.22)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.4)]' : ''"
+          :href="proj.url ? normalizeUrl(proj.url) : undefined"
           :target="proj.url ? '_blank' : undefined"
           :rel="proj.url ? 'noopener noreferrer' : undefined">
           <div class="aspect-video bg-[#080810] flex items-center justify-center overflow-hidden relative flex-shrink-0">
