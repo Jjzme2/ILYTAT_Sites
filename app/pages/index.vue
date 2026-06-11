@@ -101,6 +101,7 @@ useReveal()
 
     <!-- Above fold: eager-loaded, on the critical render path -->
     <SiteNav />
+    <main>
     <SiteHero />
     <SitePillarsMarquee />
 
@@ -139,13 +140,13 @@ useReveal()
           <div class="px-6 pt-5 pb-6 flex flex-col gap-1.5">
             <span class="font-mono text-[8px] tracking-[2.5px] uppercase block" style="color: color-mix(in srgb, var(--theme-accent) 38%, transparent)">{{ proj.industry }}</span>
             <h3 class="font-display text-[15px] font-bold text-[#f0ece6] tracking-[-0.3px]">{{ proj.title }}</h3>
-            <p class="text-[12.5px] text-[#6a6761] leading-[1.78]">{{ proj.description }}</p>
+            <p class="text-[12.5px] text-[#8a8278] leading-[1.78]">{{ proj.description }}</p>
           </div>
         </LumenSurface>
       </div>
       <div v-else class="py-20 px-8 glass-deep rounded-sm text-center" data-reveal>
         <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-3 tracking-[-0.5px]">First projects in progress.</p>
-        <p class="text-[14px] text-[#6a6761] max-w-[380px] mx-auto mb-8 leading-[1.85]">Ask about being an early client — discounted builds available for businesses in Kankakee County.</p>
+        <p class="text-[14px] text-[#8a8278] max-w-[380px] mx-auto mb-8 leading-[1.85]">Ask about being an early client — discounted builds available for businesses in Kankakee County.</p>
         <a href="#contact" class="btn-ghost">Let's talk &rarr;</a>
       </div>
     </section>
@@ -202,5 +203,6 @@ useReveal()
 
     <LazySiteContact :prefilled-service="prefilledService" />
     <LazySiteFooter />
+    </main>
   </div>
 </template>

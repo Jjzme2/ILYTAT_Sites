@@ -110,9 +110,9 @@ watch(() => props.prefilledService, (name) => {
           </div>
           <div class="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
             <div class="fgroup">
-              <label>Package Interest</label>
+              <label for="form-service">Package Interest</label>
               <div class="select-wrap">
-                <select v-model="form.service">
+                <select id="form-service" v-model="form.service">
                   <option value="">Select a package…</option>
                   <option v-for="pkg in packages" :key="pkg.name" :value="`${pkg.name} — ${pkg.price}`">
                     {{ pkg.name }} — {{ pkg.price }}
@@ -123,9 +123,9 @@ watch(() => props.prefilledService, (name) => {
               </div>
             </div>
             <div v-if="form.service && form.service !== 'Not sure yet'" class="fgroup">
-              <label>Billing Preference</label>
+              <label for="form-billing">Billing Preference</label>
               <div class="select-wrap">
-                <select v-model="form.billingPreference">
+                <select id="form-billing" v-model="form.billingPreference">
                   <option value="monthly">Monthly ({{ monthlyRate }}/mo)</option>
                   <option value="yearly">Yearly ($799/yr) — Save $269</option>
                 </select>

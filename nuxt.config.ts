@@ -118,6 +118,7 @@ export default defineNuxtConfig({
 
   app: {
     head: {
+      htmlAttrs: { lang: 'en' },
       title: 'ILYTAT — Web Design Kankakee County IL',
       meta: [
         { charset: 'utf-8' },
@@ -142,8 +143,13 @@ export default defineNuxtConfig({
         // Preconnect eliminates the DNS + TLS handshake latency on first image request
         { rel: 'preconnect',  href: 'https://media.ilytat.com' },
         { rel: 'dns-prefetch', href: 'https://media.ilytat.com' },
-        // Preload the logo — it's in the nav on every page, above the fold
-        { rel: 'preload', as: 'image', href: 'https://media.ilytat.com/logo.png', fetchpriority: 'high' },
+        // Preload the logo — responsive WebP with PNG fallback for older browsers
+        {
+          rel: 'preload', as: 'image', fetchpriority: 'high',
+          href: 'https://media.ilytat.com/logo-72.webp',
+          type: 'image/webp',
+          imagesrcset: 'https://media.ilytat.com/logo-72.webp, https://media.ilytat.com/logo-144.webp 2x',
+        },
         // Canonical — avoids duplicate-content penalties for www vs non-www
         { rel: 'canonical', href: process.env.SITE_URL || 'https://ilytat.com' },
       ],

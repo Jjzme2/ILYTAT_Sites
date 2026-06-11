@@ -5,7 +5,7 @@ const { pillars } = siteConfig
 </script>
 
 <template>
-  <div class="border-t border-b border-white/[0.04] bg-[var(--theme-marquee-bg)] py-4 overflow-hidden relative">
+  <div class="border-t border-b border-white/[0.04] bg-[var(--theme-marquee-bg)] py-4 overflow-hidden relative" style="min-height:46px">
     <div
       class="absolute inset-y-0 left-0 w-20 z-10 pointer-events-none"
       style="background: linear-gradient(to right, var(--theme-marquee-bg), transparent)"

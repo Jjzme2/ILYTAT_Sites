@@ -23,17 +23,22 @@ const scrolled = computed(() => scrollY.value > 56)
         aria-hidden="true" />
     </Transition>
 
-    <img
-      src="https://media.ilytat.com/logo.png"
-      alt="ILYTAT"
-      width="120" height="36"
-      class="block h-9 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-200">
+    <picture>
+      <source
+        type="image/webp"
+        srcset="https://media.ilytat.com/logo-72.webp, https://media.ilytat.com/logo-144.webp 2x">
+      <img
+        src="https://media.ilytat.com/logo.png"
+        alt="ILYTAT"
+        width="120" height="36"
+        class="block h-9 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-200">
+    </picture>
 
     <div class="flex items-center gap-4 sm:gap-3">
 
       <NuxtLink
         to="/blog"
-        class="text-[10px] font-medium text-[#5a5650] no-underline tracking-[2px] uppercase transition-colors duration-200 hover:text-[var(--theme-text-hi)]">
+        class="text-[10px] font-medium text-(--theme-text-hi) no-underline tracking-[2px] uppercase transition-colors duration-200 hover:text-(--theme-text-hi)">
         Blog
       </NuxtLink>
 
@@ -42,7 +47,7 @@ const scrolled = computed(() => scrollY.value > 56)
         class="hidden sm:flex items-center justify-center w-7 h-7 transition-all duration-300 cursor-pointer bg-transparent border-0 p-0"
         :class="lumenEnabled
           ? 'text-[var(--theme-accent)] drop-shadow-[0_0_6px_var(--theme-accent)]'
-          : 'text-[var(--theme-text-muted)] hover:text-[var(--theme-text-hi)]'"
+          : 'text-[var(--theme-text-muted)] hover:text-(--theme-text-hi)'"
         :title="lumenEnabled ? 'Disable light effects' : 'Enable light effects'"
         :aria-label="lumenEnabled ? 'Disable light effects' : 'Enable light effects'"
         @click="toggleLumen">

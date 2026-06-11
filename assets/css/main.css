@@ -29,7 +29,7 @@
   /* — Text */
   --theme-text:         #f0ece6;
   --theme-text-hi:      #c8c4be;
-  --theme-text-body:    #6a6761;
+  --theme-text-body:    #8a8278;
   --theme-text-muted:   #4a4742;
   --theme-text-ghost:   #333040;
   --theme-text-faint:   #252118;
@@ -528,7 +528,7 @@ html {
 .fgroup label {
   font-family: var(--font-mono);
   font-size: 9px; letter-spacing: 2px;
-  text-transform: uppercase; color: #4e4843;
+  text-transform: uppercase; color: #8a8278;
 }
 [data-theme="frost"] .fgroup label { color: #3d4266; }
 .fgroup input,
