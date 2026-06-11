@@ -43,6 +43,7 @@ type QuoteResult = {
   addHosting: boolean
   nextStep:   string
   message:    string
+  rationale?: string[]
 }
 
 const phase       = ref<Phase>('questions')
@@ -311,6 +312,31 @@ async function submitLead() {
                 style="background: var(--theme-accent)"
               />
             </p>
+          </div>
+
+          <!-- Why this package (rationale) -->
+          <div
+            v-if="quote.rationale && quote.rationale.length"
+            class="glass-deep rounded-sm px-6 py-5"
+            style="border-color: color-mix(in srgb, var(--theme-accent) 12%, transparent)"
+          >
+            <p class="font-mono text-[10px] tracking-[2px] uppercase mb-4" style="color: color-mix(in srgb, var(--theme-accent) 55%, transparent)">
+              Why This Package?
+            </p>
+            <ul class="flex flex-col gap-2.5">
+              <li
+                v-for="(point, i) in quote.rationale"
+                :key="i"
+                class="flex items-start gap-3 text-[14px] leading-[1.75]"
+                style="color: var(--theme-text-body)"
+              >
+                <span
+                  class="shrink-0 w-1.5 h-1.5 rounded-full mt-[0.6em]"
+                  style="background: var(--theme-accent)"
+                />
+                {{ point }}
+              </li>
+            </ul>
           </div>
 
           <!-- Quote result card -->
