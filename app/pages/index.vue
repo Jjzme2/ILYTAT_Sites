@@ -117,7 +117,6 @@ useReveal()
     <LazySiteServices @select-service="prefilledService = $event" />
     <LazySiteProcess />
     <LazySitePricing />
-    <LazyQuoteEstimator />
 
     <!-- ── Portfolio ──────────────────────────────────────────────────────── -->
     <section id="portfolio" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16" style="content-visibility:auto;contain-intrinsic-block-size:auto 600px">

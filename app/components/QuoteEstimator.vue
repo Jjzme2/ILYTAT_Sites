@@ -1,39 +1,69 @@
 <script setup lang="ts">
-import { ref, computed, nextTick } from 'vue'
+import { ref, computed, watch, nextTick } from 'vue'
+
+// ─── Question types ───────────────────────────────────────────────────────────
+type Question = {
+  key:     string
+  label:   string
+  type:    'radio' | 'multiselect'
+  options: readonly string[]
+}
 
 // ─── Question config ──────────────────────────────────────────────────────────
-const QUESTIONS = [
+const Q_SERVICE_TYPE: Question = {
+  key:     'serviceType',
+  label:   'What are you looking to build?',
+  type:    'radio',
+  options: ['Website / Web Presence', 'Custom Software / App'],
+}
+
+const WEBSITE_QUESTIONS: Question[] = [
   {
     key:     'businessType',
     label:   'What type of business do you run?',
-    type:    'radio' as const,
-    options: ['Restaurant/Food', 'Service Business', 'Retail/Shop', 'Health/Wellness', 'Custom Software / App', 'Other'],
+    type:    'radio',
+    options: ['Restaurant/Food', 'Service Business', 'Retail/Shop', 'Health/Wellness', 'Other'],
   },
   {
     key:     'websiteSituation',
     label:   "What's your current website situation?",
-    type:    'radio' as const,
+    type:    'radio',
     options: ['No website', 'Outdated site', 'Have one but need a refresh'],
   },
   {
     key:     'features',
     label:   'What features do you need?',
-    type:    'multiselect' as const,
+    type:    'multiselect',
     options: ['Online booking', 'Menu/catalog', 'Contact form', 'Photo gallery', 'E-commerce'],
   },
   {
     key:     'timeline',
     label:   'When do you need this done?',
-    type:    'radio' as const,
+    type:    'radio',
     options: ['ASAP', 'Within 1 month', '1–3 months', 'Just exploring'],
   },
   {
     key:     'budget',
     label:   "What's your approximate budget?",
-    type:    'radio' as const,
+    type:    'radio',
     options: ['Under $500', '$500–$1,000', '$1,000–$1,500', 'Not sure yet'],
   },
-] as const
+]
+
+const SOFTWARE_QUESTIONS: Question[] = [
+  {
+    key:     'softwareType',
+    label:   'What type of software are you looking to build?',
+    type:    'radio',
+    options: ['Web Application / Portal', 'Internal Tool / Dashboard', 'Automation / Integration', 'Mobile App', 'Other'],
+  },
+  {
+    key:     'timeline',
+    label:   'When do you need this done?',
+    type:    'radio',
+    options: ['ASAP', 'Within 1 month', '1–3 months', 'Just exploring'],
+  },
+]
 
 type Phase = 'questions' | 'loading' | 'result' | 'submitted'
 type QuoteResult = {
@@ -46,15 +76,16 @@ type QuoteResult = {
   rationale?: string[]
 }
 
-const phase       = ref<Phase>('questions')
-const currentStep = ref(0)
-const answers     = ref<Record<string, string | string[]>>({})
-const quote       = ref<QuoteResult | null>(null)
-const leadName    = ref('')
-const leadEmail   = ref('')
-const leadPhone   = ref('')
-const error       = ref('')
-const submitting  = ref(false)
+const phase        = ref<Phase>('questions')
+const currentStep  = ref(0)
+const answers      = ref<Record<string, string | string[]>>({})
+const otherDetails = ref<Record<string, string>>({})
+const quote        = ref<QuoteResult | null>(null)
+const leadName     = ref('')
+const leadEmail    = ref('')
+const leadPhone    = ref('')
+const error        = ref('')
+const submitting   = ref(false)
 
 // ─── Typewriter ───────────────────────────────────────────────────────────────
 const typedMessage = ref('')
@@ -76,7 +107,26 @@ function startTypewriter(text: string) {
 }
 
 // ─── Wizard logic ─────────────────────────────────────────────────────────────
-const currentQuestion = computed(() => QUESTIONS[currentStep.value])
+const isCustomSoftware = computed(() => answers.value.serviceType === 'Custom Software / App')
+
+const activeQuestions = computed<Question[]>(() => {
+  if (isCustomSoftware.value) return [Q_SERVICE_TYPE, ...SOFTWARE_QUESTIONS]
+  return [Q_SERVICE_TYPE, ...WEBSITE_QUESTIONS]
+})
+
+// When the service type changes, reset subsequent answers and clamp step to 1
+// so we never point at an out-of-bounds question in the new path.
+watch(() => answers.value.serviceType, (_, oldVal) => {
+  if (oldVal === undefined) return
+  currentStep.value = 1
+  const allFollowUpKeys = [...WEBSITE_QUESTIONS, ...SOFTWARE_QUESTIONS].map(q => q.key)
+  for (const key of allFollowUpKeys) {
+    delete answers.value[key]
+    delete otherDetails.value[key]
+  }
+})
+
+const currentQuestion = computed(() => activeQuestions.value[currentStep.value])
 
 const isAnswered = computed(() => {
   const a = answers.value[currentQuestion.value.key]
@@ -102,16 +152,25 @@ function selectOption(option: string) {
   }
 }
 
-const isCustomSoftware = computed(() => answers.value.businessType === 'Custom Software / App')
+const currentAnswerIsOther = computed(() => {
+  const a = answers.value[currentQuestion.value.key]
+  if (Array.isArray(a)) return a.includes('Other')
+  return a === 'Other'
+})
 
 async function fetchQuote() {
   phase.value = 'loading'
   error.value = ''
   await nextTick()
+  // Merge "tell us more" detail fields so the AI sees full context
+  const enrichedAnswers: Record<string, string | string[]> = { ...answers.value }
+  for (const [key, text] of Object.entries(otherDetails.value)) {
+    if (text.trim()) enrichedAnswers[`${key}Detail`] = text.trim()
+  }
   try {
     quote.value = await $fetch<QuoteResult>('/api/get-quote', {
       method: 'POST',
-      body: { answers: answers.value },
+      body: { answers: enrichedAnswers },
     })
     phase.value = 'result'
     startTypewriter(quote.value.message ?? '')
@@ -124,18 +183,10 @@ async function fetchQuote() {
 
 async function next() {
   if (!isAnswered.value) return
-
-  // Custom Software / App — skip website-specific questions, go straight to result
-  if (isCustomSoftware.value && currentStep.value === 0) {
-    await fetchQuote()
-    return
-  }
-
-  if (currentStep.value < QUESTIONS.length - 1) {
+  if (currentStep.value < activeQuestions.value.length - 1) {
     currentStep.value++
     return
   }
-
   await fetchQuote()
 }
 
@@ -172,7 +223,7 @@ async function submitLead() {
 </script>
 
 <template>
-  <section id="quote" class="py-[100px] sm:py-16" style="content-visibility:auto;contain-intrinsic-block-size:auto 640px">
+  <section id="quote" class="pb-[100px] sm:pb-16" style="content-visibility:auto;contain-intrinsic-block-size:auto 640px">
     <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
 
       <!-- Section header -->
@@ -182,7 +233,7 @@ async function submitLead() {
           Get your custom quote in 60 seconds
         </h2>
         <p class="mt-4 text-[15px] max-w-[440px] mx-auto leading-[1.88]" style="color: var(--theme-text-body)">
-          Answer 5 quick questions and our AI will recommend the right package for your business.
+          Answer a few quick questions and our AI will recommend the right package for your project.
         </p>
       </header>
 
@@ -193,7 +244,7 @@ async function submitLead() {
 
           <div class="flex items-center gap-2 mb-8">
             <div
-              v-for="(_, i) in QUESTIONS"
+              v-for="(_, i) in activeQuestions"
               :key="i"
               class="h-1 flex-1 rounded-full transition-all duration-300"
               :class="i <= currentStep ? 'bg-[var(--theme-accent)]' : 'bg-white/[0.08]'"
@@ -201,7 +252,7 @@ async function submitLead() {
           </div>
 
           <p class="font-mono text-[11px] tracking-[2px] uppercase mb-3" style="color: color-mix(in srgb, var(--theme-accent) 60%, transparent)">
-            Step {{ currentStep + 1 }} of {{ QUESTIONS.length }}
+            Step {{ currentStep + 1 }} of {{ activeQuestions.length }}
           </p>
 
           <h3 class="font-display text-[clamp(18px,2.2vw,24px)] font-bold text-[var(--theme-text)] tracking-[-0.5px] mb-6">
@@ -239,6 +290,18 @@ async function submitLead() {
                 {{ option }}
               </span>
             </button>
+
+            <!-- "Tell us more" textarea — shown whenever Other is the selected answer -->
+            <textarea
+              v-if="currentAnswerIsOther"
+              v-model="otherDetails[currentQuestion.key]"
+              placeholder="Tell us more (optional)…"
+              rows="2"
+              class="mt-1 w-full px-4 py-3 rounded-sm text-[14px] resize-none transition-colors focus:outline-none"
+              style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-text);"
+              @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
+              @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
+            />
           </div>
 
           <p v-if="error" class="mt-4 text-[13px] text-red-400">{{ error }}</p>
@@ -259,7 +322,7 @@ async function submitLead() {
               :disabled="!isAnswered"
               @click="next"
             >
-              {{ isCustomSoftware && currentStep === 0 ? 'Get Started →' : currentStep < QUESTIONS.length - 1 ? 'Next →' : 'Get My Quote →' }}
+              {{ currentStep < activeQuestions.length - 1 ? 'Next →' : isCustomSoftware ? 'Get Started →' : 'Get My Quote →' }}
             </button>
           </div>
         </div>

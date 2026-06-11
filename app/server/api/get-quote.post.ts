@@ -8,7 +8,7 @@ export default defineEventHandler(async (event) => {
   }
 
   // Custom software / app — skip AI and return a tailored contact CTA immediately.
-  if (answers.businessType === 'Custom Software / App') {
+  if (answers.serviceType === 'Custom Software / App') {
     return {
       tier:       'Custom Software',
       price:      'Custom',

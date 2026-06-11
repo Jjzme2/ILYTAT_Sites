@@ -158,5 +158,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
         Every site includes managed hosting, SSL, and your domain — starting free on month one.
       </p>
     </div>
+
+    <LazyQuoteEstimator />
   </section>
 </template>
