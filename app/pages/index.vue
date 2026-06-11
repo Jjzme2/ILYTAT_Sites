@@ -13,9 +13,11 @@ const { track } = useAnalytics()
 // ============================================================================
 // 02. FETCH LIVE DATA
 // ============================================================================
-const { data: projects }     = await useFetch('/api/projects')
+// promotion is above-fold (PromoBanner) — await so it SSR's in the initial HTML
 const { data: promotion }    = await useFetch('/api/promotion')
-const { data: testimonials } = await useFetch('/api/testimonials')
+// projects and testimonials are below-fold — lazy so they don't block SSR TTFB
+const { data: projects }     = useFetch('/api/projects',     { lazy: true })
+const { data: testimonials } = useFetch('/api/testimonials', { lazy: true })
 
 // ============================================================================
 // 03. UI STATE

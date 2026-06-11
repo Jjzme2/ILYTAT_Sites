@@ -231,18 +231,7 @@ function db() {
   return getFirestore(useFirebaseApp())
 }
 
-// ── Admin fetch helper ────────────────────────────────────────────────────────
-// Attaches the Firebase ID token (and TOTP session token when 2FA is active)
-// to protected admin API requests.
-async function getAdminHeaders(): Promise<Record<string, string>> {
-  const auth  = useFirebaseAuth()
-  const token = await auth.currentUser?.getIdToken()
-  if (!token) return {}
-  const headers: Record<string, string> = { Authorization: `Bearer ${token}` }
-  const session = sessionStorage.getItem('totp-session')
-  if (session) headers['X-TOTP-Session'] = session
-  return headers
-}
+const getAdminHeaders = useAdminHeaders
 
 // ── Tab state ─────────────────────────────────────────────────────────────────
 const activeTab = ref<'dashboard' | 'portfolio' | 'promotions' | 'testimonials' | 'inquiries' | 'analytics' | 'health' | 'docs' | 'logs' | 'blog' | 'security'>('dashboard')

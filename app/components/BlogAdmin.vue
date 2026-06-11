@@ -1,13 +1,7 @@
 <script setup lang="ts">
 import type { BlogPost, BlogPlan } from '~/types'
-import { useFirebaseAuth } from '~/utils/firebase'
 
-// ── Auth header helper ──────────────────────────────────────────────────────
-async function getAdminHeaders(): Promise<Record<string, string>> {
-  const auth  = useFirebaseAuth()
-  const token = await auth.currentUser?.getIdToken()
-  return token ? { Authorization: `Bearer ${token}` } : {}
-}
+const getAdminHeaders = useAdminHeaders
 
 // ── Error / success display ─────────────────────────────────────────────────
 const error   = ref('')

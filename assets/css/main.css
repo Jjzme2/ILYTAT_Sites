@@ -785,12 +785,11 @@ html {
     -webkit-backdrop-filter: blur(8px) !important;
   }
 
-  /* Hero fade-up delays hide the h1 from Lighthouse's LCP measurement until
-     ~1 s after paint. Remove delays on mobile so heading text is visible
-     immediately; keep a short duration so the entrance still reads as intentional. */
+  /* Disable all fade-up animations on mobile — elements starting at opacity:0
+     push LCP out by the full animation duration even with 0s delay.
+     Text must be visible on first paint for LCP to be measured correctly. */
   [class*="fade-up"] {
-    animation-delay: 0s !important;
-    animation-duration: 0.35s !important;
+    animation: none !important;
   }
 }
 

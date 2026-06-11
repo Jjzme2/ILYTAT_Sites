@@ -59,9 +59,11 @@ export default defineNuxtConfig({
       // display:optional — font used only for small accent labels; no swap means no CLS
       { name: 'Space Mono', provider: 'google', weights: [400, 700], display: 'optional' },
       // Playfair Display: the LCP element ("local business.") uses this italic face.
-      // Preloading ensures it's ready before FCP, eliminating the font-swap CLS and
-      // the 2-second LCP gap that appears when the font arrives late on slow networks.
-      { name: 'Playfair Display', provider: 'google', weights: [400, 700], styles: ['italic'], preload: true },
+      // display:optional — if the font doesn't arrive within the browser's tiny initial
+      // render window it stays with the fallback (Georgia) permanently, preventing the
+      // late font-swap from registering as a new LCP event on slow connections.
+      // Preload still fires so fast connections get the real font on first paint.
+      { name: 'Playfair Display', provider: 'google', weights: [400, 700], styles: ['italic'], preload: true, display: 'optional' },
     ],
   },
 
@@ -146,6 +148,9 @@ export default defineNuxtConfig({
         // Preconnect eliminates the DNS + TLS handshake latency on first image request
         { rel: 'preconnect',  href: 'https://media.ilytat.com' },
         { rel: 'dns-prefetch', href: 'https://media.ilytat.com' },
+        // Turnstile script is injected by nuxt-turnstile into every page head —
+        // preconnecting saves the full DNS+TLS round-trip on slow mobile connections
+        { rel: 'preconnect',  href: 'https://challenges.cloudflare.com' },
         // Preload the logo — responsive WebP with PNG fallback for older browsers
         {
           rel: 'preload', as: 'image', fetchpriority: 'high',
