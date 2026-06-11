@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, nextTick } from 'vue'
 
 // ─── Question config ──────────────────────────────────────────────────────────
 const QUESTIONS = [
@@ -110,6 +110,9 @@ async function next() {
 
   phase.value = 'loading'
   error.value = ''
+  // nextTick ensures the loading animation renders before the fetch starts —
+  // without it Vue batches both phase changes and the loading state never paints
+  await nextTick()
   try {
     quote.value = await $fetch<QuoteResult>('/api/get-quote', {
       method: 'POST',
@@ -292,8 +295,9 @@ async function submitLead() {
         <!-- ── Result + Lead form ────────────────────────────────────────── -->
         <div v-else-if="phase === 'result' && quote" class="flex flex-col gap-5" data-reveal>
 
-          <!-- AI message with typewriter effect -->
+          <!-- AI message with typewriter effect — hidden when AI omits the field -->
           <div
+            v-if="quote.message"
             class="glass-deep rounded-sm px-6 py-5"
             style="border-color: color-mix(in srgb, var(--theme-accent) 16%, transparent)"
           >

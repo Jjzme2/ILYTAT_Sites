@@ -19,7 +19,12 @@ export default defineEventHandler(async (event) => {
   }
 
   try {
-    return JSON.parse(raw)
+    const result = JSON.parse(raw)
+    // Guarantee the message field exists — some models omit optional JSON fields
+    if (!result.message) {
+      result.message = `Based on your answers, the ${result.tier} package looks like a great fit for what you're building.`
+    }
+    return result
   }
   catch {
     throw createError({ statusCode: 502, message: 'Invalid AI response format. Please try again.' })
