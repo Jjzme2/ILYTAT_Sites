@@ -1,9 +1,11 @@
 // ─── Config ───────────────────────────────────────────────────────────────────
 // Server-side only — this module uses process.env directly.
 // Never call generateQuote() from component code; use /api/get-quote instead.
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? 'gemini-2.0-flash'
+
 const providers = {
   gemini: {
-    url: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+    url: `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`,
     key: process.env.GEMINI_API_KEY,
   },
   opencloud: {
