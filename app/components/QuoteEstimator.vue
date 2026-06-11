@@ -164,7 +164,7 @@ async function submitLead() {
     <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
 
       <!-- Section header -->
-      <header class="mb-16 text-center" data-reveal>
+      <header class="mb-16 text-center">
         <p class="eyebrow justify-center">Instant Estimate</p>
         <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] leading-[1.05]">
           Get your custom quote in 60 seconds
@@ -177,7 +177,7 @@ async function submitLead() {
       <div class="max-w-[580px] mx-auto">
 
         <!-- ── Questions ─────────────────────────────────────────────────── -->
-        <div v-if="phase === 'questions'" class="glass-deep rounded-sm p-8 sm:p-6" data-reveal>
+        <div v-if="phase === 'questions'" class="glass-deep rounded-sm p-8 sm:p-6">
 
           <div class="flex items-center gap-2 mb-8">
             <div
@@ -293,7 +293,7 @@ async function submitLead() {
         </div>
 
         <!-- ── Result + Lead form ────────────────────────────────────────── -->
-        <div v-else-if="phase === 'result' && quote" class="flex flex-col gap-5" data-reveal>
+        <div v-else-if="phase === 'result' && quote" class="flex flex-col gap-5">
 
           <!-- AI message with typewriter effect — hidden when AI omits the field -->
           <div
@@ -412,7 +412,7 @@ async function submitLead() {
         </div>
 
         <!-- ── Thank you ─────────────────────────────────────────────────── -->
-        <div v-else-if="phase === 'submitted'" class="glass-deep rounded-sm p-12 text-center" data-reveal>
+        <div v-else-if="phase === 'submitted'" class="glass-deep rounded-sm p-12 text-center">
           <div
             class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-6"
             style="background: color-mix(in srgb, var(--theme-accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)"
