@@ -18,7 +18,7 @@ async function loadPosts() {
   try {
     posts.value = await $fetch<BlogPost[]>('/api/admin/blog', { headers: await getAdminHeaders() })
   }
-  catch (e: unknown) { showError(`Failed to load posts: ${e instanceof Error ? e.message : String(e)}`) }
+  catch (e: unknown) { showError(`Failed to load posts: ${apiErrorMessage(e)}`) }
   finally            { postsLoading.value = false }
 }
 
@@ -67,7 +67,7 @@ async function savePost() {
     closeEditor()
     await loadPosts()
   }
-  catch (e: unknown) { showError(`Save failed: ${e instanceof Error ? e.message : String(e)}`) }
+  catch (e: unknown) { showError(`Save failed: ${apiErrorMessage(e)}`) }
   finally            { saving.value = false }
 }
 
@@ -87,7 +87,7 @@ async function deletePost(id: string) {
     await $fetch(`/api/admin/blog/${id}`, { method: 'DELETE', headers: await getAdminHeaders() })
     await loadPosts()
   }
-  catch (e: unknown) { showError(`Delete failed: ${e instanceof Error ? e.message : String(e)}`) }
+  catch (e: unknown) { showError(`Delete failed: ${apiErrorMessage(e)}`) }
   finally            { deletingId.value = null }
 }
 
@@ -122,7 +122,7 @@ async function savePlan() {
     planDirty.value = false
     showSuccess('Plan saved.')
   }
-  catch (e: unknown) { showError(`Failed to save plan: ${e instanceof Error ? e.message : String(e)}`) }
+  catch (e: unknown) { showError(`Failed to save plan: ${apiErrorMessage(e)}`) }
   finally { planSaving.value = false }
 }
 
@@ -170,7 +170,10 @@ async function generateNow() {
     generatePanelOpen.value  = false
     await loadPosts()
   }
-  catch (e: unknown) { showError(`Generation failed: ${e instanceof Error ? e.message : String(e)}`) }
+  // apiErrorMessage digs out the server's statusMessage; e.message would only
+  // ever be "[POST] /api/admin/generate-blog: 502", which is what made these
+  // failures undiagnosable from the UI.
+  catch (e: unknown) { showError(apiErrorMessage(e, 'Generation failed.')) }
   finally { generating.value = false }
 }
 
@@ -391,12 +394,12 @@ function isAiPost(post: BlogPost) {
 
 /* Banners */
 .ba-banner { padding: 10px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
-.ba-banner-error   { background: rgba(239,68,68,.12);  border: 1px solid rgba(239,68,68,.3);  color: #f87171; }
-.ba-banner-success { background: rgba(34,197,94,.10);  border: 1px solid rgba(34,197,94,.25); color: #4ade80; }
+.ba-banner-error   { background: rgba(239,68,68,.12);  border: 1px solid rgba(239,68,68,.3);  color: var(--status-bad); }
+.ba-banner-success { background: rgba(34,197,94,.10);  border: 1px solid rgba(34,197,94,.25); color: var(--status-good); }
 
 /* ── AI Panel ──────────────────────────────────────────────────────────────── */
 .ai-panel {
-  border: 1px solid #2a2a38;
+  border: 1px solid var(--glass-card-border);
   border-radius: 8px;
   margin-bottom: 20px;
   background: #0f0f18;
@@ -406,7 +409,7 @@ function isAiPost(post: BlogPost) {
 .ai-panel-toggle {
   width: 100%; display: flex; align-items: center; justify-content: space-between;
   background: none; border: none; padding: 13px 16px; cursor: pointer;
-  color: #c0bdb8;
+  color: var(--theme-text-hi);
 }
 .ai-panel-toggle:hover { background: #13131e; }
 
@@ -433,7 +436,7 @@ function isAiPost(post: BlogPost) {
 .ai-section-label {
   font-size: 12px; color: #888; padding: 4px 0;
 }
-.ai-section-label strong { color: #c0bdb8; }
+.ai-section-label strong { color: var(--theme-text-hi); }
 
 .ai-field { display: flex; flex-direction: column; gap: 4px; }
 .ai-field-grow { flex: 1; }
@@ -444,8 +447,8 @@ function isAiPost(post: BlogPost) {
 .ai-optional { font-weight: 400; text-transform: none; letter-spacing: 0; color: #555; }
 
 .ai-input {
-  background: #0a0a12; border: 1px solid #2a2a38; border-radius: 5px;
-  color: #f0ece6; font-size: 13px; padding: 8px 10px;
+  background: #0a0a12; border: 1px solid var(--glass-card-border); border-radius: 5px;
+  color: var(--theme-fg); font-size: 13px; padding: 8px 10px;
   outline: none; transition: border-color .15s;
   width: 100%; box-sizing: border-box;
   font-family: inherit;
@@ -461,7 +464,7 @@ function isAiPost(post: BlogPost) {
   background: none; border: none; color: #888; font-size: 13px; cursor: pointer;
   display: flex; align-items: center; gap: 8px; padding: 4px 0;
 }
-.ai-generate-toggle:hover { color: #c0bdb8; }
+.ai-generate-toggle:hover { color: var(--theme-text-hi); }
 
 .ai-generate-form { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
 
@@ -469,7 +472,7 @@ function isAiPost(post: BlogPost) {
   display: flex; align-items: center; gap: 6px; font-size: 12px; color: #888;
   cursor: pointer; user-select: none;
 }
-.ai-radio-label:hover { color: #c0bdb8; }
+.ai-radio-label:hover { color: var(--theme-text-hi); }
 .ai-radio { accent-color: #6366f1; }
 
 .ai-btn {
@@ -481,7 +484,7 @@ function isAiPost(post: BlogPost) {
 .ai-btn:disabled { opacity: .5; cursor: not-allowed; }
 .ai-btn-primary   { background: #6366f1; color: #fff; }
 .ai-btn-primary:hover:not(:disabled) { opacity: .85; }
-.ai-btn-secondary { background: #1e1e2a; color: #c0bdb8; border: 1px solid #2a2a38; }
+.ai-btn-secondary { background: #1e1e2a; color: var(--theme-text-hi); border: 1px solid var(--glass-card-border); }
 .ai-btn-secondary:hover:not(:disabled) { border-color: #6366f1; color: #818cf8; }
 
 .ai-spinner {
@@ -495,7 +498,7 @@ function isAiPost(post: BlogPost) {
 
 /* Header */
 .ba-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
-.ba-title  { font-size: 20px; font-weight: 700; color: #f0ece6; margin: 0; }
+.ba-title  { font-size: 20px; font-weight: 700; color: var(--theme-fg); margin: 0; }
 .ba-header-actions { display: flex; gap: 8px; align-items: center; }
 .ba-btn         { border-radius: 7px; font-size: 13px; font-weight: 600; padding: 8px 16px; cursor: pointer; border: none; }
 .ba-btn-primary { background: #6366f1; color: #fff; }
@@ -508,14 +511,14 @@ function isAiPost(post: BlogPost) {
 .ba-text-btn { background: none; border: none; color: #6366f1; cursor: pointer; font-size: 14px; text-decoration: underline; }
 
 /* Post list */
-.ba-list { display: flex; flex-direction: column; gap: 1px; border: 1px solid #2a2a32; border-radius: 8px; overflow: hidden; }
+.ba-list { display: flex; flex-direction: column; gap: 1px; border: 1px solid var(--theme-surface-alt); border-radius: 8px; overflow: hidden; }
 .ba-item { display: flex; align-items: stretch; gap: 0; background: #13131a; transition: background .15s; }
 .ba-item:hover { background: #16161e; }
 .ba-item-accent { width: 4px; flex-shrink: 0; }
 .ba-item-info   { flex: 1; padding: 14px 16px; min-width: 0; }
 
 .ba-item-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.ba-item-title { font-size: 15px; font-weight: 600; color: #f0ece6; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ba-item-title { font-size: 15px; font-weight: 600; color: var(--theme-fg); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .ba-ai-badge {
   flex-shrink: 0; font-size: 9px; font-weight: 700; letter-spacing: 1px;
@@ -526,8 +529,8 @@ function isAiPost(post: BlogPost) {
 .ba-item-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 12px; color: #666; }
 .ba-slug      { font-family: 'Space Mono', monospace; color: #888; }
 .ba-status    { border-radius: 4px; padding: 1px 7px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-.ba-status-pub   { background: rgba(34,197,94,.15);  color: #4ade80; }
-.ba-status-draft { background: rgba(251,191,36,.12); color: #fbbf24; }
+.ba-status-pub   { background: rgba(34,197,94,.15);  color: var(--status-good); }
+.ba-status-draft { background: rgba(251,191,36,.12); color: var(--status-warn); }
 .ba-date  { color: #666; }
 .ba-tags  { color: #777; font-style: italic; }
 .ba-excerpt { font-size: 13px; color: #777; margin: 6px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -540,11 +543,11 @@ function isAiPost(post: BlogPost) {
   display: inline-flex; align-items: center;
   transition: background .12s, color .12s;
 }
-.ba-action-btn:hover         { background: #1e1e28; color: #f0ece6; }
+.ba-action-btn:hover         { background: #1e1e28; color: var(--theme-fg); }
 .ba-action-view              { color: #6366f1; }
 .ba-action-view:hover        { color: #818cf8; background: rgba(99,102,241,.1); }
-.ba-action-delete:hover      { background: rgba(239,68,68,.1); color: #f87171; }
-.ba-action-confirm           { color: #f87171 !important; background: rgba(239,68,68,.1) !important; }
+.ba-action-delete:hover      { background: rgba(239,68,68,.1); color: var(--status-bad); }
+.ba-action-confirm           { color: var(--status-bad) !important; background: rgba(239,68,68,.1) !important; }
 
 /* ── Editor Modal ─────────────────────────────────────────────────────────── */
 .ba-modal-overlay {
@@ -560,8 +563,8 @@ function isAiPost(post: BlogPost) {
 .ba-modal-wide { width: 100vw; }
 .ba-modal-header {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 14px 20px; border-bottom: 1px solid #2a2a32;
-  font-size: 14px; font-weight: 600; color: #c0bdb8; background: #13131a;
+  padding: 14px 20px; border-bottom: 1px solid var(--theme-surface-alt);
+  font-size: 14px; font-weight: 600; color: var(--theme-text-hi); background: #13131a;
   flex-shrink: 0;
 }
 .ba-modal-header-actions { display: flex; align-items: center; gap: 10px; }
@@ -569,7 +572,7 @@ function isAiPost(post: BlogPost) {
   background: none; border: none; color: #666; font-size: 16px;
   cursor: pointer; padding: 4px 8px; border-radius: 5px;
 }
-.ba-modal-close:hover { background: #1e1e28; color: #f0ece6; }
+.ba-modal-close:hover { background: #1e1e28; color: var(--theme-fg); }
 .ba-preview-toggle {
   background: none; border: 1px solid #3a3a48; border-radius: 5px;
   color: #888; font-size: 12px; padding: 5px 12px; cursor: pointer;
@@ -583,12 +586,12 @@ function isAiPost(post: BlogPost) {
 .ba-editor-full { min-height: 100%; }
 
 .ba-modal-split  { display: flex; flex-direction: row; overflow: hidden; }
-.ba-editor-pane  { flex: 0 0 50%; overflow-y: auto; border-right: 1px solid #2a2a32; }
+.ba-editor-pane  { flex: 0 0 50%; overflow-y: auto; border-right: 1px solid var(--theme-surface-alt); }
 .ba-preview-pane { flex: 1; overflow-y: auto; background: #0a0a0e; }
 
 @media (max-width: 768px) {
   .ba-modal-split  { flex-direction: column; }
   .ba-editor-pane  { flex: 0 0 auto; }
-  .ba-preview-pane { flex: 1; min-height: 50vh; border-top: 1px solid #2a2a32; border-right: none; }
+  .ba-preview-pane { flex: 1; min-height: 50vh; border-top: 1px solid var(--theme-surface-alt); border-right: none; }
 }
 </style>

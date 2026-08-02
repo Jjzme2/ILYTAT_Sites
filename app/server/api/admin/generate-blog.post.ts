@@ -12,8 +12,12 @@ import { log }               from '~/server/utils/logger'
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 
-  if (!process.env.GEMINI_API_KEY && !(process.env.OPENCLOUD_API_KEY && process.env.OPENCLOUD_BASE_URL)) {
-    throw createError({ statusCode: 503, message: 'No AI provider configured (GEMINI_API_KEY or OPENCLOUD_API_KEY + OPENCLOUD_BASE_URL required).' })
+  const cfg = useRuntimeConfig(event)
+  if (!cfg.openrouterApiKey && !cfg.opencloudApiKey && !cfg.geminiApiKey) {
+    throw createError({
+      statusCode: 503,
+      statusMessage: 'No AI provider configured. Set OPENROUTER_API_KEY in the environment.',
+    })
   }
 
   const body = await readBody(event)
@@ -39,6 +43,8 @@ export default defineEventHandler(async (event) => {
   catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     await log('error', 'api', `Admin AI blog generation failed: ${msg}`)
-    throw createError({ statusCode: 500, message: `Generation failed: ${msg}` })
+    // statusMessage (not message) is what reaches the client, so the admin UI
+    // can show why it failed instead of a bare 500.
+    throw createError({ statusCode: 502, statusMessage: `Generation failed — ${msg}` })
   }
 })

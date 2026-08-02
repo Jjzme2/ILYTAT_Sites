@@ -11,6 +11,7 @@
  */
 
 import { firestoreRequest, toFirestoreFields } from "~/server/utils/firebaseAdmin";
+import { callAI as callProvider, parseAiJson } from "~/server/utils/ai";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -69,120 +70,21 @@ Content requirements:
 
 // ── Startup config warnings ───────────────────────────────────────────────────
 
-if (!process.env.GEMINI_API_KEY) {
-  console.warn("[generateBlog] GEMINI_API_KEY is not set — primary provider disabled.");
-}
-{
-  const missing = [
-    !process.env.OPENCLOUD_BASE_URL && "OPENCLOUD_BASE_URL",
-    !process.env.OPENCLOUD_API_KEY && "OPENCLOUD_API_KEY",
-  ].filter(Boolean);
-  if (missing.length) {
-    console.warn(`[generateBlog] OpenRouter fallback disabled — missing: ${missing.join(", ")}`);
-  }
-}
+// ── Provider ─────────────────────────────────────────────────────────────────
+// Delegates to the shared client in server/utils/ai.ts. This module previously
+// carried its own Gemini + OpenCloud implementations whose error handling
+// swallowed the real provider failure into a console.warn, then reported
+// "No AI provider available" even when a key was configured — which is what
+// made the admin 500 undiagnosable.
 
-// ── Provider: Gemini ──────────────────────────────────────────────────────────
-
-async function callGemini(userMessage: string): Promise<string> {
-  const model = process.env.GEMINI_MODEL ?? "gemini-2.0-flash";
-  const key = process.env.GEMINI_API_KEY;
-  if (!key) throw new Error("GEMINI_API_KEY not set");
-
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(40_000),
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: [{ role: "user", parts: [{ text: userMessage }] }],
-        generationConfig: {
-          temperature: 0.75,
-          maxOutputTokens: 4096,
-          responseMimeType: "application/json",
-        },
-      }),
-    },
-  );
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`Gemini ${res.status}: ${body}`);
-  }
-
-  const data = await res.json();
-  const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) {
-    const reason = data?.candidates?.[0]?.finishReason ?? "unknown";
-    throw new Error(`Gemini empty response (finishReason: ${reason})`);
-  }
-  return text;
-}
-
-// ── Provider: OpenCloud / OpenRouter ─────────────────────────────────────────
-
-async function callOpenCloud(userMessage: string): Promise<string> {
-  const baseUrl = process.env.OPENCLOUD_BASE_URL;
-  const key = process.env.OPENCLOUD_API_KEY;
-  const model = process.env.OPENCLOUD_MODEL ?? "gpt-4o-mini";
-
-  if (!baseUrl || !key) throw new Error("OpenCloud not configured");
-
-  const res = await fetch(`${baseUrl}/v1/chat/completions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${key}`,
-      "HTTP-Referer": "https://sites.ilytat.com",
-      "X-Title": "ILYTAT LLC",
-    },
-    signal: AbortSignal.timeout(40_000),
-    body: JSON.stringify({
-      model,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userMessage },
-      ],
-      response_format: { type: "json_object" },
-    }),
-  });
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => "");
-    throw new Error(`OpenCloud ${res.status}: ${body}`);
-  }
-
-  const data = await res.json();
-  const text = data?.choices?.[0]?.message?.content;
-  if (!text) throw new Error("OpenCloud returned empty response");
-  return text;
-}
-
-// ── Unified AI call with fallback ─────────────────────────────────────────────
 
 async function callAI(userMessage: string): Promise<string> {
-  if (process.env.GEMINI_API_KEY) {
-    try {
-      return await callGemini(userMessage);
-    } catch (e) {
-      console.warn("[generateBlog] Gemini failed, trying OpenCloud:", (e as Error).message);
-    }
-  }
-
-  if (process.env.OPENCLOUD_API_KEY && process.env.OPENCLOUD_BASE_URL) {
-    return await callOpenCloud(userMessage);
-  }
-
-  const missing = [
-    !process.env.OPENCLOUD_BASE_URL && "OPENCLOUD_BASE_URL",
-    !process.env.OPENCLOUD_API_KEY && "OPENCLOUD_API_KEY",
-  ].filter(Boolean);
-  if (missing.length) {
-    console.error(`[generateBlog] No fallback available — missing: ${missing.join(", ")}`);
-  }
-  throw new Error("No AI provider available. Configure GEMINI_API_KEY or OPENCLOUD_API_KEY.");
+  return callProvider({
+    system: SYSTEM_PROMPT,
+    user: userMessage,
+    json: true,
+    maxTokens: 4096,
+  });
 }
 
 // ── Blog generation ───────────────────────────────────────────────────────────
@@ -209,14 +111,7 @@ export async function generateBlogPost(opts: {
 
   const raw = await callAI(userMessage);
 
-  let parsed: GeneratedBlog;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    const match = raw.match(/\{[\s\S]*\}/);
-    if (!match) throw new Error(`AI returned non-JSON: ${raw.slice(0, 300)}`);
-    parsed = JSON.parse(match[0]);
-  }
+  const parsed = parseAiJson<GeneratedBlog>(raw);
 
   if (!parsed.title || !parsed.slug || !parsed.content) {
     throw new Error(`AI response missing required fields: ${JSON.stringify(parsed).slice(0, 300)}`);

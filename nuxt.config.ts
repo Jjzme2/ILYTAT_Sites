@@ -25,7 +25,6 @@ export default defineNuxtConfig({
     "@nuxt/icon",
     "@nuxt/image",
     "@nuxt/eslint",
-    "@pinia/nuxt",
     "@vercel/analytics",
     "@vercel/speed-insights",
     "nuxt-turnstile",
@@ -85,9 +84,21 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    geminiApiKey: process.env.GEMINI_API_KEY,
-    opencloudBaseUrl: process.env.OPENCLOUD_BASE_URL,
-    opencloudApiKey: process.env.OPENCLOUD_API_KEY,
+    // ── AI ────────────────────────────────────────────────────────────────
+    // OpenRouter is the primary provider: one key, one bill, and the model is
+    // a config value rather than a URL path, so a retired model is an env
+    // change instead of a deploy.
+    openrouterApiKey: process.env.OPENROUTER_API_KEY || "",
+    openrouterBaseUrl: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
+    openrouterModel: process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash",
+    // Optional fallback.
+    geminiApiKey: process.env.GEMINI_API_KEY || "",
+    geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+    // Legacy names, still read so existing deployments keep working.
+    opencloudBaseUrl: process.env.OPENCLOUD_BASE_URL || "",
+    opencloudApiKey: process.env.OPENCLOUD_API_KEY || "",
+    // Daily spend guard for the public AI tools (requests/day, all IPs).
+    aiDailyRequestCap: Number(process.env.AI_DAILY_REQUEST_CAP || 300),
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || "ILYTAT Inquiries <noreply@ilytat.com>",
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || "",
