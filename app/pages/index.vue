@@ -112,10 +112,6 @@
     id="top"
     class="relative min-h-screen bg-[var(--theme-bg)] text-(--theme-fg) font-sans leading-relaxed overflow-x-hidden"
   >
-    <div
-      class="grain"
-      aria-hidden="true"
-    />
 
     <!-- Exactly one banner ever renders. A live promotion from the API wins;
          the Founding Five copy is the fallback. Rendering both stacked two
@@ -165,7 +161,6 @@
             v-for="proj in projects"
             :key="proj.id"
             as="a"
-            palette="azure-sand"
             class="glass-deep rounded-[var(--radius)] flex flex-col no-underline text-inherit transition-[border-color,box-shadow] duration-300 group"
             :class="
               proj.url

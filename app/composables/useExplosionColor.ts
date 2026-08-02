@@ -1,14 +1,19 @@
 /**
- * useExplosionColor — returns a random .glow-* class name on the client.
+ * useExplosionColor — returns a .glow-* class name.
  *
- * Randomization happens in onMounted to avoid SSR/hydration mismatch.
  * The class maps to CSS variables --ex-c1/--ex-c2 consumed by .lumen-burst.
+ *
+ * These used to be shuffled at random in onMounted, so the five service cards
+ * drew five of ten hues — including crimson, lime and rose — on a gold-branded
+ * site, reshuffled on every page load. The site literally looked different
+ * every refresh, which made it impossible to art-direct or screenshot. The
+ * palette is now pinned to the two on-brand golds.
  *
  * Usage:
  *   const glowClass = useExplosionColor()
  *   <LumenSurface :class="glowClass" />
  *
- * To pin a color instead, pass the class directly: class="glow-violet"
+ * To pin a specific colour, pass the class directly: class="glow-violet"
  */
 
 const GLOW_CLASSES = [
@@ -26,14 +31,11 @@ const GLOW_CLASSES = [
 
 export type GlowClass = typeof GLOW_CLASSES[number]
 
+/** The only hues that belong on a gold-branded page. */
+const BRAND_GLOWS: readonly GlowClass[] = ['glow-gold', 'glow-solar']
+
 export function useExplosionColor(): Ref<GlowClass> {
-  const cls = ref<GlowClass>(GLOW_CLASSES[0])
-
-  onMounted(() => {
-    cls.value = GLOW_CLASSES[Math.floor(Math.random() * GLOW_CLASSES.length)]
-  })
-
-  return cls
+  return ref<GlowClass>(BRAND_GLOWS[0])
 }
 
 /**
@@ -41,12 +43,7 @@ export function useExplosionColor(): Ref<GlowClass> {
  * Useful for grids where you want adjacent cards to differ.
  */
 export function useExplosionColors(count: number): Ref<GlowClass[]> {
-  const classes = ref<GlowClass[]>(Array.from({ length: count }, (_, i) => GLOW_CLASSES[i % GLOW_CLASSES.length]))
-
-  onMounted(() => {
-    const shuffled = [...GLOW_CLASSES].sort(() => Math.random() - 0.5)
-    classes.value = Array.from({ length: count }, (_, i) => shuffled[i % shuffled.length])
-  })
-
-  return classes
+  return ref<GlowClass[]>(
+    Array.from({ length: count }, (_, i) => BRAND_GLOWS[i % BRAND_GLOWS.length]),
+  )
 }

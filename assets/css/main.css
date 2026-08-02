@@ -205,12 +205,6 @@ html {
   66%       { transform: translate(-18px, 14px); }
 }
 
-@keyframes gold-shimmer {
-  0%   { background-position: 0%   50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0%   50%; }
-}
-
 @keyframes marquee-left {
   to { transform: translateX(calc(-100% / 6)); }
 }
@@ -220,13 +214,6 @@ html {
   50%       { transform: translateY(7px); }
 }
 
-@keyframes scroll-line {
-  0%   { transform: scaleY(0); transform-origin: top;    opacity: 0; }
-  40%  { transform: scaleY(1); transform-origin: top;    opacity: 1; }
-  60%  { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
-  100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
-}
-
 /* ── Scroll reveal ─────────────────────────────────────────────────────────── */
 .js-enabled [data-reveal] {
   opacity: 0;
@@ -234,14 +221,6 @@ html {
   transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .js-enabled [data-reveal].is-revealed { opacity: 1; transform: none; }
-
-/* ── Grain overlay ─────────────────────────────────────────────────────────── */
-.grain {
-  position: fixed; inset: 0; z-index: 100;
-  pointer-events: none; opacity: 0.026;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 256px 256px;
-}
 
 /* ── Glassmorphism ─────────────────────────────────────────────────────────── */
 .glass-card {
@@ -292,33 +271,7 @@ html {
   animation: blob-drift 22s ease-in-out infinite reverse;
   animation-delay: -7s;
 }
-.hero-blob-3 {
-  width: 540px; height: 540px;
-  bottom: -80px; left: 28%;
-  background: radial-gradient(circle, var(--blob-3) 0%, transparent 65%);
-  filter: blur(110px);
-  animation: blob-drift 15s ease-in-out infinite;
-  animation-delay: -10s;
-}
-/* Frost-only fourth blob — hidden in ember via --blob-4: transparent */
-.hero-blob-4 {
-  width: 420px; height: 420px;
-  bottom: 10%; left: 5%;
-  background: radial-gradient(circle, var(--blob-4) 0%, transparent 65%);
-  filter: blur(100px);
-  animation: blob-drift 20s ease-in-out infinite;
-  animation-delay: -5s;
-}
 
-/* ── Animated gradient text (hero serif line) ──────────────────────────────── */
-.hero-gold-text {
-  background: var(--hero-gradient);
-  background-size: 200% 200%;
-  animation: gold-shimmer 5s ease-in-out infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 /* ── Marquee strip ─────────────────────────────────────────────────────────── */
 .animate-marquee {
@@ -331,7 +284,6 @@ html {
 
 /* ── Utility animations ────────────────────────────────────────────────────── */
 .animate-bob  { animation: bob 2.4s ease-in-out infinite; }
-.scroll-line  { animation: scroll-line 1.8s ease-in-out infinite; }
 
 /* ── Nav ───────────────────────────────────────────────────────────────────── */
 /* The nav is `position: sticky`, so it occupies flow space and can never overlap
@@ -654,10 +606,13 @@ html {
   --crack-notch-lg: 22px;
 }
 
-/* Explosion animation — ONLY opacity and transform → fully GPU composited */
+/* Explosion animation — ONLY opacity and transform → fully GPU composited.
+   Was 0.20 -> 0.42: a screen-blended saturated blob pulsing under 14px body
+   copy on every card, all the time. Dialled back so it reads as a subtle
+   surface warmth rather than the card breathing at the reader. */
 @keyframes lumen-burst {
-  0%, 100% { opacity: 0.20; transform: scale(0.93); }
-  50%       { opacity: 0.42; transform: scale(1.06); }
+  0%, 100% { opacity: 0.05; transform: scale(0.97); }
+  50%       { opacity: 0.11; transform: scale(1.02); }
 }
 
 /* ── Named explosion color palettes ─────────────────────────────────────────
@@ -798,12 +753,8 @@ html {
  * correct without the expensive blur step.
  */
 @media (max-width: 768px) {
-  /* Kill all 4 blobs — they're invisible at mobile scale and burn GPU/battery */
+  /* Kill the blobs — they're invisible at mobile scale and burn GPU/battery */
   .hero-blob { display: none !important; }
-
-  /* gold-shimmer animates background-position which is not GPU-composited — it
-     forces a paint on every frame. Freeze it at initial position on mobile. */
-  .hero-gold-text { animation: none; }
 
   /* bob animation on the scroll indicator is decorative — skip on mobile */
   .animate-bob { animation: none; }
@@ -839,13 +790,9 @@ html {
  */
 @media (prefers-reduced-motion: reduce) {
   .lumen-burst        { animation: none !important; }
-  .hero-gold-text     { animation: none !important; }
   .animate-bob        { animation: none !important; }
-  .scroll-line        { animation: none !important; }
   .hero-blob-1,
   .hero-blob-2,
-  .hero-blob-3,
-  .hero-blob-4        { animation: none !important; }
   .animate-marquee    { animation-play-state: paused !important; }
   .page-enter-active,
   .page-leave-active  { transition-duration: 0.1s !important; }

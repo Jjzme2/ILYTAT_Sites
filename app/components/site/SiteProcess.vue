@@ -34,7 +34,6 @@ const { steps } = siteConfig
             data-reveal
             :data-reveal-delay="i * 120">
             <LumenSurface
-              palette="copper-sky"
               class="crack-inner crack-inner-lift glass-card group flex flex-col h-full">
 
               <div class="px-7 py-8 flex flex-col gap-4 flex-1 relative">

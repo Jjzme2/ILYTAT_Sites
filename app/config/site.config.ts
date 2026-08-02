@@ -11,6 +11,18 @@ export const siteConfig = {
     monthlyRate,
     priceRange: '$499–$1,499', // Used dynamically in SEO schema
 
+    /**
+     * Hero visual. Drop a real image at /public and point heroImage at it
+     * (e.g. '/hero.jpg') and the hero renders the photo. Until then the slot
+     * falls back to the typographic panel below, so it never looks unfinished.
+     */
+    heroImage: null as string | null,
+    heroStats: [
+        { value: '1 week',     label: 'Typical build time' },
+        { value: monthlyRate,  label: 'Managed hosting, per month' },
+        { value: '100%',       label: 'Code ownership, yours' },
+    ],
+
     pillars: [
         { icon: 'i-heroicons-lock-closed', title: 'You own your site' },
         { icon: 'i-heroicons-currency-dollar', title: 'Simple, clear pricing' },

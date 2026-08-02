@@ -51,10 +51,17 @@ const year = new Date().getFullYear()
       </div>
     </div>
 
+    <!-- Fortune Orb. Moved down here from the hero, where a rotating yin-yang
+         dispensing fortune cookies was the first thing a prospect saw next to
+         the pitch. It keeps its personality without fronting the sale. -->
+    <div class="max-w-[1200px] mx-auto px-4 md:px-6 lg:px-12 pb-12 flex justify-center">
+      <SiteFortuneOrb />
+    </div>
+
     <div class="border-t border-[var(--glass-card-border)] py-5">
       <div class="max-w-[1200px] mx-auto px-4 md:px-6 lg:px-12 flex items-center justify-between flex-wrap gap-2">
-        <span class="font-mono text-[9.5px] uppercase tracking-[1.5px] text-(--theme-text-faint)">© {{ year }} ILYTAT LLC</span>
-        <span class="font-mono text-[9.5px] uppercase tracking-[1.5px] text-(--theme-text-faint)">Built by {{ founder.name }}</span>
+        <span class="font-mono text-[11px] uppercase tracking-[0.12em] text-(--theme-text-faint)">© {{ year }} ILYTAT LLC</span>
+        <span class="font-mono text-[11px] uppercase tracking-[0.12em] text-(--theme-text-faint)">Built by {{ founder.name }}</span>
       </div>
     </div>
   </footer>

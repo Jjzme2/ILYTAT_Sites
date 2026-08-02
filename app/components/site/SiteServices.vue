@@ -29,7 +29,6 @@ const glowClasses = useExplosionColors(services.length)
         :data-reveal-delay="i * 80">
         <LumenSurface
           as="a"
-          palette="amber-plum"
           :class="['crack-inner crack-inner-lift glass-card no-underline text-inherit group flex flex-col h-full', glowClasses[i]]"
           href="#contact"
           @click="emit('select-service', svc.title)">
