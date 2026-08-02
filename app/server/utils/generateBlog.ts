@@ -83,7 +83,9 @@ async function callAI(userMessage: string): Promise<string> {
     system: SYSTEM_PROMPT,
     user: userMessage,
     json: true,
-    maxTokens: 4096,
+    // Configurable: OpenRouter reserves against the requested ceiling, so this
+    // has to fit the available balance, not the expected post length.
+    maxTokens: useRuntimeConfig().aiBlogMaxTokens,
   });
 }
 

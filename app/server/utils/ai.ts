@@ -131,6 +131,18 @@ async function callOpenRouter(opts: AiCallOptions, cfg: {
 
   if (!res.ok) {
     const body = await res.text().catch(() => '')
+    // 402 is a billing state, not an outage, and the remedy is specific:
+    // OpenRouter reserves credit against the requested max_tokens rather than
+    // the tokens actually used, so a large ceiling fails on a small balance.
+    if (res.status === 402) {
+      throw new AiError(
+        `OpenRouter is out of credit for a ${opts.maxTokens ?? 2048}-token request. `
+        + 'Add credits, or lower AI_BLOG_MAX_TOKENS. '
+        + `Provider said: ${body.slice(0, 240)}`,
+        'openrouter',
+        402,
+      )
+    }
     // Keep the provider's own message — this is exactly what the old code
     // discarded, and it is the only thing that says *why* a call failed.
     throw new AiError(

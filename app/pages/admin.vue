@@ -89,7 +89,7 @@ async function runHealthCheck() {
     healthResult.value = await $fetch('/api/admin/health', { headers: await getAdminHeaders() })
   }
   catch (e: unknown) {
-    healthResult.value = { ok: false, tokenError: e instanceof Error ? e.message : String(e) }
+    healthResult.value = { ok: false, tokenError: apiErrorMessage(e) }
   }
   finally {
     healthLoading.value = false
@@ -1326,7 +1326,30 @@ function onGlobalKeydown(e: KeyboardEvent) {
         <button class="submit-btn" style="margin-bottom:20px" :disabled="healthLoading" @click="runHealthCheck">
           {{ healthLoading ? 'Running…' : 'Run Health Check' }}
         </button>
-        <div v-if="healthResult" style="font-family:monospace;font-size:12px;background:#111;color:#e5e5e5;padding:20px;border-radius:8px;white-space:pre-wrap;overflow-x:auto;">{{ JSON.stringify(healthResult, null, 2) }}</div>
+        <!-- AI provider status, read at a glance. Previously the only way to
+             learn whether a key was configured was to trigger a generation
+             and read the failure. -->
+        <div
+          v-if="healthResult?.ai"
+          class="glass-card rounded-[var(--radius)] p-5 mb-4 flex flex-col gap-2">
+          <div class="flex items-center gap-2">
+            <UIcon
+              :name="(healthResult.ai as Record<string, unknown>).configured ? 'i-heroicons-check-circle' : 'i-heroicons-exclamation-triangle'"
+              class="w-5 h-5"
+              :class="(healthResult.ai as Record<string, unknown>).configured ? 'text-(--status-good)' : 'text-(--status-bad)'" />
+            <span class="font-semibold text-[15px] text-(--theme-fg)">
+              AI: {{ (healthResult.ai as Record<string, unknown>).configured ? (healthResult.ai as Record<string, unknown>).primary : 'not configured' }}
+            </span>
+          </div>
+          <p v-if="(healthResult.ai as Record<string, unknown>).model" class="text-[13px] text-(--theme-text-muted)">
+            Model: {{ (healthResult.ai as Record<string, unknown>).model }}<template v-if="(healthResult.ai as Record<string, unknown>).fallback"> · fallback: {{ (healthResult.ai as Record<string, unknown>).fallback }}</template> · daily cap: {{ (healthResult.ai as Record<string, unknown>).dailyCap }}
+          </p>
+          <p v-if="(healthResult.ai as Record<string, unknown>).hint" class="text-[13px] text-(--status-bad)">
+            {{ (healthResult.ai as Record<string, unknown>).hint }}
+          </p>
+        </div>
+
+        <div v-if="healthResult" style="font-family:monospace;font-size:12px;background:var(--theme-surface-deep);color:var(--theme-text-hi);padding:20px;border-radius:8px;white-space:pre-wrap;overflow-x:auto;">{{ JSON.stringify(healthResult, null, 2) }}</div>
       </section>
 
       <!-- ── PORTFOLIO tab ── -->
@@ -1702,7 +1725,7 @@ v-model="newTestimonial.quote" rows="3"
 
           <!-- Iframe viewer -->
           <div style="flex: 1; border: 1px solid var(--theme-surface-alt); border-radius: 10px; overflow: hidden; position: relative;">
-            <div v-if="docContentLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #141417; color: var(--theme-text-body); font-size: 13px;">
+            <div v-if="docContentLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--theme-surface-alt); color: var(--theme-text-body); font-size: 13px;">
               Loading document…
             </div>
             <iframe
@@ -2053,7 +2076,16 @@ h1 {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* Tabs overflow on narrow screens. Padding keeps the first and last from
+     sitting flush against the clip edge, scroll-padding keeps a snapped tab
+     clear of it, and the mask fades both edges so it reads as scrollable
+     rather than cut off. */
+  padding-inline: 2px;
+  scroll-padding-inline: 12px;
+  scroll-snap-type: x proximity;
+  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
 }
+.dash-tab { scroll-snap-align: center; }
 .dash-tabs::-webkit-scrollbar { display: none; }
 
 .dash-tab {
@@ -2095,7 +2127,7 @@ h1 {
   border: 1px solid var(--theme-surface-alt);
   border-radius: 6px;
   padding: 6px 10px;
-  color: #4a4855;
+  color: var(--theme-text-ghost);
   cursor: pointer;
   font-size: 11px;
   font-family: 'Space Mono', monospace;
@@ -2138,7 +2170,7 @@ h1 {
 }
 
 .palette-search-icon {
-  color: #4a4855;
+  color: var(--theme-text-ghost);
   font-size: 15px;
   flex-shrink: 0;
   line-height: 1;
@@ -2315,7 +2347,7 @@ h3 {
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--theme-surface-alt);
-  background: #111116;
+  background: var(--theme-surface);
 }
 
 .project-thumb-placeholder {
@@ -2389,7 +2421,7 @@ h3 {
 
 .record-body {
   font-size: 13px;
-  color: #b8b4ae;
+  color: var(--theme-text-hi);
   line-height: 1.6;
 }
 
@@ -2458,7 +2490,7 @@ h3 {
 /* ── Add form ── */
 .add-form {
   padding: 24px;
-  background: #141417;
+  background: var(--theme-surface-alt);
   border: 1px solid var(--theme-surface-alt);
   border-radius: 12px;
   display: flex;
@@ -2484,7 +2516,7 @@ label {
   gap: 8px;
   cursor: pointer;
   font-size: 13px;
-  color: #b8b4ae;
+  color: var(--theme-text-hi);
 }
 
 input[type="text"],
