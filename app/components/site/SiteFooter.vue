@@ -3,6 +3,17 @@ import { siteContent } from '~/utils/siteContent'
 
 const { founder, contact } = siteContent
 const year = new Date().getFullYear()
+
+// Same CDN fallback as the nav — never render a broken-image icon. The @error
+// listener can miss a server-rendered image that already failed, so re-check
+// the element once mounted.
+const logoFailed = ref(false)
+const logoRef    = ref<HTMLImageElement | null>(null)
+
+onMounted(() => {
+  const img = logoRef.value
+  if (img?.complete && img.naturalWidth === 0) logoFailed.value = true
+})
 </script>
 
 <template>
@@ -13,10 +24,18 @@ const year = new Date().getFullYear()
     <div class="max-w-[1200px] mx-auto px-4 py-16 md:px-6 lg:px-12 grid grid-cols-1 gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
       <div>
         <img
+          v-if="!logoFailed"
+          ref="logoRef"
           src="https://media.ilytat.com/logo.png"
           alt="ILYTAT"
           width="120" height="28"
-          class="h-7 w-auto object-contain mb-5 block opacity-50 hover:opacity-80 transition-opacity duration-300">
+          class="h-7 w-auto object-contain mb-5 block opacity-50 hover:opacity-80 transition-opacity duration-300"
+          @error="logoFailed = true">
+        <span
+          v-else
+          class="font-display text-[18px] font-extrabold tracking-[-0.02em] mb-5 block text-(--theme-text-hi)">
+          ILYTAT
+        </span>
         <p class="text-[12px] leading-[1.8] max-w-[200px] text-(--theme-text-faint)">
           Websites for local businesses.<br />Manteno, IL · Kankakee County.
         </p>

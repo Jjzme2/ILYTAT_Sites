@@ -17,7 +17,17 @@ const links = [
   { label: 'About',    href: '#about'     },
 ]
 
-const menuOpen = ref(false)
+const menuOpen   = ref(false)
+const logoFailed = ref(false)
+const logoRef    = ref<HTMLImageElement | null>(null)
+
+// The image is server-rendered, so a load failure usually fires before Vue has
+// attached the @error listener. Re-check the element's state once mounted:
+// a finished-but-zero-width image is a failed one.
+onMounted(() => {
+  const img = logoRef.value
+  if (img?.complete && img.naturalWidth === 0) logoFailed.value = true
+})
 
 // Lock body scroll while the mobile panel is open so the page behind stays put.
 watch(menuOpen, (open) => {
@@ -42,17 +52,27 @@ onUnmounted(() => {
         aria-hidden="true" />
     </Transition>
 
+    <!-- The logo is served from an external CDN and had no fallback, so a CDN
+         outage rendered a broken-image icon as the first thing on the page.
+         If it fails to load we swap to a plain wordmark instead. -->
     <a href="#top" class="flex items-center" aria-label="ILYTAT — back to top">
-      <picture>
+      <picture v-if="!logoFailed">
         <source
           type="image/webp"
           srcset="https://media.ilytat.com/logo-72.webp, https://media.ilytat.com/logo-144.webp 2x">
         <img
+          ref="logoRef"
           src="https://media.ilytat.com/logo.png"
           alt="ILYTAT"
           width="120" height="36"
-          class="block h-7 md:h-9 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-200">
+          class="block h-7 md:h-9 w-auto object-contain opacity-90 hover:opacity-100 transition-opacity duration-200"
+          @error="logoFailed = true">
       </picture>
+      <span
+        v-else
+        class="font-display text-[19px] md:text-[22px] font-extrabold tracking-[-0.02em] text-(--theme-fg)">
+        ILYTAT
+      </span>
     </a>
 
     <!-- ── Desktop links ──────────────────────────────────────────────────── -->

@@ -204,23 +204,44 @@
             </div>
           </LumenSurface>
         </div>
+        <!-- Empty state. Previously this read "First projects in progress." —
+             so a prospect comparing vendors side by side saw an empty
+             portfolio. It now shows what actually ships in a build, which is
+             the argument that has to land when there is no gallery yet. -->
         <div
           v-else
-          class="py-20 px-8 glass-deep rounded-[var(--radius)] text-center"
           data-reveal
         >
-          <p class="font-display text-[20px] font-bold text-(--theme-fg) mb-3 tracking-[-0.5px]">
-            First projects in progress.
-          </p>
-          <p class="text-[14px] text-(--theme-text-body) max-w-[380px] mx-auto mb-8 leading-[1.85]">
-            Ask about being an early client — discounted builds available for businesses in Kankakee
-            County.
-          </p>
-          <a
-            href="#contact"
-            class="btn-ghost"
-            >Let's talk &rarr;</a
-          >
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div
+              v-for="deliverable in siteConfig.deliverables"
+              :key="deliverable.title"
+              class="glass-deep rounded-[var(--radius)] p-8 flex flex-col gap-3"
+            >
+              <UIcon
+                :name="deliverable.icon"
+                class="w-6 h-6 text-(--theme-accent)"
+              />
+              <h3 class="font-display text-[17px] font-bold text-(--theme-fg) tracking-[-0.01em]">
+                {{ deliverable.title }}
+              </h3>
+              <p class="text-[14px] text-(--theme-text-body) leading-[1.7]">
+                {{ deliverable.body }}
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-10 flex flex-col sm:flex-row sm:items-center gap-5 justify-center text-center">
+            <p class="text-[15px] text-(--theme-text-body)">
+              Founding-client pricing is open for the first five Kankakee County businesses.
+            </p>
+            <a
+              href="#contact"
+              class="btn-ghost shrink-0"
+              @click="track('cta_click', { label: 'Portfolio empty state', location: 'portfolio' })"
+              >Start a project &rarr;</a
+            >
+          </div>
         </div>
       </section>
 
