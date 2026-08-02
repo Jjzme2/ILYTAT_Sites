@@ -27,6 +27,8 @@ export default defineEventHandler(async (event) => {
     { loc: '/', changefreq: 'weekly', priority: '1.0' },
     { loc: '/services', changefreq: 'monthly', priority: '0.9' },
     { loc: '/tools/website-audit', changefreq: 'monthly', priority: '0.8' },
+    { loc: '/tools/review-response', changefreq: 'monthly', priority: '0.8' },
+    { loc: '/tools/local-seo-checklist', changefreq: 'monthly', priority: '0.8' },
     { loc: '/blog', changefreq: 'weekly', priority: '0.7' },
     { loc: '/privacy', changefreq: 'yearly', priority: '0.3' },
     { loc: '/terms', changefreq: 'yearly', priority: '0.3' },
