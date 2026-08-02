@@ -1725,7 +1725,7 @@ v-model="newTestimonial.quote" rows="3"
 
           <!-- Iframe viewer -->
           <div style="flex: 1; border: 1px solid var(--theme-surface-alt); border-radius: 10px; overflow: hidden; position: relative;">
-            <div v-if="docContentLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #141417; color: var(--theme-text-body); font-size: 13px;">
+            <div v-if="docContentLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--theme-surface-alt); color: var(--theme-text-body); font-size: 13px;">
               Loading document…
             </div>
             <iframe
@@ -2076,7 +2076,16 @@ h1 {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
+  /* Tabs overflow on narrow screens. Padding keeps the first and last from
+     sitting flush against the clip edge, scroll-padding keeps a snapped tab
+     clear of it, and the mask fades both edges so it reads as scrollable
+     rather than cut off. */
+  padding-inline: 2px;
+  scroll-padding-inline: 12px;
+  scroll-snap-type: x proximity;
+  mask-image: linear-gradient(to right, transparent 0, #000 14px, #000 calc(100% - 14px), transparent 100%);
 }
+.dash-tab { scroll-snap-align: center; }
 .dash-tabs::-webkit-scrollbar { display: none; }
 
 .dash-tab {
@@ -2118,7 +2127,7 @@ h1 {
   border: 1px solid var(--theme-surface-alt);
   border-radius: 6px;
   padding: 6px 10px;
-  color: #4a4855;
+  color: var(--theme-text-ghost);
   cursor: pointer;
   font-size: 11px;
   font-family: 'Space Mono', monospace;
@@ -2161,7 +2170,7 @@ h1 {
 }
 
 .palette-search-icon {
-  color: #4a4855;
+  color: var(--theme-text-ghost);
   font-size: 15px;
   flex-shrink: 0;
   line-height: 1;
@@ -2338,7 +2347,7 @@ h3 {
   border-radius: 6px;
   overflow: hidden;
   border: 1px solid var(--theme-surface-alt);
-  background: #111116;
+  background: var(--theme-surface);
 }
 
 .project-thumb-placeholder {
@@ -2412,7 +2421,7 @@ h3 {
 
 .record-body {
   font-size: 13px;
-  color: #b8b4ae;
+  color: var(--theme-text-hi);
   line-height: 1.6;
 }
 
@@ -2481,7 +2490,7 @@ h3 {
 /* ── Add form ── */
 .add-form {
   padding: 24px;
-  background: #141417;
+  background: var(--theme-surface-alt);
   border: 1px solid var(--theme-surface-alt);
   border-radius: 12px;
   display: flex;
@@ -2507,7 +2516,7 @@ label {
   gap: 8px;
   cursor: pointer;
   font-size: 13px;
-  color: #b8b4ae;
+  color: var(--theme-text-hi);
 }
 
 input[type="text"],

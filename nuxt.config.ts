@@ -99,6 +99,10 @@ export default defineNuxtConfig({
     opencloudApiKey: process.env.OPENCLOUD_API_KEY || "",
     // Daily spend guard for the public AI tools (requests/day, all IPs).
     aiDailyRequestCap: Number(process.env.AI_DAILY_REQUEST_CAP || 300),
+    // Response ceiling for blog generation. OpenRouter bills against the
+    // requested max_tokens, not the tokens actually used, so a large value
+    // fails with 402 on a small balance even when the post would be short.
+    aiBlogMaxTokens: Number(process.env.AI_BLOG_MAX_TOKENS || 2000),
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || "ILYTAT Inquiries <noreply@ilytat.com>",
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || "",
