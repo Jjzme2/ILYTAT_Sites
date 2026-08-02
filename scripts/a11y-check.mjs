@@ -17,6 +17,10 @@ import { chromium } from 'playwright'
 
 const URL = process.env.A11Y_URL || 'http://localhost:3000'
 const SHOTS = process.env.A11Y_SHOTS || null
+const PATHS = (process.env.A11Y_PATHS || '/,/services,/services/contractor-websites')
+  .split(',')
+  .map(p => p.trim())
+  .filter(Boolean)
 
 const browser = await chromium.launch(
   process.env.A11Y_CHROMIUM ? { executablePath: process.env.A11Y_CHROMIUM } : {},
@@ -24,10 +28,11 @@ const browser = await chromium.launch(
 
 let failures = 0
 
+for (const path of PATHS) {
 for (const theme of ['light', 'dark']) {
   const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const page = await ctx.newPage()
-  await page.goto(URL, { waitUntil: 'networkidle', timeout: 60000 })
+  await page.goto(URL + path, { waitUntil: 'networkidle', timeout: 60000 })
   await page.evaluate((t) => {
     document.documentElement.setAttribute('data-theme', t)
     // Sections use `content-visibility: auto`, so off-screen subtrees are not
@@ -112,13 +117,14 @@ for (const theme of ['light', 'dark']) {
     return out
   })
 
-  console.log(`\n=== ${theme}: ${bad.length} contrast failures ===`)
+  console.log(`\n=== ${path} [${theme}]: ${bad.length} contrast failures ===`)
   for (const b of bad.slice(0, 14)) {
     console.log(`  ${b.got}/${b.need}  ${b.size}px  ${b.color}  "${b.text}"`)
   }
   failures += bad.length
   if (SHOTS) await page.screenshot({ path: `${SHOTS}/theme-${theme}.png`, fullPage: false })
   await ctx.close()
+}
 }
 
 await browser.close()

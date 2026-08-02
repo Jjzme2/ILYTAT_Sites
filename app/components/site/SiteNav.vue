@@ -10,11 +10,13 @@ const { theme, toggleTheme }        = useTheme()
 const scrolled = computed(() => scrollY.value > 56)
 
 // Section links — the header previously offered no route to any of these.
+// Services points at the real page; the rest are homepage anchors. `to` marks
+// the ones that need NuxtLink so client-side routing works from any page.
 const links = [
-  { label: 'Services', href: '#services'  },
-  { label: 'Pricing',  href: '#pricing'   },
-  { label: 'Work',     href: '#portfolio' },
-  { label: 'About',    href: '#about'     },
+  { label: 'Services', href: '/services',  to: true  },
+  { label: 'Pricing',  href: '/#pricing',  to: false },
+  { label: 'Work',     href: '/#portfolio', to: false },
+  { label: 'About',    href: '/#about',    to: false },
 ]
 
 const menuOpen   = ref(false)
@@ -55,7 +57,7 @@ onUnmounted(() => {
     <!-- The logo is served from an external CDN and had no fallback, so a CDN
          outage rendered a broken-image icon as the first thing on the page.
          If it fails to load we swap to a plain wordmark instead. -->
-    <a href="#top" class="flex items-center" aria-label="ILYTAT — back to top">
+    <NuxtLink to="/" class="flex items-center" aria-label="ILYTAT — back to top">
       <picture v-if="!logoFailed">
         <source
           type="image/webp"
@@ -73,17 +75,18 @@ onUnmounted(() => {
         class="font-display text-[19px] md:text-[22px] font-extrabold tracking-[-0.02em] text-(--theme-fg)">
         ILYTAT
       </span>
-    </a>
+    </NuxtLink>
 
     <!-- ── Desktop links ──────────────────────────────────────────────────── -->
     <div class="hidden md:flex items-center gap-6">
-      <a
+      <component
+        :is="link.to ? 'NuxtLink' : 'a'"
         v-for="link in links"
         :key="link.href"
-        :href="link.href"
+        v-bind="link.to ? { to: link.href } : { href: link.href }"
         class="text-[12px] font-medium text-(--theme-text-hi) no-underline tracking-[1.5px] uppercase transition-colors duration-200 hover:text-(--theme-accent)">
         {{ link.label }}
-      </a>
+      </component>
 
       <NuxtLink
         to="/blog"
@@ -119,7 +122,7 @@ onUnmounted(() => {
       </button>
 
       <a
-        href="#contact"
+        href="/#contact"
         class="nav-cta-btn"
         @click="track('cta_click', { label: 'Free Audit', location: 'nav' })">
         Free Audit
@@ -129,7 +132,7 @@ onUnmounted(() => {
     <!-- ── Mobile trigger ─────────────────────────────────────────────────── -->
     <div class="flex md:hidden items-center gap-3">
       <a
-        href="#contact"
+        href="/#contact"
         class="nav-cta-btn"
         @click="track('cta_click', { label: 'Free Audit', location: 'nav' })">
         Free Audit
@@ -151,14 +154,15 @@ onUnmounted(() => {
         v-if="menuOpen"
         id="mobile-menu"
         class="md:hidden fixed left-0 right-0 top-(--nav-h) bottom-0 z-[89] bg-[var(--theme-bg)] px-4 py-6 flex flex-col gap-1 overflow-y-auto">
-        <a
+        <component
+          :is="link.to ? 'NuxtLink' : 'a'"
           v-for="link in links"
           :key="link.href"
-          :href="link.href"
+          v-bind="link.to ? { to: link.href } : { href: link.href }"
           class="py-4 text-[17px] font-medium text-(--theme-fg) no-underline border-b border-[var(--glass-card-border)]"
           @click="menuOpen = false">
           {{ link.label }}
-        </a>
+        </component>
 
         <NuxtLink
           to="/blog"
@@ -168,7 +172,7 @@ onUnmounted(() => {
         </NuxtLink>
 
         <a
-          href="#contact"
+          href="/#contact"
           class="btn-primary mt-6 justify-center"
           @click="menuOpen = false; track('cta_click', { label: 'Free Audit', location: 'mobile-menu' })">
           Get a Free Audit

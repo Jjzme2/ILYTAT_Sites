@@ -27,10 +27,13 @@ const glowClasses = useExplosionColors(services.length)
         class="crack-wrap"
         data-reveal
         :data-reveal-delay="i * 80">
+        <!-- Cards now route to the dedicated service page rather than jumping
+             to the contact anchor, so each one has a real destination with its
+             own indexable content. -->
         <LumenSurface
-          as="a"
+          as="NuxtLink"
           :class="['crack-inner crack-inner-lift glass-card no-underline text-inherit group flex flex-col h-full', glowClasses[i]]"
-          href="#contact"
+          :to="`/services/${svc.slug}`"
           @click="emit('select-service', svc.title)">
 
           <div class="flex flex-col gap-5 p-8 md:p-10 flex-1 relative">
@@ -39,7 +42,7 @@ const glowClasses = useExplosionColors(services.length)
               0{{ i + 1 }}
             </span>
 
-            <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-(--theme-accent) opacity-70">
+            <span class="font-mono text-[11px] tracking-[0.14em] uppercase text-(--theme-accent)">
               {{ svc.tag }}
             </span>
 
@@ -55,8 +58,8 @@ const glowClasses = useExplosionColors(services.length)
             <div class="flex items-center gap-3 mt-2">
               <div class="crack-line w-8 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               <span
-                class="font-mono text-[10px] tracking-[2.5px] uppercase text-(--theme-accent) opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
-                Start &rarr;
+                class="font-mono text-[12px] tracking-[0.12em] uppercase text-(--theme-accent) opacity-0 -translate-x-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-x-0">
+                Learn more &rarr;
               </span>
             </div>
           </div>
