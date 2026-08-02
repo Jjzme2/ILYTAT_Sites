@@ -110,7 +110,7 @@
 <template>
   <div
     id="top"
-    class="relative min-h-screen bg-[var(--theme-bg)] text-[var(--theme-text)] font-sans leading-relaxed overflow-x-hidden"
+    class="relative min-h-screen bg-[var(--theme-bg)] text-(--theme-fg) font-sans leading-relaxed overflow-x-hidden"
   >
     <div
       class="grain"
@@ -142,7 +142,7 @@
       <!-- ── Portfolio ──────────────────────────────────────────────────────── -->
       <section
         id="portfolio"
-        class="max-w-[1080px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]"
+        class="max-w-[1200px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]"
         style="content-visibility: auto; contain-intrinsic-block-size: auto 600px"
       >
         <header
@@ -151,7 +151,7 @@
         >
           <p class="eyebrow">Recent Work</p>
           <h2
-            class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-text) leading-[1.05]"
+            class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-fg) leading-[1.05]"
           >
             Built for businesses like yours
           </h2>
@@ -166,7 +166,7 @@
             :key="proj.id"
             as="a"
             palette="azure-sand"
-            class="glass-deep rounded-sm flex flex-col no-underline text-inherit transition-[border-color,box-shadow] duration-300 group"
+            class="glass-deep rounded-[var(--radius)] flex flex-col no-underline text-inherit transition-[border-color,box-shadow] duration-300 group"
             :class="
               proj.url
                 ? 'hover:border-[rgba(245,197,24,0.22)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.4)]'
@@ -177,7 +177,7 @@
             :rel="proj.url ? 'noopener noreferrer' : undefined"
           >
             <div
-              class="aspect-video bg-[#080810] flex items-center justify-center overflow-hidden relative shrink-0"
+              class="aspect-video bg-[var(--theme-surface-deep)] flex items-center justify-center overflow-hidden relative shrink-0"
             >
               <img
                 v-if="proj.imageUrl"
@@ -202,22 +202,22 @@
                 style="color: color-mix(in srgb, var(--theme-accent) 38%, transparent)"
                 >{{ proj.industry }}</span
               >
-              <h3 class="font-display text-[15px] font-bold text-[#f0ece6] tracking-[-0.3px]">
+              <h3 class="font-display text-[15px] font-bold text-(--theme-fg) tracking-[-0.3px]">
                 {{ proj.title }}
               </h3>
-              <p class="text-[12.5px] text-[#8a8278] leading-[1.78]">{{ proj.description }}</p>
+              <p class="text-[12.5px] text-(--theme-text-body) leading-[1.78]">{{ proj.description }}</p>
             </div>
           </LumenSurface>
         </div>
         <div
           v-else
-          class="py-20 px-8 glass-deep rounded-sm text-center"
+          class="py-20 px-8 glass-deep rounded-[var(--radius)] text-center"
           data-reveal
         >
-          <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-3 tracking-[-0.5px]">
+          <p class="font-display text-[20px] font-bold text-(--theme-fg) mb-3 tracking-[-0.5px]">
             First projects in progress.
           </p>
-          <p class="text-[14px] text-[#8a8278] max-w-[380px] mx-auto mb-8 leading-[1.85]">
+          <p class="text-[14px] text-(--theme-text-body) max-w-[380px] mx-auto mb-8 leading-[1.85]">
             Ask about being an early client — discounted builds available for businesses in Kankakee
             County.
           </p>
@@ -243,14 +243,14 @@
         class="py-16 lg:py-[100px]"
         style="content-visibility: auto; contain-intrinsic-block-size: auto 600px"
       >
-        <div class="max-w-[1080px] mx-auto px-4 md:px-6 lg:px-12">
+        <div class="max-w-[1200px] mx-auto px-4 md:px-6 lg:px-12">
           <header
             class="mb-16"
             data-reveal
           >
             <p class="eyebrow">Common Questions</p>
             <h2
-              class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-text) leading-[1.05]"
+              class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-fg) leading-[1.05]"
             >
               Straight answers
             </h2>
@@ -272,10 +272,10 @@
 
       <!-- ── CTA Band ───────────────────────────────────────────────────────── -->
       <div
-        class="relative mx-4 my-12 overflow-hidden rounded-sm md:mx-6 md:my-16 lg:mx-12 lg:my-[100px]"
+        class="relative mx-4 my-12 overflow-hidden rounded-[var(--radius)] md:mx-6 md:my-16 lg:mx-12 lg:my-[100px]"
         data-reveal
       >
-        <div class="absolute inset-0 bg-white/[0.022] backdrop-blur-2xl border border-white/8" />
+        <div class="absolute inset-0 bg-[var(--glass-card-bg)] backdrop-blur-2xl border border-[var(--glass-card-border)]" />
         <div
           class="absolute top-0 left-0 right-0 h-px"
           style="
@@ -300,7 +300,7 @@
         <div class="relative z-1 text-center px-6 py-16 lg:px-12 lg:py-24">
           <p class="eyebrow justify-center">Ready to start?</p>
           <h2
-            class="font-display text-[clamp(28px,4.2vw,56px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.04] text-(--theme-text)"
+            class="font-display text-[clamp(28px,4.2vw,56px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.04] text-(--theme-fg)"
             style="white-space: pre-line"
           >
             {{ siteContent.cta.headline }}

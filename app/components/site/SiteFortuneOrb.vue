@@ -320,7 +320,7 @@ function reset(): void {
   font-style: italic;
   font-size: 13.5px;
   line-height: 1.75;
-  color: var(--theme-text, #f0ece6);
+  color: var(--theme-fg, #f0ece6);
   margin: 0;
 }
 

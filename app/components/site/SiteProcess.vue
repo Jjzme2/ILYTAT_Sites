@@ -6,14 +6,14 @@ const { steps } = siteConfig
 
 <template>
   <section id="how-it-works" class="bg-[var(--theme-surface)] section-layer relative section-crack py-16 lg:py-[100px]">
-    <div class="max-w-[1080px] mx-auto px-4 md:px-6 lg:px-12">
+    <div class="max-w-[1200px] mx-auto px-4 md:px-6 lg:px-12">
 
       <header class="mb-20" data-reveal>
         <p class="eyebrow">How It Works</p>
-        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] leading-[1.05] mt-2">
+        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-fg) leading-[1.05] mt-2">
           Simple from day one.
         </h2>
-        <p class="text-[14px] text-[var(--theme-text-body)] mt-4 leading-[1.85] max-w-[400px]">
+        <p class="text-[14px] text-(--theme-text-body) mt-4 leading-[1.85] max-w-[400px]">
           No mystery timelines. No confusing agency process.
         </p>
       </header>
@@ -47,15 +47,15 @@ const { steps } = siteConfig
                       class="w-1.5 h-1.5 transition-colors duration-400"
                       style="background: color-mix(in srgb, var(--theme-accent) 55%, transparent); clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)" />
                   </div>
-                  <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-[var(--theme-accent)] opacity-60">
+                  <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-(--theme-accent) opacity-60">
                     Phase {{ step.n }}
                   </span>
                 </div>
 
-                <h3 class="font-display text-[18px] font-bold tracking-[-0.3px] text-[var(--theme-text)]">
+                <h3 class="font-display text-[18px] font-bold tracking-[-0.3px] text-(--theme-fg)">
                   {{ step.title }}
                 </h3>
-                <p class="text-[13.5px] leading-[1.9] text-[var(--theme-text-body)]">
+                <p class="text-[13.5px] leading-[1.9] text-(--theme-text-body)">
                   {{ step.body }}
                 </p>
 

@@ -5,7 +5,7 @@ const { pillars } = siteConfig
 </script>
 
 <template>
-  <div class="border-t border-b border-white/[0.04] bg-[var(--theme-marquee-bg)] py-4 overflow-hidden relative" style="min-height:46px">
+  <div class="border-t border-b border-[var(--glass-card-border)] bg-[var(--theme-marquee-bg)] py-4 overflow-hidden relative" style="min-height:46px">
     <div
       class="absolute inset-y-0 left-0 w-20 z-10 pointer-events-none"
       style="background: linear-gradient(to right, var(--theme-marquee-bg), transparent)"
@@ -18,10 +18,10 @@ const { pillars } = siteConfig
       <template v-for="n in 6" :key="n">
         <template v-for="p in pillars" :key="`${n}-${p.title}`">
           <span class="flex items-center gap-2.5 px-7 whitespace-nowrap">
-            <UIcon :name="p.icon" class="w-3 h-3 text-[#f5c518]/25 flex-shrink-0" />
-            <span class="font-mono text-[9.5px] tracking-[1.5px] uppercase text-[#3a3530]">{{ p.title }}</span>
+            <UIcon :name="p.icon" class="w-3 h-3 text-(--theme-accent)/25 flex-shrink-0" />
+            <span class="font-mono text-[9.5px] tracking-[1.5px] uppercase text-(--theme-text-muted)">{{ p.title }}</span>
           </span>
-          <span class="text-[#2a2520] text-[10px] flex-shrink-0 select-none">·</span>
+          <span class="text-(--theme-text-faint) text-[10px] flex-shrink-0 select-none">·</span>
         </template>
       </template>
     </div>

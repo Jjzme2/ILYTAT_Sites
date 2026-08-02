@@ -224,12 +224,12 @@ async function submitLead() {
 
 <template>
   <section id="quote" class="pb-16 lg:pb-[100px]" style="content-visibility:auto;contain-intrinsic-block-size:auto 640px">
-    <div class="max-w-[1080px] mx-auto px-4 md:px-6 lg:px-12">
+    <div class="max-w-[1200px] mx-auto px-4 md:px-6 lg:px-12">
 
       <!-- Section header -->
       <header class="mb-16 text-center">
         <p class="eyebrow justify-center">Instant Estimate</p>
-        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] leading-[1.05]">
+        <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-fg) leading-[1.05]">
           Get your custom quote in 60 seconds
         </h2>
         <p class="mt-4 text-[15px] max-w-[440px] mx-auto leading-[1.88]" style="color: var(--theme-text-body)">
@@ -240,14 +240,14 @@ async function submitLead() {
       <div class="max-w-[580px] mx-auto">
 
         <!-- ── Questions ─────────────────────────────────────────────────── -->
-        <div v-if="phase === 'questions'" class="glass-deep rounded-sm p-6 lg:p-8">
+        <div v-if="phase === 'questions'" class="glass-deep rounded-[var(--radius)] p-6 lg:p-8">
 
           <div class="flex items-center gap-2 mb-8">
             <div
               v-for="(_, i) in activeQuestions"
               :key="i"
               class="h-1 flex-1 rounded-full transition-all duration-300"
-              :class="i <= currentStep ? 'bg-[var(--theme-accent)]' : 'bg-white/[0.08]'"
+              :class="i <= currentStep ? 'bg-[var(--theme-accent)]' : 'bg-[var(--glass-card-bg)]'"
             />
           </div>
 
@@ -255,7 +255,7 @@ async function submitLead() {
             Step {{ currentStep + 1 }} of {{ activeQuestions.length }}
           </p>
 
-          <h3 class="font-display text-[clamp(18px,2.2vw,24px)] font-bold text-[var(--theme-text)] tracking-[-0.5px] mb-6">
+          <h3 class="font-display text-[clamp(18px,2.2vw,24px)] font-bold text-(--theme-fg) tracking-[-0.5px] mb-6">
             {{ currentQuestion.label }}
           </h3>
 
@@ -268,10 +268,10 @@ async function submitLead() {
               v-for="option in currentQuestion.options"
               :key="option"
               type="button"
-              class="w-full text-left px-4 py-3.5 rounded-sm border text-[14px] font-medium transition-all duration-200"
+              class="w-full text-left px-4 py-3.5 rounded-[var(--radius)] border text-[14px] font-medium transition-all duration-200"
               :class="isSelected(option)
-                ? 'border-[var(--theme-accent)] text-[var(--theme-text)]'
-                : 'border-white/[0.08] bg-white/[0.02] text-[var(--theme-text-body)] hover:border-white/[0.18] hover:bg-white/[0.04]'"
+                ? 'border-[var(--theme-accent)] text-(--theme-fg)'
+                : 'border-[var(--glass-card-border)] bg-[var(--glass-card-bg)] text-(--theme-text-body) hover:border-[var(--glass-card-border)] hover:bg-[var(--glass-card-bg)]'"
               :style="isSelected(option) ? 'background: color-mix(in srgb, var(--theme-accent) 9%, transparent)' : ''"
               @click="selectOption(option)"
             >
@@ -282,7 +282,7 @@ async function submitLead() {
                     currentQuestion.type === 'multiselect' ? 'w-4 h-4 rounded-[3px]' : 'w-4 h-4 rounded-full',
                     isSelected(option)
                       ? 'bg-[var(--theme-accent)] border-[var(--theme-accent)]'
-                      : 'border border-white/[0.25]',
+                      : 'border border-[var(--glass-card-border)]',
                   ]"
                 >
                   <span v-if="isSelected(option)" class="w-1.5 h-1.5 rounded-full bg-black" />
@@ -297,8 +297,8 @@ async function submitLead() {
               v-model="otherDetails[currentQuestion.key]"
               placeholder="Tell us more (optional)…"
               rows="2"
-              class="mt-1 w-full px-4 py-3 rounded-sm text-[14px] resize-none transition-colors focus:outline-none"
-              style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-text);"
+              class="mt-1 w-full px-4 py-3 rounded-[var(--radius)] text-[14px] resize-none transition-colors focus:outline-none"
+              style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-fg);"
               @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
               @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
             />
@@ -328,7 +328,7 @@ async function submitLead() {
         </div>
 
         <!-- ── Loading ───────────────────────────────────────────────────── -->
-        <div v-else-if="phase === 'loading'" class="glass-deep rounded-sm p-14 text-center">
+        <div v-else-if="phase === 'loading'" class="glass-deep rounded-[var(--radius)] p-14 text-center">
 
           <!-- Orbital ring animation -->
           <div class="relative w-28 h-28 mx-auto mb-10">
@@ -359,7 +359,7 @@ async function submitLead() {
             />
           </div>
 
-          <p class="font-display text-[20px] font-bold text-[var(--theme-text)] mb-2 tracking-[-0.3px]">
+          <p class="font-display text-[20px] font-bold text-(--theme-fg) mb-2 tracking-[-0.3px]">
             Analyzing your needs…
           </p>
           <p class="text-[14px]" style="color: var(--theme-text-body)">
@@ -373,13 +373,13 @@ async function submitLead() {
           <!-- AI message with typewriter effect — hidden when AI omits the field -->
           <div
             v-if="quote.message"
-            class="glass-deep rounded-sm px-6 py-5"
+            class="glass-deep rounded-[var(--radius)] px-6 py-5"
             style="border-color: color-mix(in srgb, var(--theme-accent) 16%, transparent)"
           >
             <p class="font-mono text-[10px] tracking-[2px] uppercase mb-3" style="color: color-mix(in srgb, var(--theme-accent) 55%, transparent)">
               AI Analysis
             </p>
-            <p class="text-[15px] leading-[1.88]" style="color: var(--theme-text)">
+            <p class="text-[15px] leading-[1.88]" style="color: var(--theme-fg)">
               {{ typedMessage }}<span
                 v-if="!typingDone"
                 class="inline-block w-0.5 h-[1em] align-middle ml-px animate-pulse"
@@ -391,7 +391,7 @@ async function submitLead() {
           <!-- Why this package (rationale) -->
           <div
             v-if="quote.rationale && quote.rationale.length"
-            class="glass-deep rounded-sm px-6 py-5"
+            class="glass-deep rounded-[var(--radius)] px-6 py-5"
             style="border-color: color-mix(in srgb, var(--theme-accent) 12%, transparent)"
           >
             <p class="font-mono text-[10px] tracking-[2px] uppercase mb-4" style="color: color-mix(in srgb, var(--theme-accent) 55%, transparent)">
@@ -415,7 +415,7 @@ async function submitLead() {
 
           <!-- Quote result card -->
           <div
-            class="glass-deep rounded-sm p-5 lg:p-7"
+            class="glass-deep rounded-[var(--radius)] p-5 lg:p-7"
             style="border-color: color-mix(in srgb, var(--theme-accent) 22%, transparent)"
           >
             <div class="flex items-start justify-between gap-4 mb-5">
@@ -423,12 +423,12 @@ async function submitLead() {
                 <p class="font-mono text-[10px] tracking-[2px] uppercase mb-1" style="color: color-mix(in srgb, var(--theme-accent) 60%, transparent)">
                   {{ quote.tier === 'Custom Software' ? 'Project Type' : 'Recommended Package' }}
                 </p>
-                <h3 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px]" style="color: var(--theme-text)">
+                <h3 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px]" style="color: var(--theme-fg)">
                   {{ quote.tier }}
                 </h3>
               </div>
               <div v-if="quote.tier !== 'Custom Software'" class="text-right flex-shrink-0">
-                <p class="font-display text-[clamp(20px,2.8vw,28px)] font-extrabold text-[var(--theme-accent)] tracking-[-0.5px]">
+                <p class="font-display text-[clamp(20px,2.8vw,28px)] font-extrabold text-(--theme-accent) tracking-[-0.5px]">
                   {{ quote.price }}
                 </p>
                 <p class="text-[11px]" style="color: var(--theme-text-body)">one-time build</p>
@@ -441,16 +441,16 @@ async function submitLead() {
 
             <div
               v-if="quote.addHosting"
-              class="mt-4 px-4 py-3 rounded-sm flex items-start gap-3"
+              class="mt-4 px-4 py-3 rounded-[var(--radius)] flex items-start gap-3"
               style="background: color-mix(in srgb, var(--theme-accent) 7%, transparent); border: 1px solid color-mix(in srgb, var(--theme-accent) 18%, transparent)"
             >
               <UIcon name="i-heroicons-sparkles" class="w-4 h-4 shrink-0 mt-0.5 text-(--theme-accent)" />
               <p class="text-[13px]" style="color: var(--theme-text-body)">
-                <span class="text-[var(--theme-text)] font-medium">Add managed hosting for $89/mo</span> — JJ keeps your site fast, secure, and updated. No tech headaches.
+                <span class="text-(--theme-fg) font-medium">Add managed hosting for $89/mo</span> — JJ keeps your site fast, secure, and updated. No tech headaches.
               </p>
             </div>
 
-            <p class="mt-5 text-[13px] font-medium text-[var(--theme-text)] leading-[1.7]">
+            <p class="mt-5 text-[13px] font-medium text-(--theme-fg) leading-[1.7]">
               {{ quote.nextStep }}
             </p>
 
@@ -465,8 +465,8 @@ async function submitLead() {
           </div>
 
           <!-- Lead capture form — only for standard packages -->
-          <div v-if="quote.tier !== 'Custom Software'" class="glass-deep rounded-sm p-5 lg:p-7">
-            <h4 class="font-display text-[17px] font-bold text-[var(--theme-text)] tracking-[-0.3px] mb-1">
+          <div v-if="quote.tier !== 'Custom Software'" class="glass-deep rounded-[var(--radius)] p-5 lg:p-7">
+            <h4 class="font-display text-[17px] font-bold text-(--theme-fg) tracking-[-0.3px] mb-1">
               Lock in this quote
             </h4>
             <p class="text-[13px] mb-5" style="color: var(--theme-text-body)">
@@ -479,8 +479,8 @@ async function submitLead() {
                 type="text"
                 placeholder="Your name *"
                 autocomplete="name"
-                class="w-full px-4 py-3 rounded-sm text-[14px] transition-colors focus:outline-none"
-                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-text);"
+                class="w-full px-4 py-3 rounded-[var(--radius)] text-[14px] transition-colors focus:outline-none"
+                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-fg);"
                 @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
                 @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
               />
@@ -489,8 +489,8 @@ async function submitLead() {
                 type="email"
                 placeholder="Email address *"
                 autocomplete="email"
-                class="w-full px-4 py-3 rounded-sm text-[14px] transition-colors focus:outline-none"
-                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-text);"
+                class="w-full px-4 py-3 rounded-[var(--radius)] text-[14px] transition-colors focus:outline-none"
+                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-fg);"
                 @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
                 @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
               />
@@ -499,8 +499,8 @@ async function submitLead() {
                 type="tel"
                 placeholder="Phone (optional)"
                 autocomplete="tel"
-                class="w-full px-4 py-3 rounded-sm text-[14px] transition-colors focus:outline-none"
-                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-text);"
+                class="w-full px-4 py-3 rounded-[var(--radius)] text-[14px] transition-colors focus:outline-none"
+                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-fg);"
                 @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
                 @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
               />
@@ -521,14 +521,14 @@ async function submitLead() {
         </div>
 
         <!-- ── Thank you ─────────────────────────────────────────────────── -->
-        <div v-else-if="phase === 'submitted'" class="glass-deep rounded-sm p-12 text-center">
+        <div v-else-if="phase === 'submitted'" class="glass-deep rounded-[var(--radius)] p-12 text-center">
           <div
             class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-6"
             style="background: color-mix(in srgb, var(--theme-accent) 12%, transparent); border: 1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent)"
           >
-            <UIcon name="i-heroicons-check" class="w-7 h-7 text-[var(--theme-accent)]" />
+            <UIcon name="i-heroicons-check" class="w-7 h-7 text-(--theme-accent)" />
           </div>
-          <h3 class="font-display text-[clamp(20px,2.5vw,28px)] font-bold text-[var(--theme-text)] tracking-[-0.5px] mb-3">
+          <h3 class="font-display text-[clamp(20px,2.5vw,28px)] font-bold text-(--theme-fg) tracking-[-0.5px] mb-3">
             Got it, {{ leadName }}!
           </h3>
           <p class="text-[15px] leading-[1.88] max-w-[360px] mx-auto" style="color: var(--theme-text-body)">
@@ -537,7 +537,7 @@ async function submitLead() {
             </template>
             <template v-else>
               JJ will reach out within 1 business day to discuss your
-              <span class="text-[var(--theme-text)] font-medium">{{ quote?.tier }}</span> package.
+              <span class="text-(--theme-fg) font-medium">{{ quote?.tier }}</span> package.
             </template>
           </p>
         </div>

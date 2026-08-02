@@ -89,24 +89,23 @@ onMounted(() => {
       </g>
     </svg>
 
-    <div class="relative z-[2] max-w-[1080px] mx-auto w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 lg:gap-16">
+    <div class="relative z-[2] max-w-[1200px] mx-auto w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-10 lg:gap-16">
 
       <!-- ── Left column: copy ───────────────────────────────────────────── -->
       <div class="lg:flex-1 lg:min-w-0 lg:max-w-[580px]">
 
         <!-- Eyebrow chip — uses crack-inner shape -->
         <div
-          class="inline-flex items-center gap-2.5 px-4 py-2 mb-10 border border-[var(--theme-accent)]/[0.14] bg-[var(--theme-accent)]/[0.04] backdrop-blur-md [animation:fade-up_0.8s_ease_both]"
-          style="clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))">
+          class="inline-flex items-center gap-2.5 px-4 py-2 mb-10 rounded-[var(--radius-sm)] border border-[var(--theme-accent)]/[0.14] bg-[var(--theme-accent)]/[0.04] backdrop-blur-md [animation:fade-up_0.8s_ease_both]">
           <span class="w-1.5 h-1.5 bg-[var(--theme-accent)]" style="box-shadow: 0 0 8px var(--theme-accent)" aria-hidden="true" />
-          <span class="font-mono text-[9px] tracking-[3px] uppercase text-[var(--theme-text-muted)]">Based in Manteno · Serving Kankakee County</span>
+          <span class="font-mono text-[9px] tracking-[3px] uppercase text-(--theme-text-muted)">Based in Manteno · Serving Kankakee County</span>
         </div>
 
         <h1 class="mb-8">
-          <span class="block font-display text-[clamp(52px,7.6vw,96px)] font-extrabold tracking-[-3.5px] leading-[0.95] text-[var(--theme-text)] [animation:fade-up_0.8s_0.1s_ease_both]">
+          <span class="block font-display text-[clamp(52px,7.6vw,96px)] font-extrabold tracking-[-3.5px] leading-[0.95] text-(--theme-fg) [animation:fade-up_0.8s_0.1s_ease_both]">
             Agency-grade
           </span>
-          <span class="block font-display text-[clamp(46px,6.8vw,84px)] font-light tracking-[-2.5px] leading-[1.05] text-[var(--theme-text-muted)] [animation:fade-up_0.8s_0.18s_ease_both]">
+          <span class="block font-display text-[clamp(46px,6.8vw,84px)] font-light tracking-[-2.5px] leading-[1.05] text-(--theme-text-muted) [animation:fade-up_0.8s_0.18s_ease_both]">
             websites for
           </span>
           <em
@@ -116,7 +115,7 @@ onMounted(() => {
           </em>
         </h1>
 
-        <p class="text-[15px] text-[var(--theme-text-body)] max-w-[420px] mb-10 leading-[1.9] [animation:fade-up_0.8s_0.36s_ease_both]">
+        <p class="text-[15px] text-(--theme-text-body) max-w-[420px] mb-10 leading-[1.9] [animation:fade-up_0.8s_0.36s_ease_both]">
           Custom-built, not templated. You own every line of code. Managed hosting from {{ monthlyRate }}/month.
         </p>
 
@@ -124,14 +123,12 @@ onMounted(() => {
           <a
             href="#contact"
             class="btn-primary"
-            style="clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 10px 100%, 0 calc(100% - 10px))"
             @click="track('cta_click', { label: 'Free Audit', location: 'hero' })">
             Get a Free Audit
           </a>
           <a
             href="#pricing"
             class="btn-ghost"
-            style="clip-path: polygon(0 0, calc(100% - 9px) 0, 100% 9px, 100% 100%, 9px 100%, 0 calc(100% - 9px))"
             @click="track('cta_click', { label: 'See Pricing', location: 'hero' })">
             See Pricing
           </a>
@@ -140,7 +137,7 @@ onMounted(() => {
         <!-- Crack-line accent divider -->
         <div class="flex items-center gap-6 mt-16 [animation:fade-up_0.8s_0.62s_ease_both]">
           <div class="crack-line w-20 flex-shrink-0" />
-          <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-[var(--theme-text-faint)]">
+          <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-(--theme-text-faint)">
             Manteno · Bourbonnais · Bradley · Kankakee · Peotone
           </span>
         </div>
@@ -162,7 +159,7 @@ onMounted(() => {
 
     <!-- Scroll indicator -->
     <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-3" aria-hidden="true">
-      <span class="font-mono text-[8px] tracking-[3.5px] uppercase text-[var(--theme-text-faint)]">Scroll</span>
+      <span class="font-mono text-[8px] tracking-[3.5px] uppercase text-(--theme-text-faint)">Scroll</span>
       <div class="crack-line-v h-10 flex-shrink-0 animate-bob" />
     </div>
   </section>

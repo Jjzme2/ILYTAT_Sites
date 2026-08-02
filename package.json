@@ -9,6 +9,7 @@
     "preview": "nuxt preview",
     "clean": "rm -rf .nuxt && rm -rf node_modules && npm install",
     "postinstall": "nuxt prepare",
+    "a11y": "node scripts/a11y-check.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },

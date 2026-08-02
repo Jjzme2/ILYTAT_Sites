@@ -5,6 +5,7 @@ import { useWindowScroll } from '@vueuse/core'
 const { track }                     = useAnalytics()
 const { y: scrollY }                = useWindowScroll()
 const { lumenEnabled, toggleLumen } = useLumenPrefs()
+const { theme, toggleTheme }        = useTheme()
 
 const scrolled = computed(() => scrollY.value > 56)
 
@@ -70,12 +71,22 @@ onUnmounted(() => {
         Blog
       </NuxtLink>
 
+      <!-- Light/dark toggle. setTheme() previously existed but was never called
+           from anywhere, so the theme system was unreachable dead code. -->
+      <button
+        class="flex items-center justify-center w-8 h-8 rounded-[var(--radius-sm)] transition-colors duration-200 cursor-pointer bg-transparent border-0 p-0 text-(--theme-text-hi) hover:text-(--theme-accent)"
+        :title="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+        :aria-label="theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'"
+        @click="toggleTheme">
+        <UIcon :name="theme === 'dark' ? 'i-heroicons-sun' : 'i-heroicons-moon'" class="w-[18px] h-[18px]" />
+      </button>
+
       <!-- Lumen light toggle — glows when on, dims when off -->
       <button
         class="flex items-center justify-center w-7 h-7 transition-all duration-300 cursor-pointer bg-transparent border-0 p-0"
         :class="lumenEnabled
-          ? 'text-[var(--theme-accent)] drop-shadow-[0_0_6px_var(--theme-accent)]'
-          : 'text-[var(--theme-text-muted)] hover:text-(--theme-text-hi)'"
+          ? 'text-(--theme-accent) drop-shadow-[0_0_6px_var(--theme-accent)]'
+          : 'text-(--theme-text-muted) hover:text-(--theme-text-hi)'"
         :title="lumenEnabled ? 'Disable light effects' : 'Enable light effects'"
         :aria-label="lumenEnabled ? 'Disable light effects' : 'Enable light effects'"
         @click="toggleLumen">
@@ -124,14 +135,14 @@ onUnmounted(() => {
           v-for="link in links"
           :key="link.href"
           :href="link.href"
-          class="py-4 text-[17px] font-medium text-(--theme-text) no-underline border-b border-white/[0.06]"
+          class="py-4 text-[17px] font-medium text-(--theme-fg) no-underline border-b border-[var(--glass-card-border)]"
           @click="menuOpen = false">
           {{ link.label }}
         </a>
 
         <NuxtLink
           to="/blog"
-          class="py-4 text-[17px] font-medium text-(--theme-text) no-underline border-b border-white/[0.06]"
+          class="py-4 text-[17px] font-medium text-(--theme-fg) no-underline border-b border-[var(--glass-card-border)]"
           @click="menuOpen = false">
           Blog
         </NuxtLink>

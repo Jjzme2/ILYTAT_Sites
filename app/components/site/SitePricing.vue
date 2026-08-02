@@ -55,15 +55,15 @@ onUnmounted(() => pricingObserver.value?.disconnect())
 <template>
   <section id="pricing" class="relative overflow-hidden">
     <div class="pricing-bg" aria-hidden="true" />
-    <div class="relative max-w-[1080px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]">
+    <div class="relative max-w-[1200px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]">
       <header class="mb-14" data-reveal>
         <p class="eyebrow">Pricing</p>
         <h2
-          class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[#f0ece6] leading-[1.05] mt-2">
+          class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-fg) leading-[1.05] mt-2">
           One build price.<br />
-          <em class="font-headline italic text-[#f5c518]">One monthly rate.</em>
+          <em class="font-headline italic text-(--theme-accent)">One monthly rate.</em>
         </h2>
-        <p class="text-[14px] text-[#6a6761] mt-4 leading-[1.85]">
+        <p class="text-[14px] text-(--theme-text-muted) mt-4 leading-[1.85]">
           Pick your package — then {{ hostingMonthlyRate }}/month covers everything else.
         </p>
       </header>
@@ -73,10 +73,10 @@ onUnmounted(() => pricingObserver.value?.disconnect())
         <!-- Billing cycle toggle -->
         <div class="flex items-center gap-3">
           <span class="font-mono text-[10px] tracking-[1.5px] uppercase transition-colors duration-200"
-            :class="billingCycle === 'monthly' ? 'text-[#c8c4be]' : 'text-[#333040]'">Monthly</span>
+            :class="billingCycle === 'monthly' ? 'text-(--theme-text-hi)' : 'text-(--theme-text-ghost)'">Monthly</span>
           <button
-            class="relative w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-[#f5c518]/20"
-            :class="billingCycle === 'yearly' ? 'bg-[#f5c518]' : 'bg-[#1a1a20]'"
+            class="relative w-10 h-[22px] rounded-full transition-colors duration-200 focus:outline-none focus:ring-1 focus:ring-[var(--theme-accent)]/20"
+            :class="billingCycle === 'yearly' ? 'bg-[var(--theme-accent)]' : 'bg-[var(--theme-surface-deep)]'"
             :aria-label="billingCycle === 'yearly' ? 'Switch to monthly' : 'Switch to yearly'"
             @click="billingCycle = billingCycle === 'monthly' ? 'yearly' : 'monthly'">
             <span
@@ -84,23 +84,23 @@ onUnmounted(() => pricingObserver.value?.disconnect())
               :class="billingCycle === 'yearly' ? 'translate-x-[18px]' : 'translate-x-0'" />
           </button>
           <span class="font-mono text-[10px] tracking-[1.5px] uppercase transition-colors duration-200"
-            :class="billingCycle === 'yearly' ? 'text-[#c8c4be]' : 'text-[#333040]'">
+            :class="billingCycle === 'yearly' ? 'text-(--theme-text-hi)' : 'text-(--theme-text-ghost)'">
             Yearly
             <span
-              class="ml-1.5 font-mono text-[8.5px] font-bold text-[#0f0f11] bg-[#f5c518] px-1.5 py-0.5 rounded-sm uppercase tracking-[0.5px]">Save
+              class="ml-1.5 font-mono text-[8.5px] font-bold text-(--theme-cta-text) bg-[var(--theme-accent-bright)] px-1.5 py-0.5 rounded-[var(--radius)] uppercase tracking-[0.5px]">Save
               2 months</span>
           </span>
         </div>
 
         <!-- Hosting tier selector -->
         <div class="flex items-center gap-2">
-          <span class="font-mono text-[9px] uppercase text-[#4e4843] tracking-[1.5px]">Hosting:</span>
+          <span class="font-mono text-[9px] uppercase text-(--theme-text-ghost) tracking-[1.5px]">Hosting:</span>
           <button class="font-mono text-[9px] uppercase transition-colors px-2 py-1"
-            :class="hostingTier === 'standard' ? 'text-[#f5c518] border border-[#f5c518]/20 rounded-sm' : 'text-[#4e4843] hover:text-[#6e6b5f]'"
+            :class="hostingTier === 'standard' ? 'text-(--theme-accent) border border-[var(--theme-accent)]/20 rounded-[var(--radius)]' : 'text-(--theme-text-ghost) hover:text-(--theme-text-muted)'"
             @click="hostingTier = 'standard'">Standard</button>
-          <span class="text-[#4e4843] text-[9px]">/</span>
+          <span class="text-(--theme-text-ghost) text-[9px]">/</span>
           <button class="font-mono text-[9px] uppercase transition-colors px-2 py-1"
-            :class="hostingTier === 'premium' ? 'text-[#f5c518] border border-[#f5c518]/20 rounded-sm' : 'text-[#4e4843] hover:text-[#6e6b5f]'"
+            :class="hostingTier === 'premium' ? 'text-(--theme-accent) border border-[var(--theme-accent)]/20 rounded-[var(--radius)]' : 'text-(--theme-text-ghost) hover:text-(--theme-text-muted)'"
             @click="hostingTier = 'premium'">Premium</button>
         </div>
       </div>
@@ -108,43 +108,43 @@ onUnmounted(() => pricingObserver.value?.disconnect())
       <!-- Pricing cards -->
       <div class="grid grid-cols-1 gap-4 items-start sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="(pkg, i) in packages" :key="pkg.name"
-          class="glass-deep rounded-sm px-5 py-7 sm:px-7 sm:py-9 relative transition-[border-color,box-shadow] duration-300"
-          :class="pkg.featured ? 'price-card-featured' : 'hover:border-white/[0.13]'" data-reveal
+          class="glass-deep rounded-[var(--radius)] px-5 py-7 sm:px-7 sm:py-9 relative transition-[border-color,box-shadow] duration-300"
+          :class="pkg.featured ? 'price-card-featured' : 'hover:border-[var(--glass-card-border)]'" data-reveal
           :data-reveal-delay="i * 100">
           <div v-if="pkg.featured"
-            class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[#f5c518] to-transparent" />
+            class="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-[var(--theme-accent)] to-transparent" />
           <div v-if="pkg.featured"
-            class="absolute top-4 right-5 font-mono text-[8px] font-bold text-[#f5c518]/70 uppercase tracking-[2px]">
+            class="absolute top-4 right-5 font-mono text-[8px] font-bold text-(--theme-accent)/70 uppercase tracking-[2px]">
             Most Popular
           </div>
-          <p class="font-mono text-[9px] text-[#333040] uppercase tracking-[2px] mb-5">{{ pkg.name }}</p>
+          <p class="font-mono text-[9px] text-(--theme-text-ghost) uppercase tracking-[2px] mb-5">{{ pkg.name }}</p>
           <div class="flex flex-col items-start mb-1.5">
             <span v-if="pkg.includeStartingAt"
-              class="font-mono text-[9px] text-[#f5c518] uppercase tracking-[1px] mb-1">Starting at</span>
+              class="font-mono text-[9px] text-(--theme-accent) uppercase tracking-[1px] mb-1">Starting at</span>
             <div class="flex items-baseline gap-2">
               <span
-                class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-[#f0ece6]">{{
+                class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-(--theme-fg)">{{
                   pkg.price }}</span>
-              <span class="text-[12px] text-[#333040]">{{ pkg.note }}</span>
+              <span class="text-[12px] text-(--theme-text-ghost)">{{ pkg.note }}</span>
             </div>
           </div>
-          <div class="flex flex-col gap-1 mb-6 pb-6 border-b border-white/[0.05]">
-            <span v-if="billingCycle === 'monthly'" class="font-mono text-[11.5px] font-bold text-[#f5c518]/70">
+          <div class="flex flex-col gap-1 mb-6 pb-6 border-b border-[var(--glass-card-border)]">
+            <span v-if="billingCycle === 'monthly'" class="font-mono text-[11.5px] font-bold text-(--theme-accent)/70">
               then {{ hostingMonthlyRate }}/mo hosting
             </span>
-            <span v-else class="font-mono text-[11.5px] font-bold text-[#f5c518]/70">
+            <span v-else class="font-mono text-[11.5px] font-bold text-(--theme-accent)/70">
               {{ hostingYearlyRate }} hosting
-              <span class="text-[#333040] font-normal text-[10px]">· save 2 months</span>
+              <span class="text-(--theme-text-ghost) font-normal text-[10px]">· save 2 months</span>
             </span>
-            <span class="text-[11px] text-[#333040] leading-snug">First 30 days free — hosting, SSL &amp; domain
+            <span class="text-[11px] text-(--theme-text-ghost) leading-snug">First 30 days free — hosting, SSL &amp; domain
               included</span>
           </div>
-          <p class="text-[11.5px] text-[#f5c518]/50 mb-5 leading-snug">Best for: {{ pkg.best }}</p>
+          <p class="text-[11.5px] text-(--theme-accent)/50 mb-5 leading-snug">Best for: {{ pkg.best }}</p>
           <ul class="tier-features">
             <li v-for="f in pkg.features" :key="f">{{ f }}</li>
           </ul>
           <p
-            class="font-mono text-[9px] tracking-[1.5px] text-[#222028] uppercase mt-5 mb-5 border-t border-white/[0.05] pt-4">
+            class="font-mono text-[9px] tracking-[1.5px] text-(--theme-text-faint) uppercase mt-5 mb-5 border-t border-[var(--glass-card-border)] pt-4">
             Delivered in {{ pkg.delivery }}
           </p>
           <a href="#contact" class="price-cta" :class="{ 'price-cta-featured': pkg.featured }"
@@ -155,19 +155,19 @@ onUnmounted(() => pricingObserver.value?.disconnect())
 
         <!-- Custom Software — full-width card spanning all columns -->
         <div
-          class="col-span-full glass-deep rounded-sm px-5 py-7 sm:px-7 sm:py-9 relative hover:border-white/13 transition-[border-color,box-shadow] duration-300"
+          class="col-span-full glass-deep rounded-[var(--radius)] px-5 py-7 sm:px-7 sm:py-9 relative hover:border-[var(--glass-card-border)] transition-[border-color,box-shadow] duration-300"
           data-reveal
           :data-reveal-delay="packages.length * 100">
-          <p class="font-mono text-[9px] text-[#333040] uppercase tracking-[2px] mb-5">Custom Software</p>
+          <p class="font-mono text-[9px] text-(--theme-text-ghost) uppercase tracking-[2px] mb-5">Custom Software</p>
           <div class="flex flex-col lg:flex-row lg:items-start gap-8">
             <!-- Price + tagline -->
             <div class="shrink-0 lg:w-[220px]">
               <div class="flex items-baseline gap-2 mb-1.5">
-                <span class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-[#f0ece6]">Custom</span>
+                <span class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-(--theme-fg)">Custom</span>
               </div>
-              <span class="font-mono text-[11.5px] font-bold text-[#f5c518]/70 block mb-1">scoped per project</span>
-              <span class="text-[11px] text-[#333040] leading-snug block">Quoted after a discovery call</span>
-              <p class="text-[11.5px] text-[#f5c518]/50 mt-5 leading-snug">
+              <span class="font-mono text-[11.5px] font-bold text-(--theme-accent)/70 block mb-1">scoped per project</span>
+              <span class="text-[11px] text-(--theme-text-ghost) leading-snug block">Quoted after a discovery call</span>
+              <p class="text-[11.5px] text-(--theme-accent)/50 mt-5 leading-snug">
                 Best for: Teams that need something built from scratch
               </p>
             </div>
@@ -183,7 +183,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
             </div>
             <!-- Delivery + CTA -->
             <div class="shrink-0 flex flex-col gap-4 lg:pt-[3px]">
-              <p class="font-mono text-[9px] tracking-[1.5px] text-[#222028] uppercase border-t border-white/5 pt-4 lg:border-0 lg:pt-0">
+              <p class="font-mono text-[9px] tracking-[1.5px] text-(--theme-text-faint) uppercase border-t border-[var(--glass-card-border)] pt-4 lg:border-0 lg:pt-0">
                 Delivered per scope
               </p>
               <a
@@ -197,7 +197,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
         </div>
       </div>
 
-      <p class="mt-10 text-[12.5px] text-[#333040] leading-[1.85]" data-reveal>
+      <p class="mt-10 text-[12.5px] text-(--theme-text-ghost) leading-[1.85]" data-reveal>
         Every site includes managed hosting, SSL, and your domain — starting free on month one.
       </p>
     </div>
