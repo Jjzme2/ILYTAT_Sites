@@ -93,6 +93,10 @@ export default defineNuxtConfig({
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || "",
     notificationEmail: process.env.NOTIFICATION_EMAIL,
     cronSecret: process.env.CRON_SECRET,
+    // Optional. PageSpeed Insights serves anonymous requests at a lower quota,
+    // so /api/audit works without this and just gets more headroom with it.
+    pagespeedApiKey: process.env.PAGESPEED_API_KEY || "",
+    pagespeedApiBase: process.env.PAGESPEED_API_BASE || "",
     turnstileSecretKey: process.env.TURNSTILE_SECRET_KEY || "1x0000000000000000000000000000000AA", // '1x000...AA' = always-pass test secret
     adminEmails: process.env.ADMIN_EMAILS || "admin@ilytat.com",
     firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL,

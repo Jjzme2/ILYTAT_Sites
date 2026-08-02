@@ -84,6 +84,11 @@
   --focus-ring:            #8a6a00;
   --nav-surface:           rgba(250, 248, 245, 0.94);
 
+  /* — Status (audit score bands) */
+  --status-good: #0f7b3d;
+  --status-warn: #7d6000;  /* 5.6:1 — matches --theme-accent */
+  --status-bad:  #b3261e;
+
   --mosaic-bg:   none;
   --mosaic-size: 48px 48px;
 }
@@ -148,6 +153,11 @@
   --scrollbar-hover:       rgba(245, 197, 24, 0.28);
   --focus-ring:            #f5c518;
   --nav-surface:           rgba(10, 8, 6, 0.94);
+
+  /* — Status (audit score bands) */
+  --status-good: #5ee08d;
+  --status-warn: #f5c518;
+  --status-bad:  #ff8f85;
 
   --mosaic-bg:   none;
   --mosaic-size: 48px 48px;

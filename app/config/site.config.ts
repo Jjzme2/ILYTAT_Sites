@@ -54,32 +54,195 @@ export const siteConfig = {
         { icon: 'i-heroicons-bolt', title: 'Ships in days, not months' },
     ],
 
+    /**
+     * Services drive both the homepage cards and the /services/[slug] pages.
+     *
+     * `tag` / `title` / `body` are the card. Everything below `slug` is the
+     * dedicated page: each one is its own indexable URL with its own title tag,
+     * meta description and Service schema, which the single-page site had no
+     * way to express.
+     */
     services: [
         {
+            slug: 'local-business-websites',
             tag: 'Retail & Services',
             title: 'Local Business Sites',
             body: 'Shops, salons, offices — everything a customer needs at a glance. Hours, location, contact, and a reason to choose you.',
+            metaTitle: 'Small Business Website Design — Kankakee County, IL | ILYTAT',
+            metaDescription: 'Custom websites for shops, salons and offices in Manteno, Bourbonnais, Bradley and Kankakee. Fast, mobile-first, and built to turn searches into customers.',
+            headline: 'Websites for local shops, salons and offices',
+            intro: 'Your customers are already searching for what you sell. The question is whether they find you — or the competitor two towns over.',
+            problem: {
+                title: 'What usually goes wrong',
+                points: [
+                    'You show up on page three of Google, or not at all.',
+                    'Your Facebook page is doing the work a website should do.',
+                    'Customers call to ask your hours because the answer is not online.',
+                    'The site you have looks wrong on a phone, which is where most people find you.',
+                ],
+            },
+            solution: {
+                title: 'What I build instead',
+                points: [
+                    'A fast, mobile-first site with your hours, location and services above the fold.',
+                    'Local search setup so you appear when someone nearby searches your category.',
+                    'A contact form that reaches your inbox immediately.',
+                    'Copy that sounds like you, not like a template.',
+                ],
+            },
+            includes: [
+                'Up to 5 custom pages',
+                'Google Business Profile setup',
+                'Contact and enquiry forms',
+                'Local SEO foundations',
+                'Mobile-first responsive build',
+                'Managed hosting, SSL and domain',
+            ],
         },
         {
+            slug: 'restaurant-websites',
             tag: 'Food & Beverage',
             title: 'Restaurants & Food',
             body: 'Menus, hours, reservations, and ordering links. Get off Facebook and start showing up in Google searches.',
+            metaTitle: 'Restaurant Website Design — Kankakee County, IL | ILYTAT',
+            metaDescription: 'Restaurant and cafe websites for Kankakee County, IL. Menus that load fast on a phone, accurate hours, reservations and ordering links.',
+            headline: 'Restaurant sites that answer the only three questions people ask',
+            intro: 'Are you open, what do you serve, and how do I order? A hungry person on a phone will give you about ten seconds to answer.',
+            problem: {
+                title: 'What usually goes wrong',
+                points: [
+                    'The menu is a PDF that has to be pinched and zoomed on a phone.',
+                    'Hours live on Facebook and disagree with what Google shows.',
+                    'No online ordering or reservation link, so the order goes elsewhere.',
+                    'Photos of the food are buried three taps deep, if they exist at all.',
+                ],
+            },
+            solution: {
+                title: 'What I build instead',
+                points: [
+                    'A real HTML menu that loads instantly and is readable without zooming.',
+                    'Hours synced with your Google Business Profile so both agree.',
+                    'Direct links to whatever ordering or reservation system you already use.',
+                    'Food photography placed where it does the most work.',
+                ],
+            },
+            includes: [
+                'Mobile-readable menu pages',
+                'Hours and location, kept accurate',
+                'Ordering and reservation links',
+                'Google Business Profile setup',
+                'Photo galleries',
+                'Managed hosting, SSL and domain',
+            ],
         },
         {
+            slug: 'contractor-websites',
             tag: 'Trades & Contractors',
             title: 'Contractors & Trades',
             body: 'Photo galleries, service areas, quote request forms. Look as professional online as you are on the job.',
+            metaTitle: 'Contractor & Trades Website Design — Kankakee County, IL | ILYTAT',
+            metaDescription: 'Websites for contractors, trades and home services in Kankakee County, IL. Project galleries, service-area pages and quote forms that bring in real leads.',
+            headline: 'Look as professional online as you do on the job',
+            intro: 'Your work speaks for itself — but only if people can see it. Most trades lose jobs to a competitor with worse work and a better website.',
+            problem: {
+                title: 'What usually goes wrong',
+                points: [
+                    'Your best work lives in a camera roll nobody can see.',
+                    'Customers cannot tell whether you cover their town.',
+                    'Quote requests arrive by voicemail and get lost.',
+                    'No online presence at all, so referrals are the only pipeline.',
+                ],
+            },
+            solution: {
+                title: 'What I build instead',
+                points: [
+                    'A project gallery that shows before-and-after work properly.',
+                    'Clear service-area coverage so nobody has to guess.',
+                    'A quote request form that captures job details up front.',
+                    'Trust signals — licensing, insurance, years in business — where buyers look.',
+                ],
+            },
+            includes: [
+                'Project photo galleries',
+                'Service-area pages',
+                'Quote request forms',
+                'Licensing and insurance details',
+                'Local SEO foundations',
+                'Managed hosting, SSL and domain',
+            ],
         },
         {
+            slug: 'event-websites',
             tag: 'Local Events',
             title: 'Local Events',
             body: 'Event pages, RSVPs, and promotion. Get your event in front of the right people in Kankakee County.',
+            metaTitle: 'Event Website Design — Kankakee County, IL | ILYTAT',
+            metaDescription: 'Event websites for Kankakee County, IL. Schedules, RSVPs, ticket links and directions in one page people can actually share.',
+            headline: 'One page that tells people everything about your event',
+            intro: 'Events live or die on logistics. If somebody has to hunt for the start time or the parking situation, they stop hunting.',
+            problem: {
+                title: 'What usually goes wrong',
+                points: [
+                    'Details are scattered across a Facebook event, a flyer and word of mouth.',
+                    'No single link you can put on a poster or hand to a sponsor.',
+                    'RSVPs arrive in four different inboxes.',
+                    'Nobody can find parking, timings or the schedule on the day.',
+                ],
+            },
+            solution: {
+                title: 'What I build instead',
+                points: [
+                    'One shareable page with schedule, location, parking and directions.',
+                    'RSVP or ticket links wired to whatever system you use.',
+                    'A layout that works when half your traffic arrives on the day, on a phone.',
+                    'Sponsor and vendor placement that looks intentional.',
+                ],
+            },
+            includes: [
+                'Event schedule and details',
+                'RSVP and ticketing links',
+                'Directions and parking info',
+                'Sponsor and vendor sections',
+                'Shareable social preview',
+                'Managed hosting, SSL and domain',
+            ],
         },
         {
+            slug: 'custom-software',
             tag: 'Custom Software',
             title: 'Custom Software & Apps',
             body: 'Booking systems, internal tools, customer portals, or anything beyond a standard website. If you can describe it, I can scope and build it.',
-        }
+            metaTitle: 'Custom Software & Web Apps for Small Business | ILYTAT',
+            metaDescription: 'Booking systems, internal tools and customer portals for small businesses in Illinois. Scoped honestly, built properly, and you own the code.',
+            headline: 'When a website is not the thing you actually need',
+            intro: 'Sometimes the problem is not marketing — it is the spreadsheet holding your business together. That is a software problem.',
+            problem: {
+                title: 'What usually goes wrong',
+                points: [
+                    'A spreadsheet is doing a job it was never meant to do.',
+                    'Off-the-shelf software costs per seat, per month, forever, and still does not fit.',
+                    'Staff re-key the same data into three different systems.',
+                    'Booking and scheduling happen by phone tag.',
+                ],
+            },
+            solution: {
+                title: 'What I build instead',
+                points: [
+                    'A tool scoped to your actual workflow, not a generic template.',
+                    'Booking, scheduling or portal functionality your customers can self-serve.',
+                    'Integrations with the systems you already pay for.',
+                    'Code you own outright — no per-seat licensing, no lock-in.',
+                ],
+            },
+            includes: [
+                'Discovery and honest scoping',
+                'Custom application build',
+                'Integration with existing tools',
+                'Staff training and handover',
+                'Full source-code ownership',
+                'Ongoing support options',
+            ],
+        },
     ],
 
     steps: [
