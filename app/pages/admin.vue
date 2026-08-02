@@ -198,7 +198,7 @@ async function sendMagicLink() {
     magicLinkSent.value = true
   }
   catch (e: unknown) {
-    magicLinkError.value = e instanceof Error ? e.message : 'Failed to send sign-in link'
+    magicLinkError.value = apiErrorMessage(e, 'Failed to send sign-in link')
   }
   finally {
     magicLinkLoading.value = false
@@ -254,7 +254,7 @@ async function loadDocs() {
     }
   }
   catch (e: unknown) {
-    showError(`Failed to load docs: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to load docs: ${apiErrorMessage(e)}`)
   }
   finally {
     docsLoading.value = false
@@ -270,7 +270,7 @@ async function selectDoc(key: string) {
     docContent.value = res.html
   }
   catch (e: unknown) {
-    showError(`Failed to load document: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to load document: ${apiErrorMessage(e)}`)
   }
   finally {
     docContentLoading.value = false
@@ -347,7 +347,7 @@ async function saveEditProject(id: string) {
     await loadProjects()
   }
   catch (e: unknown) {
-    showError(`Failed to update project: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to update project: ${apiErrorMessage(e)}`)
   }
   finally {
     savingEditProject.value = false
@@ -360,7 +360,7 @@ async function loadProjects() {
     projects.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Project))
   }
   catch (e: unknown) {
-    showError(`Failed to load projects: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to load projects: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -380,7 +380,7 @@ async function addProject() {
     await loadProjects()
   }
   catch (e: unknown) {
-    showError(`Failed to save project: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to save project: ${apiErrorMessage(e)}`)
   }
   finally {
     savingProject.value = false
@@ -393,7 +393,7 @@ async function toggleProjectVisible(p: Project) {
     await loadProjects()
   }
   catch (e: unknown) {
-    showError(`Failed to update project: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to update project: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -410,7 +410,7 @@ async function moveProject(p: Project, dir: 'up' | 'down') {
     await loadProjects()
   }
   catch (e: unknown) {
-    showError(`Failed to reorder: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to reorder: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -421,7 +421,7 @@ async function deleteProject(id: string) {
     await loadProjects()
   }
   catch (e: unknown) {
-    showError(`Failed to delete project: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to delete project: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -445,7 +445,7 @@ async function loadPromotions() {
     promotions.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Promotion))
   }
   catch (e: unknown) {
-    showError(`Failed to load promotions: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to load promotions: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -463,7 +463,7 @@ async function addPromotion() {
     await loadPromotions()
   }
   catch (e: unknown) {
-    showError(`Failed to save promotion: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to save promotion: ${apiErrorMessage(e)}`)
   }
   finally {
     savingPromo.value = false
@@ -500,7 +500,7 @@ async function saveEditPromo(id: string) {
     await loadPromotions()
   }
   catch (e: unknown) {
-    showError(`Failed to update promotion: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to update promotion: ${apiErrorMessage(e)}`)
   }
   finally {
     savingEditPromo.value = false
@@ -513,7 +513,7 @@ async function togglePromoActive(p: Promotion) {
     await loadPromotions()
   }
   catch (e: unknown) {
-    showError(`Failed to update promotion: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to update promotion: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -524,7 +524,7 @@ async function deletePromotion(id: string) {
     await loadPromotions()
   }
   catch (e: unknown) {
-    showError(`Failed to delete promotion: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to delete promotion: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -548,7 +548,7 @@ async function loadTestimonials() {
     testimonials.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as Testimonial))
   }
   catch (e: unknown) {
-    showError(`Failed to load testimonials: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to load testimonials: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -566,7 +566,7 @@ async function addTestimonial() {
     await loadTestimonials()
   }
   catch (e: unknown) {
-    showError(`Failed to save testimonial: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to save testimonial: ${apiErrorMessage(e)}`)
   }
   finally {
     savingTestimonial.value = false
@@ -604,7 +604,7 @@ async function saveEditTestimonial(id: string) {
     await loadTestimonials()
   }
   catch (e: unknown) {
-    showError(`Failed to update testimonial: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to update testimonial: ${apiErrorMessage(e)}`)
   }
   finally {
     savingEditTestimonial.value = false
@@ -629,7 +629,7 @@ async function moveTestimonial(t: Testimonial, dir: 'up' | 'down') {
     await loadTestimonials()
   }
   catch (e: unknown) {
-    showError(`Failed to reorder: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to reorder: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -662,7 +662,7 @@ async function loadInquiries() {
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
   }
   catch (e: unknown) {
-    showError(`Failed to load inquiries: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to load inquiries: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -673,7 +673,7 @@ async function deleteInquiry(id: string) {
     await loadInquiries()
   }
   catch (e: unknown) {
-    showError(`Failed to delete inquiry: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to delete inquiry: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -683,7 +683,7 @@ async function markInquiryRead(id: string) {
     await loadInquiries()
   }
   catch (e: unknown) {
-    showError(`Failed to update inquiry: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to update inquiry: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -712,7 +712,7 @@ async function loadAnalytics() {
     analytics.value = await $fetch<AnalyticsSummary>('/api/analytics/summary', { headers: await getAdminHeaders() })
   }
   catch (e: unknown) {
-    showError(`Analytics load failed: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Analytics load failed: ${apiErrorMessage(e)}`)
   }
   finally {
     analyticsLoading.value = false
@@ -763,7 +763,7 @@ async function loadLogs() {
     appLogs.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppLog))
   }
   catch (e: unknown) {
-    showError(`Failed to load logs: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to load logs: ${apiErrorMessage(e)}`)
   }
   finally {
     logsLoading.value = false
@@ -806,7 +806,7 @@ async function loadSpamAttempts() {
     spamAttempts.value = res.attempts
   }
   catch (e: unknown) {
-    showError(`Failed to load spam attempts: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to load spam attempts: ${apiErrorMessage(e)}`)
   }
   finally {
     spamLoading.value = false
@@ -820,7 +820,7 @@ async function deleteSpamAttempt(id: string) {
     spamAttempts.value = spamAttempts.value.filter(a => a.id !== id)
   }
   catch (e: unknown) {
-    showError(`Failed to delete spam record: ${e instanceof Error ? e.message : String(e)}`)
+    showError(`Failed to delete spam record: ${apiErrorMessage(e)}`)
   }
 }
 
@@ -1027,7 +1027,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
         </div>
       </form>
       <div v-else-if="magicLinkSent" style="background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:14px 16px;margin-top:4px;">
-        <p style="font-size:13px;color:#4ade80;margin:0;line-height:1.6;">
+        <p style="font-size:13px;color:var(--status-good);margin:0;line-height:1.6;">
           Link sent to <strong>{{ magicLinkEmail }}</strong>. Check your inbox and click the link to sign in.
         </p>
       </div>
@@ -1039,7 +1039,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
     <div v-else-if="totpStep" class="login-screen">
       <p class="admin-logo">ILYTAT<span>.com</span></p>
       <h1>Two-Factor Auth</h1>
-      <p style="font-size:13px;color:#8e8ba0;margin-bottom:24px;line-height:1.6;">Enter the 6-digit code from your authenticator app.</p>
+      <p style="font-size:13px;color:var(--theme-text-body);margin-bottom:24px;line-height:1.6;">Enter the 6-digit code from your authenticator app.</p>
       <form class="login-form" @submit.prevent="submitTotp">
         <div class="fgroup">
           <label>Authenticator Code</label>
@@ -1080,7 +1080,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
       </header>
 
       <!-- Global error banner -->
-      <div v-if="adminError" style="background:#f87171;color:#fff;padding:10px 20px;font-size:13px;font-family:monospace;white-space:pre-wrap;position:sticky;top:0;z-index:100;">
+      <div v-if="adminError" style="background:var(--status-bad);color:#fff;padding:10px 20px;font-size:13px;font-family:monospace;white-space:pre-wrap;position:sticky;top:0;z-index:100;">
         ⚠ {{ adminError }}
       </div>
 
@@ -1092,37 +1092,37 @@ function onGlobalKeydown(e: KeyboardEvent) {
         <!-- Stats -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;">
           <div class="record-card" style="text-align:center;padding:16px 12px;">
-            <p style="font-size:32px;font-weight:700;margin:0;" :style="{ color: inquiries.filter(i => i.status === 'new').length > 0 ? '#f5c518' : '#4ade80' }">
+            <p style="font-size:32px;font-weight:700;margin:0;" :style="{ color: inquiries.filter(i => i.status === 'new').length > 0 ? 'var(--theme-accent)' : 'var(--status-good)' }">
               {{ inquiries.filter(i => i.status === 'new').length }}
             </p>
-            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">New inquiries</p>
+            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">New inquiries</p>
           </div>
           <div class="record-card" style="text-align:center;padding:16px 12px;">
-            <p style="font-size:32px;font-weight:700;margin:0;color:#f5c518;">{{ inquiries.length }}</p>
-            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Total inquiries</p>
+            <p style="font-size:32px;font-weight:700;margin:0;color:var(--theme-accent);">{{ inquiries.length }}</p>
+            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Total inquiries</p>
           </div>
           <div class="record-card" style="text-align:center;padding:16px 12px;">
-            <p style="font-size:32px;font-weight:700;margin:0;color:#f5c518;">{{ projects.filter(p => p.visible).length }}</p>
-            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Live projects</p>
+            <p style="font-size:32px;font-weight:700;margin:0;color:var(--theme-accent);">{{ projects.filter(p => p.visible).length }}</p>
+            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Live projects</p>
           </div>
           <div class="record-card" style="text-align:center;padding:16px 12px;">
-            <p style="font-size:32px;font-weight:700;margin:0;color:#f5c518;">{{ testimonials.filter(t => t.visible).length }}</p>
-            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Testimonials</p>
+            <p style="font-size:32px;font-weight:700;margin:0;color:var(--theme-accent);">{{ testimonials.filter(t => t.visible).length }}</p>
+            <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Testimonials</p>
           </div>
         </div>
 
         <!-- New inquiries -->
         <div v-if="inquiries.filter(i => i.status === 'new').length" class="record-card" style="margin-bottom:20px;">
-          <p style="font-size:11px;font-weight:700;color:#f5c518;margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">🔔 Needs a reply</p>
+          <p style="font-size:11px;font-weight:700;color:var(--theme-accent);margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">🔔 Needs a reply</p>
           <div style="display:flex;flex-direction:column;gap:0;">
             <div
               v-for="inq in inquiries.filter(i => i.status === 'new').slice(0, 5)"
               :key="inq.id"
-              style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #1e1e24;"
+              style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--theme-surface-alt);"
             >
               <div style="min-width:0;">
-                <p style="margin:0;font-size:13px;font-weight:600;color:#f0ece6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ inq.name }} — {{ inq.businessName }}</p>
-                <p style="margin:3px 0 0;font-size:11px;color:#68667a;">{{ inq.service || 'General inquiry' }} · {{ inq.email }}</p>
+                <p style="margin:0;font-size:13px;font-weight:600;color:var(--theme-fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ inq.name }} — {{ inq.businessName }}</p>
+                <p style="margin:3px 0 0;font-size:11px;color:var(--theme-text-muted);">{{ inq.service || 'General inquiry' }} · {{ inq.email }}</p>
               </div>
               <div style="display:flex;gap:6px;flex-shrink:0;margin-top:1px;">
                 <a :href="`mailto:${inq.email}`" class="submit-btn" style="padding:4px 12px;font-size:11px;text-decoration:none;">Reply →</a>
@@ -1135,16 +1135,16 @@ function onGlobalKeydown(e: KeyboardEvent) {
 
         <!-- Recent inquiries (all, when no unread) -->
         <div v-else-if="inquiries.length" class="record-card" style="margin-bottom:20px;">
-          <p style="font-size:11px;font-weight:700;color:#8e8ba0;margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">Recent inquiries</p>
+          <p style="font-size:11px;font-weight:700;color:var(--theme-text-body);margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">Recent inquiries</p>
           <div style="display:flex;flex-direction:column;gap:0;">
             <div
               v-for="inq in inquiries.slice(0, 3)"
               :key="inq.id"
-              style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid #1e1e24;"
+              style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 0;border-bottom:1px solid var(--theme-surface-alt);"
             >
               <div style="min-width:0;">
-                <p style="margin:0;font-size:13px;font-weight:600;color:#f0ece6;">{{ inq.name }} — {{ inq.businessName }}</p>
-                <p style="margin:3px 0 0;font-size:11px;color:#68667a;">{{ inq.service || 'General inquiry' }} · {{ new Date(inq.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</p>
+                <p style="margin:0;font-size:13px;font-weight:600;color:var(--theme-fg);">{{ inq.name }} — {{ inq.businessName }}</p>
+                <p style="margin:3px 0 0;font-size:11px;color:var(--theme-text-muted);">{{ inq.service || 'General inquiry' }} · {{ new Date(inq.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) }}</p>
               </div>
               <a :href="`mailto:${inq.email}`" class="badge-btn badge-off" style="font-size:11px;flex-shrink:0;text-decoration:none;margin-top:1px;">Reply →</a>
             </div>
@@ -1153,12 +1153,12 @@ function onGlobalKeydown(e: KeyboardEvent) {
         </div>
 
         <div v-else class="record-card" style="margin-bottom:20px;text-align:center;padding:32px 20px;">
-          <p style="font-size:14px;color:#68667a;margin:0;">No inquiries yet. Share your contact form link to start getting leads.</p>
+          <p style="font-size:14px;color:var(--theme-text-muted);margin:0;">No inquiries yet. Share your contact form link to start getting leads.</p>
         </div>
 
         <!-- Quick actions -->
         <div class="record-card">
-          <p style="font-size:10px;font-weight:700;color:#68667a;margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">Quick actions</p>
+          <p style="font-size:10px;font-weight:700;color:var(--theme-text-muted);margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">Quick actions</p>
           <div style="display:flex;flex-wrap:wrap;gap:8px;">
             <button class="submit-btn" style="padding:8px 16px;font-size:12px;" @click="activeTab = 'inquiries'">All Inquiries</button>
             <button class="badge-btn badge-off" style="font-size:12px;" @click="activeTab = 'portfolio'">Portfolio</button>
@@ -1180,31 +1180,31 @@ function onGlobalKeydown(e: KeyboardEvent) {
           </button>
         </div>
 
-        <div v-if="analyticsLoading && !analytics" style="color:#8e8ba0;font-size:13px;">Loading analytics…</div>
+        <div v-if="analyticsLoading && !analytics" style="color:var(--theme-text-body);font-size:13px;">Loading analytics…</div>
 
         <div v-else-if="analytics">
           <!-- Error from API -->
-          <div v-if="analytics.error" style="background:#f87171;color:#fff;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:20px;">
+          <div v-if="analytics.error" style="background:var(--status-bad);color:#fff;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:20px;">
             ⚠ {{ analytics.error }}
           </div>
 
           <!-- ── Summary cards ── -->
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px;">
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:#4ade80;">{{ analytics.day30Counts['contact_submit'] || 0 }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Contact submits<br><span style="font-size:10px;">(last 30 days)</span></p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:var(--status-good);">{{ analytics.day30Counts['contact_submit'] || 0 }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Contact submits<br><span style="font-size:10px;">(last 30 days)</span></p>
             </div>
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.day30Counts['pricing_viewed'] || 0 }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Pricing views<br><span style="font-size:10px;">(last 30 days)</span></p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:var(--theme-accent);">{{ analytics.day30Counts['pricing_viewed'] || 0 }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Pricing views<br><span style="font-size:10px;">(last 30 days)</span></p>
             </div>
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.day30Counts['cta_click'] || 0 }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">CTA clicks<br><span style="font-size:10px;">(last 30 days)</span></p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:var(--theme-accent);">{{ analytics.day30Counts['cta_click'] || 0 }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">CTA clicks<br><span style="font-size:10px;">(last 30 days)</span></p>
             </div>
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:#f5c518;">{{ analytics.total }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:#8e8ba0;margin:4px 0 0;">Total events<br><span style="font-size:10px;">(all time)</span></p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:var(--theme-accent);">{{ analytics.total }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Total events<br><span style="font-size:10px;">(all time)</span></p>
             </div>
           </div>
 
@@ -1220,11 +1220,11 @@ function onGlobalKeydown(e: KeyboardEvent) {
                 <span style="width:120px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ label }}</span>
                 <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:4px;height:20px;overflow:hidden;">
                   <div
-                    style="height:100%;background:#f5c518;border-radius:4px;transition:width 0.4s;"
+                    style="height:100%;background:var(--theme-accent);border-radius:4px;transition:width 0.4s;"
                     :style="{ width: Math.round((count as number) / Math.max(...Object.values(analytics.ctaBreakdown) as number[]) * 100) + '%' }"
                   />
                 </div>
-                <span style="font-size:13px;color:#8e8ba0;width:24px;text-align:right;">{{ count }}</span>
+                <span style="font-size:13px;color:var(--theme-text-body);width:24px;text-align:right;">{{ count }}</span>
               </div>
             </div>
           </div>
@@ -1238,11 +1238,11 @@ function onGlobalKeydown(e: KeyboardEvent) {
                 :key="evt"
                 style="display:flex;justify-content:space-between;padding:6px 10px;border-radius:4px;background:rgba(255,255,255,0.03);font-size:13px;"
               >
-                <span style="font-family:monospace;color:#f0ece6;">{{ evt }}</span>
-                <span style="color:#f5c518;font-weight:600;">{{ cnt }}</span>
+                <span style="font-family:monospace;color:var(--theme-fg);">{{ evt }}</span>
+                <span style="color:var(--theme-accent);font-weight:600;">{{ cnt }}</span>
               </div>
             </div>
-            <p v-else style="color:#68667a;font-size:13px;">No events in the last 7 days.</p>
+            <p v-else style="color:var(--theme-text-muted);font-size:13px;">No events in the last 7 days.</p>
           </div>
 
           <!-- ── Recent events feed ── -->
@@ -1254,15 +1254,15 @@ function onGlobalKeydown(e: KeyboardEvent) {
                 :key="e.id"
                 class="analytics-event-row"
               >
-                <span style="color:#68667a;font-family:monospace;">{{ new Date(e.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) }}</span>
-                <span style="font-family:monospace;color:#f5c518;font-weight:600;">{{ e.event }}</span>
-                <span style="color:#8e8ba0;word-break:break-all;">{{ Object.keys(e.properties).length ? JSON.stringify(e.properties) : '' }}</span>
+                <span style="color:var(--theme-text-muted);font-family:monospace;">{{ new Date(e.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) }}</span>
+                <span style="font-family:monospace;color:var(--theme-accent);font-weight:600;">{{ e.event }}</span>
+                <span style="color:var(--theme-text-body);word-break:break-all;">{{ Object.keys(e.properties).length ? JSON.stringify(e.properties) : '' }}</span>
               </div>
             </div>
           </div>
         </div>
 
-        <p v-else style="color:#8e8ba0;font-size:13px;">Click Refresh to load analytics data.</p>
+        <p v-else style="color:var(--theme-text-body);font-size:13px;">Click Refresh to load analytics data.</p>
       </section>
 
       <!-- ── LOGS tab ── -->
@@ -1279,8 +1279,8 @@ function onGlobalKeydown(e: KeyboardEvent) {
               style="padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;border:1px solid transparent;transition:all .15s;"
               :style="{
                 background: logsFilter === lvl ? 'rgba(245,197,24,0.15)' : 'rgba(255,255,255,0.03)',
-                borderColor: logsFilter === lvl ? 'rgba(245,197,24,0.4)' : '#2a2a32',
-                color: logsFilter === lvl ? '#f5c518' : '#68667a',
+                borderColor: logsFilter === lvl ? 'rgba(245,197,24,0.4)' : 'var(--theme-surface-alt)',
+                color: logsFilter === lvl ? 'var(--theme-accent)' : 'var(--theme-text-muted)',
               }"
               @click="logsFilter = (lvl as typeof logsFilter)"
             >{{ lvl }}</button>
@@ -1288,7 +1288,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
         </div>
         <p class="dash-hint">Structured log entries written by all server-side handlers. Sorted newest first.</p>
 
-        <div v-if="logsLoading && !appLogs.length" style="color:#8e8ba0;font-size:13px;">Loading logs…</div>
+        <div v-if="logsLoading && !appLogs.length" style="color:var(--theme-text-body);font-size:13px;">Loading logs…</div>
 
         <div v-else-if="!filteredLogs.length" class="empty-state">
           {{ appLogs.length ? 'No logs match the selected filter.' : 'No logs yet — they appear here once the app starts writing them.' }}
@@ -1300,7 +1300,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
             class="log-entry"
           >
             <!-- Timestamp -->
-            <span style="color:#68667a;font-family:monospace;font-size:11px;">
+            <span style="color:var(--theme-text-muted);font-family:monospace;font-size:11px;">
               {{ new Date(entry.createdAt).toLocaleString('en-US', { timeZone:'America/Chicago', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', second:'2-digit' }) }}
             </span>
             <!-- Level badge -->
@@ -1309,11 +1309,11 @@ function onGlobalKeydown(e: KeyboardEvent) {
               :style="{ background: LEVEL_COLOR[entry.level] + '22', color: LEVEL_COLOR[entry.level], border: '1px solid ' + LEVEL_COLOR[entry.level] + '44' }"
             >{{ entry.level }}</span>
             <!-- Area -->
-            <span style="font-family:monospace;color:#8e8ba0;font-size:11px;">[{{ entry.area }}]</span>
+            <span style="font-family:monospace;color:var(--theme-text-body);font-size:11px;">[{{ entry.area }}]</span>
             <!-- Message + data -->
             <div>
-              <span style="color:#f0ece6;">{{ entry.message }}</span>
-              <span v-if="entry.data" style="display:block;margin-top:3px;font-family:monospace;font-size:10px;color:#68667a;word-break:break-all;">{{ entry.data }}</span>
+              <span style="color:var(--theme-fg);">{{ entry.message }}</span>
+              <span v-if="entry.data" style="display:block;margin-top:3px;font-family:monospace;font-size:10px;color:var(--theme-text-muted);word-break:break-all;">{{ entry.data }}</span>
             </div>
           </div>
         </div>
@@ -1399,7 +1399,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
                   <img v-if="p.imageUrl" :src="p.imageUrl" :alt="p.title" style="width:100%;height:100%;object-fit:cover;border-radius:6px;">
                   <div v-else class="project-thumb-placeholder">
                     <span style="font-size:20px;opacity:.3;">&#9670;</span>
-                    <span style="font-size:10px;color:#68667a;margin-top:4px;">No image</span>
+                    <span style="font-size:10px;color:var(--theme-text-muted);margin-top:4px;">No image</span>
                   </div>
                 </div>
                 <div class="record-main">
@@ -1676,7 +1676,7 @@ v-model="newTestimonial.quote" rows="3"
         </div>
         <p class="dash-hint">Documents stored under <code>docs/</code> in the R2 internal bucket. Upload new files there to add them here.</p>
 
-        <div v-if="docsLoading && !internalDocs.length" style="color: #8e8ba0; font-size: 13px;">Loading documents…</div>
+        <div v-if="docsLoading && !internalDocs.length" style="color: var(--theme-text-body); font-size: 13px;">Loading documents…</div>
 
         <div v-else-if="!internalDocs.length" class="empty-state">
           No documents found. Upload HTML files to <code>docs/</code> in the R2 bucket.
@@ -1691,8 +1691,8 @@ v-model="newTestimonial.quote" rows="3"
               style="padding: 10px 14px; cursor: pointer; border-radius: 6px; font-size: 13px; border: 1px solid transparent; transition: all 0.15s;"
               :style="{
                 background: selectedDocKey === docItem.key ? 'rgba(245,197,24,0.1)' : 'rgba(255,255,255,0.02)',
-                borderColor: selectedDocKey === docItem.key ? 'rgba(245,197,24,0.3)' : '#2a2a32',
-                color: selectedDocKey === docItem.key ? '#f5c518' : '#8e8ba0',
+                borderColor: selectedDocKey === docItem.key ? 'rgba(245,197,24,0.3)' : 'var(--theme-surface-alt)',
+                color: selectedDocKey === docItem.key ? 'var(--theme-accent)' : 'var(--theme-text-body)',
               }"
               @click="selectDoc(docItem.key)"
             >
@@ -1701,8 +1701,8 @@ v-model="newTestimonial.quote" rows="3"
           </div>
 
           <!-- Iframe viewer -->
-          <div style="flex: 1; border: 1px solid #2a2a32; border-radius: 10px; overflow: hidden; position: relative;">
-            <div v-if="docContentLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #141417; color: #8e8ba0; font-size: 13px;">
+          <div style="flex: 1; border: 1px solid var(--theme-surface-alt); border-radius: 10px; overflow: hidden; position: relative;">
+            <div v-if="docContentLoading" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: #141417; color: var(--theme-text-body); font-size: 13px;">
               Loading document…
             </div>
             <iframe
@@ -1712,7 +1712,7 @@ v-model="newTestimonial.quote" rows="3"
               style="width: 100%; height: 100%; border: none;"
               title="Internal document viewer"
             />
-            <div v-else style="display: flex; align-items: center; justify-content: center; height: 100%; color: #68667a; font-size: 13px;">
+            <div v-else style="display: flex; align-items: center; justify-content: center; height: 100%; color: var(--theme-text-muted); font-size: 13px;">
               Select a document to view
             </div>
           </div>
@@ -1728,7 +1728,7 @@ v-model="newTestimonial.quote" rows="3"
         <div class="onboarding-card">
           <div>
             <p style="font-weight:600;margin:0 0 4px;font-size:14px;">Client Onboarding Form</p>
-            <p style="font-size:12px;color:#8e8ba0;margin:0;">Send this to new clients to collect their requirements, branding assets, and preferences.</p>
+            <p style="font-size:12px;color:var(--theme-text-body);margin:0;">Send this to new clients to collect their requirements, branding assets, and preferences.</p>
           </div>
           <a href="https://tally.so/r/A7D9Ay" target="_blank" rel="noopener noreferrer" class="submit-btn onboarding-btn">
             Open Form ↗
@@ -1775,10 +1775,10 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
 
         <div class="record-card" style="margin-bottom:32px;flex-direction:column;gap:16px;">
           <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
-            <span style="font-size:13px;color:#8e8ba0;">Status:</span>
+            <span style="font-size:13px;color:var(--theme-text-body);">Status:</span>
             <span
               style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;"
-              :style="totpEnabled ? 'background:#16a34a22;color:#4ade80;border:1px solid #4ade8044;' : 'background:#f871711a;color:#f87171;border:1px solid #f8717133;'"
+              :style="totpEnabled ? 'background:#16a34a22;color:var(--status-good);border:1px solid var(--status-good)44;' : 'background:var(--status-bad)1a;color:var(--status-bad);border:1px solid var(--status-bad)33;'"
             >{{ totpEnabled ? 'Enabled' : 'Disabled' }}</span>
             <button v-if="!totpEnabled" class="submit-btn" style="padding:6px 14px;font-size:12px;" :disabled="totpSetupLoading" @click="totpGenerateSecret">
               {{ totpSetupLoading ? 'Generating…' : 'Set Up 2FA' }}
@@ -1792,12 +1792,12 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
           <template v-if="totpSetupQr">
             <div style="display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;">
               <div>
-                <p style="font-size:12px;color:#8e8ba0;margin-bottom:8px;">Scan with your authenticator app:</p>
-                <img :src="totpSetupQr" alt="TOTP QR code" style="width:160px;height:160px;border-radius:8px;border:1px solid #2a2a32;">
+                <p style="font-size:12px;color:var(--theme-text-body);margin-bottom:8px;">Scan with your authenticator app:</p>
+                <img :src="totpSetupQr" alt="TOTP QR code" style="width:160px;height:160px;border-radius:8px;border:1px solid var(--theme-surface-alt);">
               </div>
               <div style="flex:1;min-width:200px;">
-                <p style="font-size:12px;color:#8e8ba0;margin-bottom:4px;">Or enter the secret manually:</p>
-                <code style="font-family:'Space Mono',monospace;font-size:12px;color:#f5c518;word-break:break-all;display:block;margin-bottom:16px;">{{ totpSetupSecret }}</code>
+                <p style="font-size:12px;color:var(--theme-text-body);margin-bottom:4px;">Or enter the secret manually:</p>
+                <code style="font-family:'Space Mono',monospace;font-size:12px;color:var(--theme-accent);word-break:break-all;display:block;margin-bottom:16px;">{{ totpSetupSecret }}</code>
                 <div class="fgroup" style="max-width:200px;">
                   <label>Verify — enter the 6-digit code</label>
                   <input
@@ -1817,7 +1817,7 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
           </template>
 
           <p v-if="totpSetupError" class="form-error">{{ totpSetupError }}</p>
-          <p v-if="totpSetupSuccess" style="font-size:13px;color:#4ade80;">{{ totpSetupSuccess }}</p>
+          <p v-if="totpSetupSuccess" style="font-size:13px;color:var(--status-good);">{{ totpSetupSuccess }}</p>
         </div>
 
         <!-- Security log -->
@@ -1832,7 +1832,7 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
           These were never saved to Inquiries or sent by email.
         </p>
 
-        <div v-if="spamLoading && !spamAttempts.length" style="color:#8e8ba0;font-size:13px;">Loading…</div>
+        <div v-if="spamLoading && !spamAttempts.length" style="color:var(--theme-text-body);font-size:13px;">Loading…</div>
 
         <div v-else-if="!spamAttempts.length" class="empty-state">
           No blocked attempts on record — that's a good sign.
@@ -1842,7 +1842,7 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
           <div
             v-for="attempt in spamAttempts"
             :key="attempt.id"
-            style="background:rgba(255,255,255,0.025);border:1px solid #2a2a32;border-radius:6px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;"
+            style="background:rgba(255,255,255,0.025);border:1px solid var(--theme-surface-alt);border-radius:6px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;"
           >
             <div>
               <!-- Reason badge + timestamp -->
@@ -1855,19 +1855,19 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
                     border:     '1px solid ' + SPAM_REASON_COLOR[attempt.reason] + '44',
                   }"
                 >{{ SPAM_REASON_LABEL[attempt.reason] }}</span>
-                <span style="font-family:monospace;font-size:11px;color:#68667a;">
+                <span style="font-family:monospace;font-size:11px;color:var(--theme-text-muted);">
                   {{ new Date(attempt.createdAt).toLocaleString('en-US', { timeZone:'America/Chicago', month:'short', day:'numeric', year:'numeric', hour:'2-digit', minute:'2-digit' }) }}
                 </span>
               </div>
 
               <!-- Submitted identity -->
-              <p style="margin:0 0 4px;font-size:13px;color:#f0ece6;">
+              <p style="margin:0 0 4px;font-size:13px;color:var(--theme-fg);">
                 <strong>{{ attempt.name || '—' }}</strong>
-                <span style="color:#68667a;margin-left:8px;">{{ attempt.email }}</span>
+                <span style="color:var(--theme-text-muted);margin-left:8px;">{{ attempt.email }}</span>
               </p>
 
               <!-- Network metadata -->
-              <p style="margin:0;font-family:monospace;font-size:11px;color:#68667a;word-break:break-all;">
+              <p style="margin:0;font-family:monospace;font-size:11px;color:var(--theme-text-muted);word-break:break-all;">
                 IP: {{ attempt.ip }}
                 <span v-if="attempt.userAgent" style="margin-left:12px;">UA: {{ attempt.userAgent }}</span>
               </p>
@@ -1931,8 +1931,8 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
 
 <style scoped>
 .admin-page {
-  background: #0f0f11;
-  color: #f0ece6;
+  background: var(--theme-bg);
+  color: var(--theme-fg);
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
   font-size: 14px;
@@ -1950,11 +1950,11 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
   font-weight: 700;
   font-size: 14px;
   letter-spacing: 1px;
-  color: #f0ece6;
+  color: var(--theme-fg);
   text-decoration: none;
 }
 
-.admin-logo span { color: #f5c518; }
+.admin-logo span { color: var(--theme-accent); }
 
 h1 {
   font-family: 'Sora', sans-serif;
@@ -1982,13 +1982,13 @@ h1 {
   background: none;
   border: none;
   cursor: pointer;
-  color: #68667a;
+  color: var(--theme-text-muted);
   padding: 4px;
   line-height: 0;
   transition: color 0.15s;
 }
 
-.pw-toggle:hover { color: #f0ece6; }
+.pw-toggle:hover { color: var(--theme-fg); }
 
 .login-divider {
   display: flex;
@@ -2003,33 +2003,33 @@ h1 {
   content: '';
   flex: 1;
   height: 1px;
-  background: #2a2a32;
+  background: var(--theme-surface-alt);
 }
 
 .magic-link-btn {
   width: 100%;
   background: transparent;
-  border: 1px solid #2a2a32;
+  border: 1px solid var(--theme-surface-alt);
   border-radius: 8px;
   padding: 10px 16px;
   font-size: 13px;
-  color: #8e8ba0;
+  color: var(--theme-text-body);
   cursor: pointer;
   transition: border-color 0.15s, color 0.15s;
 }
 .magic-link-btn:hover {
   border-color: rgba(245, 197, 24, 0.3);
-  color: #f0ece6;
+  color: var(--theme-fg);
 }
 
 .back-link {
   display: block;
   margin-top: 24px;
   font-size: 13px;
-  color: #68667a;
+  color: var(--theme-text-muted);
   text-decoration: none;
 }
-.back-link:hover { color: #f0ece6; }
+.back-link:hover { color: var(--theme-fg); }
 
 /* ── Dashboard ── */
 .dashboard { display: flex; flex-direction: column; min-height: 100vh; }
@@ -2039,8 +2039,8 @@ h1 {
   align-items: center;
   gap: 24px;
   padding: 16px 32px;
-  border-bottom: 1px solid #2a2a32;
-  background: #0f0f11;
+  border-bottom: 1px solid var(--theme-surface-alt);
+  background: var(--theme-bg);
   position: sticky;
   top: 0;
   z-index: 10;
@@ -2061,7 +2061,7 @@ h1 {
   border-radius: 6px;
   background: none;
   border: 1px solid transparent;
-  color: #68667a;
+  color: var(--theme-text-muted);
   cursor: pointer;
   font-size: 13px;
   text-transform: capitalize;
@@ -2073,26 +2073,26 @@ h1 {
 .dash-tab.active {
   background: rgba(245, 197, 24, 0.1);
   border-color: rgba(245, 197, 24, 0.3);
-  color: #f5c518;
+  color: var(--theme-accent);
 }
 
-.dash-tab:hover:not(.active) { color: #f0ece6; border-color: #2a2a32; }
+.dash-tab:hover:not(.active) { color: var(--theme-fg); border-color: var(--theme-surface-alt); }
 
 .logout-btn {
   background: none;
-  border: 1px solid #2a2a32;
+  border: 1px solid var(--theme-surface-alt);
   border-radius: 6px;
   padding: 7px 14px;
-  color: #68667a;
+  color: var(--theme-text-muted);
   cursor: pointer;
   font-size: 13px;
   transition: all 0.15s;
 }
-.logout-btn:hover { border-color: #f5c518; color: #f5c518; }
+.logout-btn:hover { border-color: var(--theme-accent); color: var(--theme-accent); }
 
 .palette-trigger {
   background: rgba(255,255,255,0.03);
-  border: 1px solid #2a2a32;
+  border: 1px solid var(--theme-surface-alt);
   border-radius: 6px;
   padding: 6px 10px;
   color: #4a4855;
@@ -2103,7 +2103,7 @@ h1 {
   transition: all 0.15s;
   flex-shrink: 0;
 }
-.palette-trigger:hover { border-color: rgba(245,197,24,0.4); color: #f5c518; }
+.palette-trigger:hover { border-color: rgba(245,197,24,0.4); color: var(--theme-accent); }
 
 /* ── Command palette ── */
 .palette-backdrop {
@@ -2149,17 +2149,17 @@ h1 {
   background: none;
   border: none;
   outline: none;
-  color: #f0ece6;
+  color: var(--theme-fg);
   font-size: 14px;
   font-family: 'Inter', sans-serif;
   min-width: 0;
 }
-.palette-input::placeholder { color: #3a3845; }
+.palette-input::placeholder { color: var(--glass-card-border); }
 
 .palette-esc-hint {
   background: rgba(255,255,255,0.04);
-  border: 1px solid #2a2a32;
-  color: #3a3845;
+  border: 1px solid var(--theme-surface-alt);
+  color: var(--glass-card-border);
   border-radius: 4px;
   padding: 2px 7px;
   font-size: 10px;
@@ -2168,21 +2168,21 @@ h1 {
   flex-shrink: 0;
   transition: color 0.15s;
 }
-.palette-esc-hint:hover { color: #68667a; }
+.palette-esc-hint:hover { color: var(--theme-text-muted); }
 
 .palette-list {
   max-height: 320px;
   overflow-y: auto;
   padding: 6px;
   scrollbar-width: thin;
-  scrollbar-color: #2a2a32 transparent;
+  scrollbar-color: var(--theme-surface-alt) transparent;
 }
 
 .palette-group-label {
   font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
-  color: #3a3845;
+  color: var(--glass-card-border);
   padding: 8px 10px 4px;
   margin: 0;
   font-family: 'Space Mono', monospace;
@@ -2193,7 +2193,7 @@ h1 {
   text-align: left;
   background: none;
   border: none;
-  color: #8e8ba0;
+  color: var(--theme-text-body);
   padding: 9px 12px;
   border-radius: 7px;
   cursor: pointer;
@@ -2204,13 +2204,13 @@ h1 {
 }
 .palette-item--active {
   background: rgba(245,197,24,0.08);
-  color: #f0ece6;
+  color: var(--theme-fg);
 }
 
 .palette-empty {
   padding: 28px 16px;
   text-align: center;
-  color: #3a3845;
+  color: var(--glass-card-border);
   font-size: 13px;
 }
 
@@ -2218,13 +2218,13 @@ h1 {
   display: flex;
   gap: 16px;
   padding: 10px 16px;
-  border-top: 1px solid #1e1e24;
+  border-top: 1px solid var(--theme-surface-alt);
   font-size: 11px;
-  color: #3a3845;
+  color: var(--glass-card-border);
 }
 .palette-footer kbd {
   background: rgba(255,255,255,0.05);
-  border: 1px solid #2a2a32;
+  border: 1px solid var(--theme-surface-alt);
   border-radius: 3px;
   padding: 1px 5px;
   font-family: 'Space Mono', monospace;
@@ -2279,7 +2279,7 @@ h3 {
 
 .dash-hint {
   font-size: 13px;
-  color: #68667a;
+  color: var(--theme-text-muted);
   margin-bottom: 28px;
   line-height: 1.6;
 }
@@ -2293,8 +2293,8 @@ h3 {
   justify-content: space-between;
   gap: 16px;
   padding: 16px 20px;
-  background: #1a1a1f;
-  border: 1px solid #2a2a32;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-surface-alt);
   border-radius: 10px;
 }
 
@@ -2314,7 +2314,7 @@ h3 {
   flex-shrink: 0;
   border-radius: 6px;
   overflow: hidden;
-  border: 1px solid #2a2a32;
+  border: 1px solid var(--theme-surface-alt);
   background: #111116;
 }
 
@@ -2342,7 +2342,7 @@ h3 {
   max-height: 120px;
   max-width: 100%;
   border-radius: 6px;
-  border: 1px solid #2a2a32;
+  border: 1px solid var(--theme-surface-alt);
   object-fit: cover;
   display: block;
 }
@@ -2355,8 +2355,8 @@ h3 {
 
 .reorder-btn {
   background: none;
-  border: 1px solid #2a2a32;
-  color: #68667a;
+  border: 1px solid var(--theme-surface-alt);
+  color: var(--theme-text-muted);
   border-radius: 4px;
   width: 26px;
   height: 22px;
@@ -2370,7 +2370,7 @@ h3 {
   padding: 0;
 }
 
-.reorder-btn:hover:not(:disabled) { border-color: #f5c518; color: #f5c518; }
+.reorder-btn:hover:not(:disabled) { border-color: var(--theme-accent); color: var(--theme-accent); }
 .reorder-btn:disabled { opacity: 0.2; cursor: default; }
 
 .record-title {
@@ -2383,7 +2383,7 @@ h3 {
 
 .record-meta {
   font-size: 12px;
-  color: #68667a;
+  color: var(--theme-text-muted);
   margin-bottom: 8px;
 }
 
@@ -2394,7 +2394,7 @@ h3 {
 }
 
 .record-url { font-size: 12px; margin-top: 6px; }
-.record-url a { color: #f5c518; text-decoration: none; }
+.record-url a { color: var(--theme-accent); text-decoration: none; }
 
 .record-actions {
   display: flex;
@@ -2406,8 +2406,8 @@ h3 {
 .new-badge {
   font-size: 10px;
   font-weight: 700;
-  background: #f5c518;
-  color: #0f0f11;
+  background: var(--theme-accent);
+  color: var(--theme-bg);
   padding: 2px 6px;
   border-radius: 4px;
   letter-spacing: 0.5px;
@@ -2416,9 +2416,9 @@ h3 {
 .empty-state {
   text-align: center;
   padding: 32px;
-  color: #68667a;
+  color: var(--theme-text-muted);
   font-size: 13px;
-  border: 1px dashed #2a2a32;
+  border: 1px dashed var(--theme-surface-alt);
   border-radius: 10px;
 }
 
@@ -2433,8 +2433,8 @@ h3 {
   white-space: nowrap;
 }
 
-.badge-active { background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.3); color: #4ade80; }
-.badge-off { background: rgba(255, 255, 255, 0.05); border-color: #2a2a32; color: #68667a; }
+.badge-active { background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.3); color: var(--status-good); }
+.badge-off { background: rgba(255, 255, 255, 0.05); border-color: var(--theme-surface-alt); color: var(--theme-text-muted); }
 
 .danger-btn {
   font-size: 11px;
@@ -2443,14 +2443,14 @@ h3 {
   border: 1px solid transparent;
   cursor: pointer;
   background: none;
-  color: #68667a;
+  color: var(--theme-text-muted);
   transition: all 0.15s;
 }
 .danger-btn:hover { border-color: rgba(239, 68, 68, 0.4); color: #ef4444; }
 
 .action-link {
   font-size: 12px;
-  color: #f5c518;
+  color: var(--theme-accent);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -2459,7 +2459,7 @@ h3 {
 .add-form {
   padding: 24px;
   background: #141417;
-  border: 1px solid #2a2a32;
+  border: 1px solid var(--theme-surface-alt);
   border-radius: 12px;
   display: flex;
   flex-direction: column;
@@ -2474,7 +2474,7 @@ h3 {
 
 label {
   font-size: 12px;
-  color: #8e8ba0;
+  color: var(--theme-text-body);
   letter-spacing: 0.2px;
 }
 
@@ -2493,11 +2493,11 @@ input[type="password"],
 input[type="url"],
 input[type="number"],
 textarea {
-  background: #1a1a1f;
-  border: 1px solid #2a2a32;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-surface-alt);
   border-radius: 8px;
   padding: 10px 12px;
-  color: #f0ece6;
+  color: var(--theme-fg);
   font-size: 14px;
   font-family: inherit;
   width: 100%;
@@ -2511,13 +2511,13 @@ textarea:focus {
   border-color: rgba(245, 197, 24, 0.4);
 }
 
-input[type="checkbox"] { accent-color: #f5c518; width: 14px; height: 14px; }
+input[type="checkbox"] { accent-color: var(--theme-accent); width: 14px; height: 14px; }
 
 textarea { resize: vertical; }
 
 .submit-btn {
-  background: linear-gradient(110deg, #f5c518, #f09420);
-  color: #0f0f11;
+  background: linear-gradient(110deg, var(--theme-accent), #f09420);
+  color: var(--theme-bg);
   border: none;
   border-radius: 8px;
   padding: 12px 24px;
@@ -2542,8 +2542,8 @@ textarea { resize: vertical; }
   gap: 8px;
   padding: 8px 12px;
   border-radius: 6px;
-  background: #1a1a1f;
-  border: 1px solid #2a2a32;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-surface-alt);
   font-size: 12px;
   align-items: start;
 }
@@ -2611,7 +2611,7 @@ code {
   background: rgba(245, 197, 24, 0.1);
   padding: 1px 6px;
   border-radius: 4px;
-  color: #f5c518;
+  color: var(--theme-accent);
 }
 
 @media (max-width: 640px) {
