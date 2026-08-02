@@ -89,7 +89,7 @@ async function runHealthCheck() {
     healthResult.value = await $fetch('/api/admin/health', { headers: await getAdminHeaders() })
   }
   catch (e: unknown) {
-    healthResult.value = { ok: false, tokenError: e instanceof Error ? e.message : String(e) }
+    healthResult.value = { ok: false, tokenError: apiErrorMessage(e) }
   }
   finally {
     healthLoading.value = false
@@ -1326,7 +1326,30 @@ function onGlobalKeydown(e: KeyboardEvent) {
         <button class="submit-btn" style="margin-bottom:20px" :disabled="healthLoading" @click="runHealthCheck">
           {{ healthLoading ? 'Running…' : 'Run Health Check' }}
         </button>
-        <div v-if="healthResult" style="font-family:monospace;font-size:12px;background:#111;color:#e5e5e5;padding:20px;border-radius:8px;white-space:pre-wrap;overflow-x:auto;">{{ JSON.stringify(healthResult, null, 2) }}</div>
+        <!-- AI provider status, read at a glance. Previously the only way to
+             learn whether a key was configured was to trigger a generation
+             and read the failure. -->
+        <div
+          v-if="healthResult?.ai"
+          class="glass-card rounded-[var(--radius)] p-5 mb-4 flex flex-col gap-2">
+          <div class="flex items-center gap-2">
+            <UIcon
+              :name="(healthResult.ai as Record<string, unknown>).configured ? 'i-heroicons-check-circle' : 'i-heroicons-exclamation-triangle'"
+              class="w-5 h-5"
+              :class="(healthResult.ai as Record<string, unknown>).configured ? 'text-(--status-good)' : 'text-(--status-bad)'" />
+            <span class="font-semibold text-[15px] text-(--theme-fg)">
+              AI: {{ (healthResult.ai as Record<string, unknown>).configured ? (healthResult.ai as Record<string, unknown>).primary : 'not configured' }}
+            </span>
+          </div>
+          <p v-if="(healthResult.ai as Record<string, unknown>).model" class="text-[13px] text-(--theme-text-muted)">
+            Model: {{ (healthResult.ai as Record<string, unknown>).model }}<template v-if="(healthResult.ai as Record<string, unknown>).fallback"> · fallback: {{ (healthResult.ai as Record<string, unknown>).fallback }}</template> · daily cap: {{ (healthResult.ai as Record<string, unknown>).dailyCap }}
+          </p>
+          <p v-if="(healthResult.ai as Record<string, unknown>).hint" class="text-[13px] text-(--status-bad)">
+            {{ (healthResult.ai as Record<string, unknown>).hint }}
+          </p>
+        </div>
+
+        <div v-if="healthResult" style="font-family:monospace;font-size:12px;background:var(--theme-surface-deep);color:var(--theme-text-hi);padding:20px;border-radius:8px;white-space:pre-wrap;overflow-x:auto;">{{ JSON.stringify(healthResult, null, 2) }}</div>
       </section>
 
       <!-- ── PORTFOLIO tab ── -->

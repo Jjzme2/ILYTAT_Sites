@@ -1,9 +1,14 @@
 /**
  * GET /api/admin/health
  *
- * Server-side Firestore connectivity check.
+ * Server-side Firestore connectivity check, plus AI provider configuration.
  * Tests: service account token, write, read-back, cleanup for each collection.
  * Call this from /admin (logged-in only) to diagnose missing env vars or auth issues.
+ *
+ * The AI section reports which provider is configured and which model it will
+ * use, without ever returning the key. Not knowing this was what made the blog
+ * generation failure hard to diagnose — the only way to find out whether a key
+ * was set was to trigger a generation and read the error.
  */
 
 import { firestoreRequest, toFirestoreFields, fromFirestoreFields } from '~/server/utils/firebaseAdmin'
@@ -36,6 +41,7 @@ export default defineEventHandler(async (event) => {
       tokenError: `Missing env vars: ${missingVars.join(', ')}`,
       collections: [],
       missingVars,
+      ai: aiStatus(config),
     }
   }
 
@@ -108,5 +114,30 @@ export default defineEventHandler(async (event) => {
     writeError,
     collections: results,
     projectId: config.public.firebaseProjectId,
+    ai: aiStatus(config),
   }
 })
+
+/**
+ * Which AI provider will actually be used, and with what model.
+ * Never returns the key itself — only whether one is present.
+ */
+function aiStatus(config: ReturnType<typeof useRuntimeConfig>) {
+  const openrouter = Boolean(config.openrouterApiKey || config.opencloudApiKey)
+  const gemini = Boolean(config.geminiApiKey)
+
+  return {
+    configured: openrouter || gemini,
+    primary: openrouter ? 'OpenRouter' : gemini ? 'Gemini' : null,
+    model: openrouter
+      ? (config.openrouterModel || 'google/gemini-2.5-flash')
+      : gemini
+        ? (config.geminiModel || 'gemini-2.5-flash')
+        : null,
+    fallback: openrouter && gemini ? 'Gemini' : null,
+    dailyCap: config.aiDailyRequestCap,
+    hint: openrouter || gemini
+      ? null
+      : 'Set NUXT_OPENROUTER_API_KEY in Vercel (runtime, no redeploy needed).',
+  }
+}
