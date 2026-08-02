@@ -103,10 +103,12 @@ onMounted(() => {
           </a>
         </div>
 
-        <!-- Crack-line accent divider -->
-        <div class="flex items-center gap-6 mt-16 [animation:fade-up_0.8s_0.62s_ease_both]">
-          <div class="crack-line w-20 flex-shrink-0" />
-          <span class="font-mono text-[9px] tracking-[2.5px] uppercase text-(--theme-text-faint)">
+        <!-- Service-area line. The divider is decorative and only makes sense
+             beside a single line of text, so it is desktop-only — on a phone
+             this list wraps to two lines and the rule left it hanging. -->
+        <div class="flex items-center gap-6 mt-12 md:mt-16 [animation:fade-up_0.8s_0.62s_ease_both]">
+          <div class="crack-line w-20 flex-shrink-0 hidden lg:block" />
+          <span class="font-mono text-[11px] tracking-[0.12em] leading-[1.9] uppercase text-(--theme-text-faint)">
             Manteno · Bourbonnais · Bradley · Kankakee · Peotone
           </span>
         </div>
@@ -154,9 +156,13 @@ onMounted(() => {
       </div>
     </div>
 
-    <!-- Scroll indicator -->
-    <div class="absolute bottom-10 left-1/2 -translate-x-1/2 z-[2] flex flex-col items-center gap-3" aria-hidden="true">
-      <span class="font-mono text-[8px] tracking-[3.5px] uppercase text-(--theme-text-faint)">Scroll</span>
+    <!-- Scroll indicator. Absolutely positioned, so it sits on top of whatever
+         the hero's own content happens to occupy — on a phone the service-area
+         line wraps to two lines and collided with it. It is purely decorative
+         (scrolling is not a discoverability problem on touch), so it is
+         desktop-only, where there is room for it. -->
+    <div class="hidden lg:flex absolute bottom-10 left-1/2 -translate-x-1/2 z-[2] flex-col items-center gap-3" aria-hidden="true">
+      <span class="font-mono text-[10px] tracking-[0.2em] uppercase text-(--theme-text-faint)">Scroll</span>
       <div class="crack-line-v h-10 flex-shrink-0 animate-bob" />
     </div>
   </section>
