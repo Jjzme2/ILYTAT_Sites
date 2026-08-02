@@ -55,7 +55,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
 <template>
   <section id="pricing" class="relative overflow-hidden">
     <div class="pricing-bg" aria-hidden="true" />
-    <div class="relative max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+    <div class="relative max-w-[1080px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]">
       <header class="mb-14" data-reveal>
         <p class="eyebrow">Pricing</p>
         <h2

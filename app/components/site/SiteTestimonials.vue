@@ -11,7 +11,7 @@ defineProps<{
 
 <template>
   <section
-    class="max-w-[1080px] mx-auto px-12 pb-[100px] md:px-6 md:pb-20 sm:px-4 sm:pb-16">
+    class="max-w-[1080px] mx-auto px-4 pb-16 md:px-6 md:pb-20 lg:px-12 lg:pb-[100px]">
     <header class="mb-16" data-reveal>
       <p class="eyebrow">What Clients Say</p>
       <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-[var(--theme-text)] leading-[1.05]">Built on real results</h2>

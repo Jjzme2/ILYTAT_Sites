@@ -8,7 +8,7 @@ const { aboutStats } = siteConfig
 
 <template>
   <section id="about" class="bg-[var(--theme-surface)] section-layer">
-    <div class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+    <div class="max-w-[1080px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]">
       <div class="grid grid-cols-1 gap-16 items-start lg:grid-cols-[1fr_1fr] lg:gap-28" data-reveal>
 
         <!-- Left: pull quote + founder identity (sticky on desktop) -->

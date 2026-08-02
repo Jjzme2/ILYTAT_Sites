@@ -7,7 +7,7 @@
       style="background: linear-gradient(to right, transparent, color-mix(in srgb, var(--theme-accent) 28%, transparent) 20%, color-mix(in srgb, var(--theme-accent) 60%, white) 50%, color-mix(in srgb, var(--theme-accent) 28%, transparent) 80%, transparent); box-shadow: 0 0 12px 2px color-mix(in srgb, var(--theme-accent) 20%, transparent)"
       aria-hidden="true" />
 
-    <div class="max-w-[1080px] mx-auto px-12 py-14 md:px-6 md:py-10 sm:px-4 sm:py-8">
+    <div class="max-w-[1080px] mx-auto px-4 py-8 md:px-6 md:py-10 lg:px-12 lg:py-14">
 
       <!-- Eyebrow + headline -->
       <div class="flex flex-col items-center text-center mb-10 md:mb-8">
@@ -26,7 +26,7 @@
           <span>Mobile</span>
           <span class="flex-1 h-px" style="background: rgba(255,255,255,0.04)" />
         </p>
-        <div class="grid grid-cols-4 gap-3 sm:grid-cols-2">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div
             v-for="score in mobile"
             :key="'m-' + score.label"
@@ -47,7 +47,7 @@
           <span>Desktop</span>
           <span class="flex-1 h-px" style="background: rgba(255,255,255,0.04)" />
         </p>
-        <div class="grid grid-cols-4 gap-3 sm:grid-cols-2">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div
             v-for="score in desktop"
             :key="'d-' + score.label"

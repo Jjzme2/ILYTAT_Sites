@@ -142,7 +142,7 @@
       <!-- ── Portfolio ──────────────────────────────────────────────────────── -->
       <section
         id="portfolio"
-        class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16"
+        class="max-w-[1080px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]"
         style="content-visibility: auto; contain-intrinsic-block-size: auto 600px"
       >
         <header
@@ -240,10 +240,10 @@
       <!-- ── FAQ ───────────────────────────────────────────────────────────── -->
       <section
         id="faq"
-        class="py-[100px] sm:py-16"
+        class="py-16 lg:py-[100px]"
         style="content-visibility: auto; contain-intrinsic-block-size: auto 600px"
       >
-        <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
+        <div class="max-w-[1080px] mx-auto px-4 md:px-6 lg:px-12">
           <header
             class="mb-16"
             data-reveal
@@ -272,7 +272,7 @@
 
       <!-- ── CTA Band ───────────────────────────────────────────────────────── -->
       <div
-        class="relative mx-12 my-[100px] overflow-hidden rounded-sm md:mx-6 md:my-16 sm:mx-4 sm:my-12"
+        class="relative mx-4 my-12 overflow-hidden rounded-sm md:mx-6 md:my-16 lg:mx-12 lg:my-[100px]"
         data-reveal
       >
         <div class="absolute inset-0 bg-white/[0.022] backdrop-blur-2xl border border-white/8" />
@@ -297,7 +297,7 @@
           "
           aria-hidden="true"
         />
-        <div class="relative z-1 text-center px-12 py-24 sm:px-6 sm:py-16">
+        <div class="relative z-1 text-center px-6 py-16 lg:px-12 lg:py-24">
           <p class="eyebrow justify-center">Ready to start?</p>
           <h2
             class="font-display text-[clamp(28px,4.2vw,56px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.04] text-(--theme-text)"

@@ -9,7 +9,7 @@ const glowClasses = useExplosionColors(services.length)
 </script>
 
 <template>
-  <section id="services" class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+  <section id="services" class="max-w-[1080px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]">
 
     <header class="mb-16" data-reveal>
       <p class="eyebrow">What I Build</p>
@@ -20,7 +20,7 @@ const glowClasses = useExplosionColors(services.length)
       </h2>
     </header>
 
-    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2">
+    <div class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <div
         v-for="(svc, i) in services"
         :key="svc.title"

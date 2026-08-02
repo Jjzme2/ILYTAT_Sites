@@ -5,8 +5,8 @@ const { steps } = siteConfig
 </script>
 
 <template>
-  <section id="how-it-works" class="bg-[var(--theme-surface)] section-layer relative section-crack py-[100px] sm:py-16">
-    <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
+  <section id="how-it-works" class="bg-[var(--theme-surface)] section-layer relative section-crack py-16 lg:py-[100px]">
+    <div class="max-w-[1080px] mx-auto px-4 md:px-6 lg:px-12">
 
       <header class="mb-20" data-reveal>
         <p class="eyebrow">How It Works</p>

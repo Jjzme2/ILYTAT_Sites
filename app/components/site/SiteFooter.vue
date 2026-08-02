@@ -10,7 +10,7 @@ const year = new Date().getFullYear()
     <!-- Crack-light top border -->
     <div class="crack-line absolute top-0 left-0 right-0" aria-hidden="true" />
 
-    <div class="max-w-[1080px] mx-auto px-12 py-16 md:px-6 sm:px-4 grid grid-cols-1 gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
+    <div class="max-w-[1080px] mx-auto px-4 py-16 md:px-6 lg:px-12 grid grid-cols-1 gap-10 sm:grid-cols-[1fr_auto_auto] sm:gap-16">
       <div>
         <img
           src="https://media.ilytat.com/logo.png"
@@ -52,7 +52,7 @@ const year = new Date().getFullYear()
     </div>
 
     <div class="border-t border-[var(--glass-card-border)] py-5">
-      <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4 flex items-center justify-between flex-wrap gap-2">
+      <div class="max-w-[1080px] mx-auto px-4 md:px-6 lg:px-12 flex items-center justify-between flex-wrap gap-2">
         <span class="font-mono text-[9.5px] uppercase tracking-[1.5px] text-[var(--theme-text-faint)]">© {{ year }} ILYTAT LLC</span>
         <span class="font-mono text-[9.5px] uppercase tracking-[1.5px] text-[var(--theme-text-faint)]">Built by {{ founder.name }}</span>
       </div>

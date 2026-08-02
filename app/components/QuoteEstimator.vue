@@ -223,8 +223,8 @@ async function submitLead() {
 </script>
 
 <template>
-  <section id="quote" class="pb-[100px] sm:pb-16" style="content-visibility:auto;contain-intrinsic-block-size:auto 640px">
-    <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
+  <section id="quote" class="pb-16 lg:pb-[100px]" style="content-visibility:auto;contain-intrinsic-block-size:auto 640px">
+    <div class="max-w-[1080px] mx-auto px-4 md:px-6 lg:px-12">
 
       <!-- Section header -->
       <header class="mb-16 text-center">
@@ -240,7 +240,7 @@ async function submitLead() {
       <div class="max-w-[580px] mx-auto">
 
         <!-- ── Questions ─────────────────────────────────────────────────── -->
-        <div v-if="phase === 'questions'" class="glass-deep rounded-sm p-8 sm:p-6">
+        <div v-if="phase === 'questions'" class="glass-deep rounded-sm p-6 lg:p-8">
 
           <div class="flex items-center gap-2 mb-8">
             <div
@@ -415,7 +415,7 @@ async function submitLead() {
 
           <!-- Quote result card -->
           <div
-            class="glass-deep rounded-sm p-7 sm:p-5"
+            class="glass-deep rounded-sm p-5 lg:p-7"
             style="border-color: color-mix(in srgb, var(--theme-accent) 22%, transparent)"
           >
             <div class="flex items-start justify-between gap-4 mb-5">
@@ -465,7 +465,7 @@ async function submitLead() {
           </div>
 
           <!-- Lead capture form — only for standard packages -->
-          <div v-if="quote.tier !== 'Custom Software'" class="glass-deep rounded-sm p-7 sm:p-5">
+          <div v-if="quote.tier !== 'Custom Software'" class="glass-deep rounded-sm p-5 lg:p-7">
             <h4 class="font-display text-[17px] font-bold text-[var(--theme-text)] tracking-[-0.3px] mb-1">
               Lock in this quote
             </h4>

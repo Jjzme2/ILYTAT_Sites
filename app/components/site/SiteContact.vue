@@ -20,7 +20,7 @@ watch(() => props.prefilledService, (name) => {
 </script>
 
 <template>
-  <section id="contact" class="bg-[var(--theme-surface-alt)] section-layer px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16">
+  <section id="contact" class="bg-[var(--theme-surface-alt)] section-layer px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]">
     <div class="max-w-[1080px] mx-auto grid grid-cols-1 gap-12 items-start lg:grid-cols-[360px_1fr] lg:gap-20">
 
       <!-- Left: contact details + promise list -->
@@ -60,7 +60,7 @@ watch(() => props.prefilledService, (name) => {
 
       <!-- Right: form card — crack panel -->
       <div class="crack-wrap" data-reveal data-reveal-delay="100">
-      <div class="crack-inner crack-inner-lg glass-deep p-9 sm:p-6">
+      <div class="crack-inner crack-inner-lg glass-deep p-6 lg:p-9">
         <div v-if="submitted" class="flex flex-col items-center py-16 px-6 text-center">
           <div
             class="w-12 h-12 flex items-center justify-center text-[var(--theme-accent)] mb-6 border border-[var(--theme-accent)]/25 bg-[var(--theme-accent)]/[0.05]"

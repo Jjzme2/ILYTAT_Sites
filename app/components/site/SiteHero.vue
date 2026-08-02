@@ -151,9 +151,6 @@ onMounted(() => {
       <div
         class="hidden lg:flex-shrink-0 lg:block [animation:fade-up_0.8s_0.72s_ease_both]"
         aria-label="ILYTAT symbol">
-        <!-- Mobile divider -->
-        <div class="lg:hidden crack-line mb-8" aria-hidden="true" />
-
         <!-- Crack panel wrapper for the orb -->
         <div class="crack-wrap">
           <div class="crack-inner crack-inner-all crack-inner-lg glass-card flex flex-col items-center justify-center p-8 lg:p-10 gap-6">
