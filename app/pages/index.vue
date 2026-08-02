@@ -24,6 +24,15 @@
   // ============================================================================
   const prefilledService = ref("");
 
+  // Fallback banner shown only when the API has no live promotion. Kept short so
+  // it stays on one or two lines at 375px instead of wrapping into a tall block.
+  const foundingFivePromo = {
+    id: "founding-five-2025",
+    message: "Founding client rate — first 5 Kankakee County businesses.",
+    ctaText: "See pricing",
+    ctaUrl: "#pricing",
+  };
+
   function normalizeUrl(url: string): string {
     if (!url) return "";
     return /^https?:\/\//i.test(url) ? url : `https://${url}`;
@@ -100,6 +109,7 @@
 
 <template>
   <div
+    id="top"
     class="relative min-h-screen bg-[var(--theme-bg)] text-[var(--theme-text)] font-sans leading-relaxed overflow-x-hidden"
   >
     <div
@@ -107,22 +117,12 @@
       aria-hidden="true"
     />
 
-    <!-- Founding Five — hardcoded, dismissible via localStorage.
-         Rendered in SSR so it's in initial HTML — avoids CLS from client-only insertion.
-         PromoBanner starts visible:true and hides in onMounted if localStorage says dismissed. -->
-    <PromoBanner
-      :promotion="{
-        id: 'founding-five-2025',
-        message: 'Founding client rate available for the first 5 Kankakee County businesses.',
-        ctaText: 'See pricing →',
-        ctaUrl: '#pricing',
-      }"
-    />
-
-    <PromoBanner
-      v-if="promotion"
-      :promotion="promotion"
-    />
+    <!-- Exactly one banner ever renders. A live promotion from the API wins;
+         the Founding Five copy is the fallback. Rendering both stacked two
+         full-bleed yellow bars above the nav, which is what broke on mobile.
+         The banner sits in normal flow and scrolls away; the nav below it is
+         `position: sticky`, so the two can never overlap. -->
+    <PromoBanner :promotion="promotion ?? foundingFivePromo" />
 
     <!-- Above fold: eager-loaded, on the critical render path -->
     <SiteNav />

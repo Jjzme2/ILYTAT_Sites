@@ -139,8 +139,22 @@
     );
 }
 
+/* ── Header metrics ────────────────────────────────────────────────────────── */
+/* Single source of truth for the sticky nav's height. The nav sets its own
+   height from this, and `scroll-padding-top` below keeps anchored headings from
+   landing underneath it. Mobile-first: small screens get the shorter bar.       */
+:root {
+  --nav-h: 56px;
+}
+@media (min-width: 768px) {
+  :root { --nav-h: 72px; }
+}
+
 /* ── Base ──────────────────────────────────────────────────────────────────── */
 html {
+  /* Offsets every anchor jump and scrollIntoView() by the nav height, so section
+     headings are never hidden behind the sticky bar.                            */
+  scroll-padding-top: calc(var(--nav-h) + 16px);
   background-color: var(--theme-bg);
   background-image: var(--mosaic-bg);
   background-size: var(--mosaic-size);
@@ -305,16 +319,26 @@ html {
 .scroll-line  { animation: scroll-line 1.8s ease-in-out infinite; }
 
 /* ── Nav ───────────────────────────────────────────────────────────────────── */
+/* The nav is `position: sticky`, so it occupies flow space and can never overlap
+   the promo banner above it. Height comes from --nav-h; only the surface changes
+   on scroll — never the box metrics, which would shift the sticky offset.       */
 .nav-scrolled {
   background: rgba(10, 8, 6, 0.94) !important;
   backdrop-filter: blur(32px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(150%) !important;
   border-color: rgba(255, 255, 255, 0.05) !important;
-  padding-top: 14px !important;
-  padding-bottom: 14px !important;
 }
 [data-theme="frost"] .nav-scrolled {
   background: rgba(7, 9, 26, 0.94) !important;
+}
+
+/* On phones the nav is opaque from the very first paint. A transparent bar over
+   the yellow promo banner is what made the header read as broken.               */
+@media (max-width: 767px) {
+  .site-nav {
+    background: rgba(10, 8, 6, 0.94);
+    border-color: rgba(255, 255, 255, 0.05);
+  }
 }
 
 .nav-cta-btn {
@@ -323,6 +347,15 @@ html {
   color: var(--theme-cta-text);
   background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
   padding: 11px 24px; border-radius: 3px;
+  /* Chamfer moved off an inline style and onto the shared notch token. */
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--crack-notch-sm)) 0,
+    100% var(--crack-notch-sm),
+    100% 100%,
+    var(--crack-notch-sm) 100%,
+    0 calc(100% - var(--crack-notch-sm))
+  );
   text-decoration: none; white-space: nowrap; position: relative; overflow: hidden;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
   box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.24);

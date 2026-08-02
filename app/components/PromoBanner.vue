@@ -8,54 +8,65 @@ const props = defineProps<{
   }
 }>()
 
-const STORAGE_KEY = `dismissed_promo_${props.promotion.id}`
-
-const visible = ref(true)
-
-onMounted(() => {
-  if (localStorage.getItem(STORAGE_KEY)) {
-    visible.value = false
-  }
+// Dismissal lives in a cookie, not localStorage, so the server already knows the
+// banner is dismissed and never renders it. The previous localStorage +
+// onMounted approach always painted the banner first, then removed it — a
+// guaranteed layout shift on every load for anyone who had dismissed it.
+const dismissed = useCookie<string | null>(`dismissed_promo_${props.promotion.id}`, {
+  maxAge: 60 * 60 * 24 * 90,
+  sameSite: 'lax',
 })
 
+const visible = computed(() => !dismissed.value)
+
 function dismiss() {
-  localStorage.setItem(STORAGE_KEY, '1')
-  visible.value = false
+  dismissed.value = '1'
 }
 </script>
 
 <template>
   <Transition name="banner">
-    <div v-if="visible" class="promo-banner" role="alert">
-      <span class="promo-message">{{ promotion.message }}</span>
-      <a
-        v-if="promotion.ctaText && promotion.ctaUrl"
-        :href="promotion.ctaUrl"
-        class="promo-cta"
-      >
-        {{ promotion.ctaText }}
-      </a>
-      <button class="promo-close" aria-label="Dismiss" @click="dismiss">
-        <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
-      </button>
+    <div v-if="visible" class="promo-wrap">
+      <div class="promo-banner">
+        <span class="promo-message">{{ promotion.message }}</span>
+        <a
+          v-if="promotion.ctaText && promotion.ctaUrl"
+          :href="promotion.ctaUrl"
+          class="promo-cta"
+        >
+          {{ promotion.ctaText }} &rarr;
+        </a>
+        <button class="promo-close" aria-label="Dismiss announcement" @click="dismiss">
+          <UIcon name="i-heroicons-x-mark" class="w-4 h-4" />
+        </button>
+      </div>
     </div>
   </Transition>
 </template>
 
 <style scoped>
+/* The wrapper animates grid-template-rows instead of max-height, so the collapse
+   works at any content height. The old `max-height: 60px` cap was shorter than
+   the banner's real mobile height, which clipped it mid-transition. */
+.promo-wrap {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition: grid-template-rows 0.3s ease, opacity 0.3s ease;
+}
 .promo-banner {
+  min-height: 0;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 10px 48px 10px 16px;
+  gap: 14px;
+  padding: 10px 44px 10px 16px;
   background: #f5c518;
   color: #18181c;
   font-size: 13.5px;
   font-weight: 500;
   position: relative;
   text-align: center;
-  flex-wrap: wrap;
 }
 
 .promo-message {
@@ -78,7 +89,7 @@ function dismiss() {
 
 .promo-close {
   position: absolute;
-  right: 14px;
+  right: 12px;
   top: 50%;
   transform: translateY(-50%);
   background: none;
@@ -93,25 +104,21 @@ function dismiss() {
 }
 .promo-close:hover { opacity: 1; }
 
+/* Phones: stack the CTA under the message rather than letting flex-wrap drop it
+   into an orphaned third row beside a half-visible message. */
 @media (max-width: 640px) {
-  .promo-banner { padding: 10px 40px 10px 12px; gap: 10px; font-size: 12.5px; }
+  .promo-banner {
+    flex-direction: column;
+    gap: 6px;
+    padding: 9px 40px 9px 14px;
+    font-size: 12.5px;
+  }
+  .promo-cta { font-size: 11.5px; padding: 3px 10px; }
 }
 
-.banner-enter-active,
-.banner-leave-active {
-  transition: all 0.3s ease;
-  overflow: hidden;
-}
 .banner-enter-from,
 .banner-leave-to {
-  max-height: 0;
+  grid-template-rows: 0fr;
   opacity: 0;
-  padding-top: 0;
-  padding-bottom: 0;
-}
-.banner-enter-to,
-.banner-leave-from {
-  max-height: 60px;
-  opacity: 1;
 }
 </style>

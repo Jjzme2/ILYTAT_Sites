@@ -63,7 +63,9 @@ const onPostPage = computed(() => route.name !== 'blog')
 
 <style scoped>
 .blog-layout { min-height: 100vh; display: flex; flex-direction: column; background: #0f0f11; }
-.blog-layout-body { flex: 1; padding-top: 64px; }
+/* Offset and nav height both read --nav-h so they can never drift apart. They
+   previously disagreed by 8px below 600px, hiding content under the nav. */
+.blog-layout-body { flex: 1; padding-top: var(--nav-h); }
 
 /* ── Nav ──────────────────────────────────────────────────────────────────── */
 .blog-nav {
@@ -81,7 +83,7 @@ const onPostPage = computed(() => route.name !== 'blog')
 .blog-nav-inner {
   max-width: 1200px; margin: 0 auto;
   display: flex; align-items: center; gap: 0;
-  padding: 0 24px; height: 64px;
+  padding: 0 24px; height: var(--nav-h);
 }
 
 .blog-nav-logo { display: flex; align-items: center; text-decoration: none; margin-right: 24px; }
@@ -139,6 +141,5 @@ const onPostPage = computed(() => route.name !== 'blog')
   .blog-nav-link, .blog-nav-current { font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   /* Shrink CTA on mobile */
   .blog-nav-cta { font-size: 12px; padding: 7px 12px; }
-  .blog-layout-body { padding-top: 56px; }
 }
 </style>

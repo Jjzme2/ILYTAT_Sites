@@ -57,7 +57,7 @@ onMounted(() => {
 <template>
   <section
     ref="heroRef"
-    class="relative min-h-screen flex flex-col justify-center px-12 pt-[120px] pb-24 overflow-hidden md:px-6 md:pt-[100px] sm:px-4 sm:pt-[88px]">
+    class="relative min-h-[calc(100svh-var(--nav-h))] flex flex-col justify-center px-4 md:px-6 lg:px-12 pt-16 md:pt-20 pb-20 md:pb-24 overflow-hidden">
 
     <!-- Ambient blobs -->
     <div ref="blob1Ref" class="hero-blob hero-blob-1" aria-hidden="true" />
