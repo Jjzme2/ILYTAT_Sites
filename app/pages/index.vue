@@ -24,6 +24,15 @@
   // ============================================================================
   const prefilledService = ref("");
 
+  // Fallback banner shown only when the API has no live promotion. Kept short so
+  // it stays on one or two lines at 375px instead of wrapping into a tall block.
+  const foundingFivePromo = {
+    id: "founding-five-2025",
+    message: "Founding client rate — first 5 Kankakee County businesses.",
+    ctaText: "See pricing",
+    ctaUrl: "#pricing",
+  };
+
   function normalizeUrl(url: string): string {
     if (!url) return "";
     return /^https?:\/\//i.test(url) ? url : `https://${url}`;
@@ -100,29 +109,16 @@
 
 <template>
   <div
-    class="relative min-h-screen bg-[var(--theme-bg)] text-[var(--theme-text)] font-sans leading-relaxed overflow-x-hidden"
+    id="top"
+    class="relative min-h-screen bg-[var(--theme-bg)] text-(--theme-fg) font-sans leading-relaxed overflow-x-hidden"
   >
-    <div
-      class="grain"
-      aria-hidden="true"
-    />
 
-    <!-- Founding Five — hardcoded, dismissible via localStorage.
-         Rendered in SSR so it's in initial HTML — avoids CLS from client-only insertion.
-         PromoBanner starts visible:true and hides in onMounted if localStorage says dismissed. -->
-    <PromoBanner
-      :promotion="{
-        id: 'founding-five-2025',
-        message: 'Founding client rate available for the first 5 Kankakee County businesses.',
-        ctaText: 'See pricing →',
-        ctaUrl: '#pricing',
-      }"
-    />
-
-    <PromoBanner
-      v-if="promotion"
-      :promotion="promotion"
-    />
+    <!-- Exactly one banner ever renders. A live promotion from the API wins;
+         the Founding Five copy is the fallback. Rendering both stacked two
+         full-bleed yellow bars above the nav, which is what broke on mobile.
+         The banner sits in normal flow and scrolls away; the nav below it is
+         `position: sticky`, so the two can never overlap. -->
+    <PromoBanner :promotion="promotion ?? foundingFivePromo" />
 
     <!-- Above fold: eager-loaded, on the critical render path -->
     <SiteNav />
@@ -142,7 +138,7 @@
       <!-- ── Portfolio ──────────────────────────────────────────────────────── -->
       <section
         id="portfolio"
-        class="max-w-[1080px] mx-auto px-12 py-[100px] md:px-6 md:py-20 sm:px-4 sm:py-16"
+        class="max-w-[1200px] mx-auto px-4 py-16 md:px-6 md:py-20 lg:px-12 lg:py-[100px]"
         style="content-visibility: auto; contain-intrinsic-block-size: auto 600px"
       >
         <header
@@ -151,7 +147,7 @@
         >
           <p class="eyebrow">Recent Work</p>
           <h2
-            class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-text) leading-[1.05]"
+            class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-fg) leading-[1.05]"
           >
             Built for businesses like yours
           </h2>
@@ -165,8 +161,7 @@
             v-for="proj in projects"
             :key="proj.id"
             as="a"
-            palette="azure-sand"
-            class="glass-deep rounded-sm flex flex-col no-underline text-inherit transition-[border-color,box-shadow] duration-300 group"
+            class="glass-deep rounded-[var(--radius)] flex flex-col no-underline text-inherit transition-[border-color,box-shadow] duration-300 group"
             :class="
               proj.url
                 ? 'hover:border-[rgba(245,197,24,0.22)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.4)]'
@@ -177,7 +172,7 @@
             :rel="proj.url ? 'noopener noreferrer' : undefined"
           >
             <div
-              class="aspect-video bg-[#080810] flex items-center justify-center overflow-hidden relative shrink-0"
+              class="aspect-video bg-[var(--theme-surface-deep)] flex items-center justify-center overflow-hidden relative shrink-0"
             >
               <img
                 v-if="proj.imageUrl"
@@ -202,30 +197,51 @@
                 style="color: color-mix(in srgb, var(--theme-accent) 38%, transparent)"
                 >{{ proj.industry }}</span
               >
-              <h3 class="font-display text-[15px] font-bold text-[#f0ece6] tracking-[-0.3px]">
+              <h3 class="font-display text-[15px] font-bold text-(--theme-fg) tracking-[-0.3px]">
                 {{ proj.title }}
               </h3>
-              <p class="text-[12.5px] text-[#8a8278] leading-[1.78]">{{ proj.description }}</p>
+              <p class="text-[12.5px] text-(--theme-text-body) leading-[1.78]">{{ proj.description }}</p>
             </div>
           </LumenSurface>
         </div>
+        <!-- Empty state. Previously this read "First projects in progress." —
+             so a prospect comparing vendors side by side saw an empty
+             portfolio. It now shows what actually ships in a build, which is
+             the argument that has to land when there is no gallery yet. -->
         <div
           v-else
-          class="py-20 px-8 glass-deep rounded-sm text-center"
           data-reveal
         >
-          <p class="font-display text-[20px] font-bold text-[#f0ece6] mb-3 tracking-[-0.5px]">
-            First projects in progress.
-          </p>
-          <p class="text-[14px] text-[#8a8278] max-w-[380px] mx-auto mb-8 leading-[1.85]">
-            Ask about being an early client — discounted builds available for businesses in Kankakee
-            County.
-          </p>
-          <a
-            href="#contact"
-            class="btn-ghost"
-            >Let's talk &rarr;</a
-          >
+          <div class="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div
+              v-for="deliverable in siteConfig.deliverables"
+              :key="deliverable.title"
+              class="glass-deep rounded-[var(--radius)] p-8 flex flex-col gap-3"
+            >
+              <UIcon
+                :name="deliverable.icon"
+                class="w-6 h-6 text-(--theme-accent)"
+              />
+              <h3 class="font-display text-[17px] font-bold text-(--theme-fg) tracking-[-0.01em]">
+                {{ deliverable.title }}
+              </h3>
+              <p class="text-[14px] text-(--theme-text-body) leading-[1.7]">
+                {{ deliverable.body }}
+              </p>
+            </div>
+          </div>
+
+          <div class="mt-10 flex flex-col sm:flex-row sm:items-center gap-5 justify-center text-center">
+            <p class="text-[15px] text-(--theme-text-body)">
+              Founding-client pricing is open for the first five Kankakee County businesses.
+            </p>
+            <a
+              href="#contact"
+              class="btn-ghost shrink-0"
+              @click="track('cta_click', { label: 'Portfolio empty state', location: 'portfolio' })"
+              >Start a project &rarr;</a
+            >
+          </div>
         </div>
       </section>
 
@@ -240,17 +256,17 @@
       <!-- ── FAQ ───────────────────────────────────────────────────────────── -->
       <section
         id="faq"
-        class="py-[100px] sm:py-16"
+        class="py-16 lg:py-[100px]"
         style="content-visibility: auto; contain-intrinsic-block-size: auto 600px"
       >
-        <div class="max-w-[1080px] mx-auto px-12 md:px-6 sm:px-4">
+        <div class="max-w-[1200px] mx-auto px-4 md:px-6 lg:px-12">
           <header
             class="mb-16"
             data-reveal
           >
             <p class="eyebrow">Common Questions</p>
             <h2
-              class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-text) leading-[1.05]"
+              class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-fg) leading-[1.05]"
             >
               Straight answers
             </h2>
@@ -272,10 +288,10 @@
 
       <!-- ── CTA Band ───────────────────────────────────────────────────────── -->
       <div
-        class="relative mx-12 my-[100px] overflow-hidden rounded-sm md:mx-6 md:my-16 sm:mx-4 sm:my-12"
+        class="relative mx-4 my-12 overflow-hidden rounded-[var(--radius)] md:mx-6 md:my-16 lg:mx-12 lg:my-[100px]"
         data-reveal
       >
-        <div class="absolute inset-0 bg-white/[0.022] backdrop-blur-2xl border border-white/8" />
+        <div class="absolute inset-0 bg-[var(--glass-card-bg)] backdrop-blur-2xl border border-[var(--glass-card-border)]" />
         <div
           class="absolute top-0 left-0 right-0 h-px"
           style="
@@ -297,10 +313,10 @@
           "
           aria-hidden="true"
         />
-        <div class="relative z-1 text-center px-12 py-24 sm:px-6 sm:py-16">
+        <div class="relative z-1 text-center px-6 py-16 lg:px-12 lg:py-24">
           <p class="eyebrow justify-center">Ready to start?</p>
           <h2
-            class="font-display text-[clamp(28px,4.2vw,56px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.04] text-(--theme-text)"
+            class="font-display text-[clamp(28px,4.2vw,56px)] font-extrabold tracking-[-2.5px] mt-2 mb-5 leading-[1.04] text-(--theme-fg)"
             style="white-space: pre-line"
           >
             {{ siteContent.cta.headline }}

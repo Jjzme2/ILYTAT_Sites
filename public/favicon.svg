@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="ILYTAT">
+  <!-- Placeholder mark: brand gold field with an I monogram and the chamfered
+       corner used throughout the site. Replace with the real logo when
+       available — this exists so the tab icon does not depend on an external
+       CDN being reachable. -->
+  <path d="M0 0 H50 L64 14 V64 H14 L0 50 Z" fill="#f5c518"/>
+  <path d="M26 17 H38 V23 H35 V41 H38 V47 H26 V41 H29 V23 H26 Z" fill="#141210"/>
+</svg>

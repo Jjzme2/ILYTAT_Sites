@@ -166,10 +166,13 @@ export default defineNuxtConfig({
         { name: "twitter:card", content: "summary_large_image" },
         { name: "twitter:image", content: "https://media.ilytat.com/og-preview.png" },
         { name: "robots", content: "index, follow" },
-        { name: "theme-color", content: "#0f0f11" },
+        // Matches --theme-bg for the default (light) theme; the previous
+        // #0f0f11 was a neutral black that matched no surface on the page.
+        { name: "theme-color", content: "#faf8f5" },
       ],
       link: [
-        { rel: "icon", type: "image/png", href: "https://media.ilytat.com/logo.png" },
+        // Served locally so the tab icon does not depend on the CDN.
+        { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" },
         // Preconnect eliminates the DNS + TLS handshake latency on first image request
         { rel: "preconnect", href: "https://media.ilytat.com" },
         { rel: "dns-prefetch", href: "https://media.ilytat.com" },

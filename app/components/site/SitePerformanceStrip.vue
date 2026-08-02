@@ -1,5 +1,5 @@
 <template>
-  <div class="relative border-t border-b border-white/4 overflow-hidden" style="background: var(--theme-surface-alt)">
+  <div class="relative border-t border-b border-[var(--glass-card-border)] overflow-hidden" style="background: var(--theme-surface-alt)">
 
     <!-- Top crack glow -->
     <div
@@ -7,12 +7,12 @@
       style="background: linear-gradient(to right, transparent, color-mix(in srgb, var(--theme-accent) 28%, transparent) 20%, color-mix(in srgb, var(--theme-accent) 60%, white) 50%, color-mix(in srgb, var(--theme-accent) 28%, transparent) 80%, transparent); box-shadow: 0 0 12px 2px color-mix(in srgb, var(--theme-accent) 20%, transparent)"
       aria-hidden="true" />
 
-    <div class="max-w-[1080px] mx-auto px-12 py-14 md:px-6 md:py-10 sm:px-4 sm:py-8">
+    <div class="max-w-[1200px] mx-auto px-4 py-8 md:px-6 md:py-10 lg:px-12 lg:py-14">
 
       <!-- Eyebrow + headline -->
       <div class="flex flex-col items-center text-center mb-10 md:mb-8">
         <p class="eyebrow justify-center">Google PageSpeed Insights</p>
-        <h2 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px] text-(--theme-text) leading-[1.1] mt-1">
+        <h2 class="font-display text-[clamp(22px,3vw,32px)] font-extrabold tracking-[-1px] text-(--theme-fg) leading-[1.1] mt-1">
           Built fast. Verified.
         </h2>
         <p class="text-[13px] text-(--theme-text-body) mt-3 max-w-[460px] leading-[1.7]">
@@ -26,15 +26,14 @@
           <span>Mobile</span>
           <span class="flex-1 h-px" style="background: rgba(255,255,255,0.04)" />
         </p>
-        <div class="grid grid-cols-4 gap-3 sm:grid-cols-2">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div
             v-for="score in mobile"
             :key="'m-' + score.label"
-            class="flex flex-col items-center gap-1.5 py-5 px-3 glass-deep"
-            style="clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))">
+            class="flex flex-col items-center gap-1.5 py-5 px-3 glass-deep rounded-[var(--radius-sm)]">
             <span
               class="font-headline italic font-light leading-none"
-              :class="score.value === 100 ? 'text-(--theme-accent)' : 'text-(--theme-text)'"
+              :class="score.value === 100 ? 'text-(--theme-accent)' : 'text-(--theme-fg)'"
               style="font-size: clamp(36px, 4.5vw, 54px)">{{ score.value }}</span>
             <span class="font-mono text-[7.5px] tracking-[2px] uppercase text-(--theme-text-ghost) text-center leading-[1.4]">{{ score.label }}</span>
           </div>
@@ -47,15 +46,14 @@
           <span>Desktop</span>
           <span class="flex-1 h-px" style="background: rgba(255,255,255,0.04)" />
         </p>
-        <div class="grid grid-cols-4 gap-3 sm:grid-cols-2">
+        <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div
             v-for="score in desktop"
             :key="'d-' + score.label"
-            class="flex flex-col items-center gap-1.5 py-5 px-3 glass-deep"
-            style="clip-path: polygon(0 0, calc(100% - 8px) 0, 100% 8px, 100% 100%, 8px 100%, 0 calc(100% - 8px))">
+            class="flex flex-col items-center gap-1.5 py-5 px-3 glass-deep rounded-[var(--radius-sm)]">
             <span
               class="font-headline italic font-light leading-none"
-              :class="score.value === 100 ? 'text-(--theme-accent)' : 'text-(--theme-text)'"
+              :class="score.value === 100 ? 'text-(--theme-accent)' : 'text-(--theme-fg)'"
               style="font-size: clamp(36px, 4.5vw, 54px)">{{ score.value }}</span>
             <span class="font-mono text-[7.5px] tracking-[2px] uppercase text-(--theme-text-ghost) text-center leading-[1.4]">{{ score.label }}</span>
           </div>

@@ -15,10 +15,81 @@
 
 /* ── Theme tokens ──────────────────────────────────────────────────────────── */
 /* These custom properties are the single source of truth for all theme-
-   sensitive values. Overriding them under [data-theme="frost"] is enough
-   to repaint the entire UI — no component logic needed.                       */
+   sensitive values. Overriding them under [data-theme="dark"] is enough to
+   repaint the entire UI — no component logic needed.
+
+   Light is the default. Small-business buyers read a bright, high-contrast page
+   as credible; the near-black original read as a developer tool. Every text
+   token below is chosen to clear WCAG AA against its own background.           */
 
 :root {
+  /* — Backgrounds */
+  --theme-bg:           #faf8f5;
+  --theme-surface:      #ffffff;
+  --theme-surface-alt:  #f4f1ec;
+  --theme-surface-deep: #eeebe4;
+  --theme-marquee-bg:   #f2efe9;
+
+  /* — Text (ratios against --theme-bg) */
+  --theme-fg:           #141210;  /* 16.9:1 */
+  --theme-text-hi:      #33302b;  /* 11.2:1 */
+  --theme-text-body:    #4d4841;  /*  7.7:1 */
+  --theme-text-muted:   #5f594f;  /*  5.9:1 */
+  --theme-text-ghost:   #6b6459;  /*  5.0:1 */
+  --theme-text-faint:   #6c665b;  /*  5.1:1 */
+
+  /* — Accent.
+       --theme-accent is used for TEXT as well as decoration, so in light mode it
+       has to be a deep gold that actually passes contrast. --theme-accent-bright
+       keeps the saturated brand gold for fills, glows and borders, where
+       luminance does not matter.                                               */
+  --theme-accent:       #7d6000;  /*  5.9:1 on --theme-bg */
+  --theme-accent-dark:  #6b5200;
+  --theme-accent-bright:#f5c518;
+  --theme-border-glow:  #e8a800;
+  --theme-btn-from:     #f7cc1e;
+  --theme-btn-to:       #e8a800;
+  --theme-cta-text:     #1a1400;
+
+  /* — Glass surfaces (dark-tinted over light backgrounds) */
+  --glass-card-bg:      rgba(20, 18, 16, 0.028);
+  --glass-card-border:  rgba(20, 18, 16, 0.11);
+  --glass-card-inset:   rgba(255, 255, 255, 0.9);
+  --glass-deep-bg:      rgba(20, 18, 16, 0.02);
+  --glass-deep-inset-1: rgba(255, 255, 255, 0.85);
+  --glass-deep-inset-2: rgba(20, 18, 16, 0.03);
+
+  /* — Card shadow (light mode needs real elevation, not black wash) */
+  --card-shadow:      0 1px 2px rgba(20, 18, 16, 0.06), 0 8px 24px rgba(20, 18, 16, 0.06);
+  --card-shadow-deep: 0 1px 3px rgba(20, 18, 16, 0.07), 0 16px 48px rgba(20, 18, 16, 0.09);
+
+  /* — Blob mesh */
+  --blob-1: rgba(245, 197, 24, 0.20);
+  --blob-2: rgba(240, 148, 32, 0.13);
+  --blob-3: rgba(245, 197, 24, 0.10);
+  --blob-4: transparent;
+
+  /* — Hero text gradient */
+  --hero-gradient: linear-gradient(110deg, #9a7600 0%, #7a5c00 35%, #b58a00 60%, #9a7600 100%);
+
+  /* — Pricing highlight */
+  --price-featured-bg:     rgba(245, 197, 24, 0.10);
+  --price-featured-border: rgba(184, 138, 0, 0.45);
+  --price-featured-inset:  rgba(255, 255, 255, 0.9);
+  --price-featured-glow:   rgba(245, 197, 24, 0.20);
+
+  /* — Misc */
+  --scrollbar-color:       rgba(20, 18, 16, 0.20);
+  --scrollbar-hover:       rgba(20, 18, 16, 0.35);
+  --focus-ring:            #8a6a00;
+  --nav-surface:           rgba(250, 248, 245, 0.94);
+
+  --mosaic-bg:   none;
+  --mosaic-size: 48px 48px;
+}
+
+/* ── Dark theme (the original "ember" palette) ─────────────────────────────── */
+[data-theme="dark"] {
   /* — Backgrounds */
   --theme-bg:           #0d0b09;
   --theme-surface:      #0e0c0a;
@@ -26,18 +97,21 @@
   --theme-surface-deep: #090705;
   --theme-marquee-bg:   #0b0906;
 
-  /* — Text */
-  --theme-text:         #f0ece6;
-  --theme-text-hi:      #c8c4be;
-  --theme-text-body:    #8a8278;
-  --theme-text-muted:   #4a4742;
-  --theme-text-ghost:   #333040;
-  --theme-text-faint:   #252118;
+  /* — Text (ratios against --theme-bg).
+       muted/ghost/faint were 2.1:1, 1.5:1 and 1.2:1 — the pricing tier names and
+       the hero's service-area line were effectively invisible. Raised to AA.   */
+  --theme-fg:           #f0ece6;  /* 16.8:1 */
+  --theme-text-hi:      #c8c4be;  /* 10.4:1 */
+  --theme-text-body:    #a49c92;  /*  7.1:1 */
+  --theme-text-muted:   #948c82;  /*  5.8:1 */
+  --theme-text-ghost:   #878076;  /*  4.9:1 */
+  --theme-text-faint:   #8b847c;  /*  5.2:1 */
 
   /* — Accent (gold) */
   --theme-accent:       #f5c518;
   --theme-accent-dark:  #e8a800;
-  --theme-border-glow:  #a78bfa; /* purple */
+  --theme-accent-bright:#f5c518;
+  --theme-border-glow:  #e8a800;  /* was #a78bfa — purple glow on a gold site */
   --theme-btn-from:     #f7cc1e;
   --theme-btn-to:       #e8a800;
   --theme-cta-text:     #0a0805;
@@ -50,6 +124,10 @@
   --glass-deep-inset-1: rgba(255, 255, 255, 0.07);
   --glass-deep-inset-2: rgba(255, 255, 255, 0.03);
 
+  /* — Card shadow */
+  --card-shadow:      0 16px 56px rgba(0, 0, 0, 0.45), 0 4px 12px rgba(0, 0, 0, 0.2);
+  --card-shadow-deep: 0 32px 96px rgba(0, 0, 0, 0.55), 0 8px 24px rgba(0, 0, 0, 0.3);
+
   /* — Blob mesh */
   --blob-1: rgba(245, 197, 24, 0.09);
   --blob-2: rgba(240, 148, 32, 0.065);
@@ -60,87 +138,38 @@
   --hero-gradient: linear-gradient(110deg, #f5c518 0%, #f09420 35%, #fbbf24 60%, #f5c518 100%);
 
   /* — Pricing highlight */
-  --price-featured-bg:     rgba(245, 197, 24, 0.038);
-  --price-featured-border: rgba(245, 197, 24, 0.26);
+  --price-featured-bg:     rgba(245, 197, 24, 0.05);
+  --price-featured-border: rgba(245, 197, 24, 0.32);
   --price-featured-inset:  rgba(245, 197, 24, 0.16);
-  --price-featured-glow:   rgba(245, 197, 24, 0.055);
+  --price-featured-glow:   rgba(245, 197, 24, 0.10);
 
   /* — Misc */
   --scrollbar-color:       rgba(245, 197, 24, 0.14);
   --scrollbar-hover:       rgba(245, 197, 24, 0.28);
-  --focus-ring:            rgba(245, 197, 24, 0.55);
+  --focus-ring:            #f5c518;
+  --nav-surface:           rgba(10, 8, 6, 0.94);
 
-  /* — Mosaic (inactive in ember) */
   --mosaic-bg:   none;
   --mosaic-size: 48px 48px;
 }
 
-/* ── Frost theme overrides ─────────────────────────────────────────────────── */
-[data-theme="frost"] {
-  /* — Backgrounds */
-  --theme-bg:           #07091a;
-  --theme-surface:      #0b0e20;
-  --theme-surface-alt:  #090c1c;
-  --theme-surface-deep: #060816;
-  --theme-marquee-bg:   #080b18;
 
-  /* — Text */
-  --theme-text:         #eaecf8;
-  --theme-text-hi:      #9ba3d4;
-  --theme-text-body:    #6b7193;
-  --theme-text-muted:   #3d4266;
-  --theme-text-ghost:   #2e3466;
-  --theme-text-faint:   #1e2244;
-
-  /* — Accent (violet) */
-  --theme-accent:       #a78bfa;
-  --theme-accent-dark:  #7c3aed;
-  --theme-border-glow:  #f5c518; /* gold */
-  --theme-btn-from:     #a78bfa;
-  --theme-btn-to:       #6d28d9;
-  --theme-cta-text:     #f8f5ff;
-
-  /* — Glass surfaces (cool-tinted) */
-  --glass-card-bg:      rgba(180, 200, 255, 0.052);
-  --glass-card-border:  rgba(180, 200, 255, 0.12);
-  --glass-card-inset:   rgba(200, 220, 255, 0.07);
-  --glass-deep-bg:      rgba(150, 180, 255, 0.038);
-  --glass-deep-inset-1: rgba(200, 220, 255, 0.08);
-  --glass-deep-inset-2: rgba(180, 200, 255, 0.035);
-
-  /* — Blob mesh (cool) */
-  --blob-1: rgba(99,  102, 241, 0.14);
-  --blob-2: rgba(129, 140, 248, 0.10);
-  --blob-3: rgba(167, 139, 250, 0.08);
-  --blob-4: rgba(96,  165, 250, 0.06);
-
-  /* — Hero text gradient (violet shimmer) */
-  --hero-gradient: linear-gradient(110deg, #a78bfa 0%, #818cf8 35%, #c4b5fd 60%, #a78bfa 100%);
-
-  /* — Pricing highlight */
-  --price-featured-bg:     rgba(167, 139, 250, 0.038);
-  --price-featured-border: rgba(167, 139, 250, 0.26);
-  --price-featured-inset:  rgba(167, 139, 250, 0.16);
-  --price-featured-glow:   rgba(167, 139, 250, 0.055);
-
-  /* — Misc */
-  --scrollbar-color:       rgba(167, 139, 250, 0.14);
-  --scrollbar-hover:       rgba(167, 139, 250, 0.28);
-  --focus-ring:            rgba(167, 139, 250, 0.55);
-
-  /* — Mosaic grid (subtle diagonal hatching) */
-  --mosaic-bg:
-    repeating-linear-gradient(
-      135deg,
-      transparent,
-      transparent 50px,
-      rgba(180, 200, 255, 0.014) 50px,
-      rgba(180, 200, 255, 0.014) 51px
-    );
+/* ── Header metrics ────────────────────────────────────────────────────────── */
+/* Single source of truth for the sticky nav's height. The nav sets its own
+   height from this, and `scroll-padding-top` below keeps anchored headings from
+   landing underneath it. Mobile-first: small screens get the shorter bar.       */
+:root {
+  --nav-h: 56px;
+}
+@media (min-width: 768px) {
+  :root { --nav-h: 72px; }
 }
 
 /* ── Base ──────────────────────────────────────────────────────────────────── */
 html {
+  /* Offsets every anchor jump and scrollIntoView() by the nav height, so section
+     headings are never hidden behind the sticky bar.                            */
+  scroll-padding-top: calc(var(--nav-h) + 16px);
   background-color: var(--theme-bg);
   background-image: var(--mosaic-bg);
   background-size: var(--mosaic-size);
@@ -176,12 +205,6 @@ html {
   66%       { transform: translate(-18px, 14px); }
 }
 
-@keyframes gold-shimmer {
-  0%   { background-position: 0%   50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0%   50%; }
-}
-
 @keyframes marquee-left {
   to { transform: translateX(calc(-100% / 6)); }
 }
@@ -189,13 +212,6 @@ html {
 @keyframes bob {
   0%, 100% { transform: translateY(0); }
   50%       { transform: translateY(7px); }
-}
-
-@keyframes scroll-line {
-  0%   { transform: scaleY(0); transform-origin: top;    opacity: 0; }
-  40%  { transform: scaleY(1); transform-origin: top;    opacity: 1; }
-  60%  { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
-  100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
 }
 
 /* ── Scroll reveal ─────────────────────────────────────────────────────────── */
@@ -206,24 +222,16 @@ html {
 }
 .js-enabled [data-reveal].is-revealed { opacity: 1; transform: none; }
 
-/* ── Grain overlay ─────────────────────────────────────────────────────────── */
-.grain {
-  position: fixed; inset: 0; z-index: 100;
-  pointer-events: none; opacity: 0.026;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-  background-size: 256px 256px;
-}
-
 /* ── Glassmorphism ─────────────────────────────────────────────────────────── */
 .glass-card {
   background: var(--glass-card-bg);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border: 1px solid var(--glass-card-border);
+  border-radius: var(--radius);
   box-shadow:
     inset 0 1px 0 var(--glass-card-inset),
-    0 16px 56px rgba(0, 0, 0, 0.45),
-    0 4px 12px rgba(0, 0, 0, 0.2);
+    var(--card-shadow);
 }
 
 .glass-deep {
@@ -231,11 +239,11 @@ html {
   backdrop-filter: blur(40px) saturate(150%);
   -webkit-backdrop-filter: blur(40px) saturate(150%);
   border: 1px solid var(--glass-card-border);
+  border-radius: var(--radius);
   box-shadow:
     inset 0 1px 0 var(--glass-deep-inset-1),
     inset 0 0 0 0.5px var(--glass-deep-inset-2),
-    0 32px 96px rgba(0, 0, 0, 0.55),
-    0 8px 24px rgba(0, 0, 0, 0.3);
+    var(--card-shadow-deep);
 }
 
 /* ── Hero blob mesh ────────────────────────────────────────────────────────── */
@@ -263,33 +271,7 @@ html {
   animation: blob-drift 22s ease-in-out infinite reverse;
   animation-delay: -7s;
 }
-.hero-blob-3 {
-  width: 540px; height: 540px;
-  bottom: -80px; left: 28%;
-  background: radial-gradient(circle, var(--blob-3) 0%, transparent 65%);
-  filter: blur(110px);
-  animation: blob-drift 15s ease-in-out infinite;
-  animation-delay: -10s;
-}
-/* Frost-only fourth blob — hidden in ember via --blob-4: transparent */
-.hero-blob-4 {
-  width: 420px; height: 420px;
-  bottom: 10%; left: 5%;
-  background: radial-gradient(circle, var(--blob-4) 0%, transparent 65%);
-  filter: blur(100px);
-  animation: blob-drift 20s ease-in-out infinite;
-  animation-delay: -5s;
-}
 
-/* ── Animated gradient text (hero serif line) ──────────────────────────────── */
-.hero-gold-text {
-  background: var(--hero-gradient);
-  background-size: 200% 200%;
-  animation: gold-shimmer 5s ease-in-out infinite;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
 
 /* ── Marquee strip ─────────────────────────────────────────────────────────── */
 .animate-marquee {
@@ -302,74 +284,96 @@ html {
 
 /* ── Utility animations ────────────────────────────────────────────────────── */
 .animate-bob  { animation: bob 2.4s ease-in-out infinite; }
-.scroll-line  { animation: scroll-line 1.8s ease-in-out infinite; }
 
 /* ── Nav ───────────────────────────────────────────────────────────────────── */
+/* The nav is `position: sticky`, so it occupies flow space and can never overlap
+   the promo banner above it. Height comes from --nav-h; only the surface changes
+   on scroll — never the box metrics, which would shift the sticky offset.       */
 .nav-scrolled {
-  background: rgba(10, 8, 6, 0.94) !important;
+  background: var(--nav-surface) !important;
   backdrop-filter: blur(32px) saturate(150%) !important;
   -webkit-backdrop-filter: blur(32px) saturate(150%) !important;
-  border-color: rgba(255, 255, 255, 0.05) !important;
-  padding-top: 14px !important;
-  padding-bottom: 14px !important;
+  border-color: var(--glass-card-border) !important;
 }
-[data-theme="frost"] .nav-scrolled {
-  background: rgba(7, 9, 26, 0.94) !important;
+
+/* On phones the nav is opaque from the very first paint. A transparent bar over
+   the yellow promo banner is what made the header read as broken.               */
+@media (max-width: 767px) {
+  .site-nav {
+    background: var(--nav-surface);
+    border-color: var(--glass-card-border);
+  }
 }
 
 .nav-cta-btn {
-  font-size: 9.5px; font-weight: 700;
-  letter-spacing: 2.5px; text-transform: uppercase;
+  font-size: 13px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--theme-cta-text);
   background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
   padding: 11px 24px; border-radius: 3px;
+  /* Chamfer moved off an inline style and onto the shared notch token. */
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--crack-notch-sm)) 0,
+    100% var(--crack-notch-sm),
+    100% 100%,
+    var(--crack-notch-sm) 100%,
+    0 calc(100% - var(--crack-notch-sm))
+  );
   text-decoration: none; white-space: nowrap; position: relative; overflow: hidden;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.24);
-}
-.nav-cta-btn::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, transparent 55%);
-  pointer-events: none;
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
 }
 .nav-cta-btn:hover {
   transform: translateY(-1px);
-  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  box-shadow: 0 5px 24px rgba(0, 0, 0, 0.4);
+}
+
+.chamfer {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--crack-notch-sm)) 0,
+    100% var(--crack-notch-sm),
+    100% 100%,
+    var(--crack-notch-sm) 100%,
+    0 calc(100% - var(--crack-notch-sm))
+  );
 }
 
 /* ── Buttons ───────────────────────────────────────────────────────────────── */
 .btn-primary {
   display: inline-flex; align-items: center; gap: 10px;
-  font-size: 10px; font-weight: 700;
-  letter-spacing: 2.5px; text-transform: uppercase;
+  font-size: 15px; font-weight: 700;
+  letter-spacing: 0.06em; text-transform: uppercase;
   color: var(--theme-cta-text);
   background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
-  padding: 17px 42px; border-radius: 3px;
+  padding: 16px 34px; border-radius: 0;
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--crack-notch-sm)) 0,
+    100% var(--crack-notch-sm),
+    100% 100%,
+    var(--crack-notch-sm) 100%,
+    0 calc(100% - var(--crack-notch-sm))
+  );
   text-decoration: none; position: relative; overflow: hidden;
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.26);
-}
-.btn-primary::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.18) 0%, transparent 55%);
-  pointer-events: none;
+  box-shadow: 0 2px 24px rgba(0, 0, 0, 0.25);
 }
 .btn-primary:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.26);
+  box-shadow: 0 8px 36px rgba(0, 0, 0, 0.4);
 }
 .btn-primary:active { transform: translateY(0); }
 
 .btn-ghost {
   display: inline-flex; align-items: center; gap: 10px;
-  font-size: 10px; font-weight: 600;
-  letter-spacing: 2.5px; text-transform: uppercase;
-  color: #7a776f; padding: 17px 38px; border-radius: 3px;
+  font-size: 15px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--theme-text-hi); padding: 16px 30px; border-radius: var(--radius-sm);
   text-decoration: none;
-  border: 1px solid rgba(255, 255, 255, 0.11);
-  background: rgba(255, 255, 255, 0.012);
+  border: 1px solid var(--glass-card-border);
+  background: transparent;
   transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s, transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.25s;
 }
 .btn-ghost:hover {
@@ -382,9 +386,9 @@ html {
 /* ── Eyebrow label ─────────────────────────────────────────────────────────── */
 .eyebrow {
   font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: 3px;
+  font-size: 12px; letter-spacing: 0.14em;
   text-transform: uppercase; color: var(--theme-accent);
-  opacity: 0.72; margin-bottom: 14px; display: block;
+  font-weight: 600; margin-bottom: 14px; display: block;
   padding-left: 14px; position: relative;
 }
 .eyebrow::before {
@@ -398,7 +402,7 @@ html {
 /* ── Section layer system ──────────────────────────────────────────────────── */
 .section-layer {
   position: relative;
-  border-radius: 32px 32px 0 0;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   margin-top: -32px;
   box-shadow:
     0 -28px 72px rgba(0, 0, 0, 0.62),
@@ -446,7 +450,7 @@ html {
 /* ── Tier features list ────────────────────────────────────────────────────── */
 .tier-features { list-style: none; padding: 0; margin: 0 0 28px; }
 .tier-features li {
-  font-size: 13px; color: #a09890;
+  font-size: 14px; color: var(--theme-text-body);
   padding: 5px 0 5px 18px;
   position: relative; line-height: 1.6;
 }
@@ -454,16 +458,15 @@ html {
   content: '—'; position: absolute; left: 0; top: 6px;
   color: color-mix(in srgb, var(--theme-accent) 28%, transparent); font-size: 10px;
 }
-[data-theme="frost"] .tier-features li { color: #7a85b8; }
 
 /* ── Price CTA ─────────────────────────────────────────────────────────────── */
 .price-cta {
   display: block; width: 100%; text-align: center;
-  padding: 14px; border-radius: 3px;
-  font-size: 10px; font-weight: 600;
-  letter-spacing: 2.5px; text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(255, 255, 255, 0.012); color: #6e6b5f;
+  padding: 14px; border-radius: var(--radius-sm);
+  font-size: 14px; font-weight: 600;
+  letter-spacing: 0.06em; text-transform: uppercase;
+  border: 1px solid var(--glass-card-border);
+  background: transparent; color: var(--theme-text-hi);
   text-decoration: none;
   transition: border-color 0.25s cubic-bezier(0.4, 0, 0.2, 1), color 0.25s, background 0.25s;
   cursor: pointer;
@@ -474,39 +477,32 @@ html {
   background: color-mix(in srgb, var(--theme-accent) 3%, transparent);
 }
 .price-cta:disabled { opacity: 0.35; cursor: not-allowed; }
-[data-theme="frost"] .price-cta { color: #5a638a; }
 
 .price-cta-featured {
   background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
   border-color: transparent; color: var(--theme-cta-text);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
   position: relative; overflow: hidden;
-}
-.price-cta-featured::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, transparent 55%);
-  pointer-events: none;
 }
 .price-cta-featured:hover:not(:disabled) {
   filter: brightness(1.06); color: var(--theme-cta-text);
-  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+  box-shadow: 0 6px 28px rgba(0, 0, 0, 0.4);
 }
 
 /* ── FAQ ───────────────────────────────────────────────────────────────────── */
 .faq-item {
-  border: 1px solid rgba(255, 255, 255, 0.056);
-  border-radius: 3px; overflow: hidden;
+  border: 1px solid var(--glass-card-border);
+  border-radius: var(--radius-sm); overflow: hidden;
   transition: border-color 0.25s, background 0.25s;
 }
 .faq-item[open] {
   border-color: color-mix(in srgb, var(--theme-accent) 18%, transparent);
   background: color-mix(in srgb, var(--theme-accent) 1.2%, transparent);
 }
-.faq-item:hover:not([open]) { border-color: rgba(255, 255, 255, 0.1); }
+.faq-item:hover:not([open]) { border-color: color-mix(in srgb, var(--theme-accent) 30%, transparent); }
 .faq-q {
   padding: 22px 24px; cursor: pointer;
-  font-size: 14.5px; font-weight: 600; color: #b8b0a5;
+  font-size: 16px; font-weight: 600; color: var(--theme-text-hi);
   list-style: none; display: flex; justify-content: space-between;
   align-items: center; user-select: none;
   transition: color 0.15s;
@@ -518,27 +514,23 @@ html {
   margin-left: 16px; transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1); line-height: 1;
 }
 .faq-item[open] .faq-q::after { transform: rotate(45deg); }
-.faq-item[open] .faq-q { color: #ede5d8; }
-[data-theme="frost"] .faq-q          { color: #7a85b8; }
-[data-theme="frost"] .faq-item[open] .faq-q { color: #eaecf8; }
-.faq-a { padding: 0 24px 22px; font-size: 14px; color: #6e6b5f; line-height: 1.9; }
-[data-theme="frost"] .faq-a { color: #5a638a; }
+.faq-item[open] .faq-q { color: var(--theme-fg); }
+.faq-a { padding: 0 24px 22px; font-size: 15px; color: var(--theme-text-body); line-height: 1.8; }
 
 /* ── Forms ─────────────────────────────────────────────────────────────────── */
 .fgroup { display: flex; flex-direction: column; gap: 6px; }
 .fgroup label {
   font-family: var(--font-mono);
-  font-size: 9px; letter-spacing: 2px;
-  text-transform: uppercase; color: #8a8278;
+  font-size: 11px; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--theme-text-muted);
 }
-[data-theme="frost"] .fgroup label { color: #3d4266; }
 .fgroup input,
 .fgroup textarea {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 3px; padding: 13px 16px;
-  color: var(--theme-text); font-family: var(--font-sans);
-  font-size: 14px; outline: none; width: 100%;
+  background: var(--theme-surface);
+  border: 1px solid var(--glass-card-border);
+  border-radius: var(--radius-sm); padding: 13px 16px;
+  color: var(--theme-fg); font-family: var(--font-sans);
+  font-size: 16px; outline: none; width: 100%;
   transition: border-color 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
 }
 .fgroup input:focus,
@@ -547,16 +539,16 @@ html {
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--theme-accent) 7%, transparent), inset 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 .fgroup input::placeholder,
-.fgroup textarea::placeholder { color: rgba(78, 72, 67, 0.65); }
+.fgroup textarea::placeholder { color: var(--theme-text-faint); }
 .fgroup textarea { resize: vertical; }
 
 .select-wrap { position: relative; }
 .select-wrap select {
-  width: 100%; background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 3px; padding: 13px 36px 13px 16px;
-  color: var(--theme-text); font-family: var(--font-sans);
-  font-size: 14px; appearance: none; outline: none;
+  width: 100%; background: var(--theme-surface);
+  border: 1px solid var(--glass-card-border);
+  border-radius: var(--radius-sm); padding: 13px 36px 13px 16px;
+  color: var(--theme-fg); font-family: var(--font-sans);
+  font-size: 16px; appearance: none; outline: none;
   cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s;
 }
 .select-wrap select:focus {
@@ -571,23 +563,17 @@ html {
 .submit-btn {
   width: 100%; padding: 17px;
   background: linear-gradient(135deg, var(--theme-btn-from) 0%, var(--theme-btn-to) 100%);
-  color: var(--theme-cta-text); border: none; border-radius: 3px;
-  font-family: var(--font-mono); font-size: 10px;
-  font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+  color: var(--theme-cta-text); border: none; border-radius: var(--radius-sm);
+  font-family: var(--font-sans); font-size: 15px;
+  font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
   cursor: pointer; position: relative; overflow: hidden;
   transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
   margin-top: 4px;
-}
-.submit-btn::after {
-  content: '';
-  position: absolute; inset: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, transparent 55%);
-  pointer-events: none;
 }
 .submit-btn:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  box-shadow: 0 6px 32px rgba(0, 0, 0, 0.4);
 }
 .submit-btn:active:not(:disabled) { transform: translateY(0); }
 .submit-btn:disabled { opacity: 0.35; cursor: not-allowed; }
@@ -611,15 +597,22 @@ html {
  */
 
 :root {
+  --radius-sm: 8px;
+  --radius:    12px;
+  --radius-lg: 16px;
+
   --crack-notch:    14px;
   --crack-notch-sm:  8px;
   --crack-notch-lg: 22px;
 }
 
-/* Explosion animation — ONLY opacity and transform → fully GPU composited */
+/* Explosion animation — ONLY opacity and transform → fully GPU composited.
+   Was 0.20 -> 0.42: a screen-blended saturated blob pulsing under 14px body
+   copy on every card, all the time. Dialled back so it reads as a subtle
+   surface warmth rather than the card breathing at the reader. */
 @keyframes lumen-burst {
-  0%, 100% { opacity: 0.20; transform: scale(0.93); }
-  50%       { opacity: 0.42; transform: scale(1.06); }
+  0%, 100% { opacity: 0.05; transform: scale(0.97); }
+  50%       { opacity: 0.11; transform: scale(1.02); }
 }
 
 /* ── Named explosion color palettes ─────────────────────────────────────────
@@ -760,12 +753,8 @@ html {
  * correct without the expensive blur step.
  */
 @media (max-width: 768px) {
-  /* Kill all 4 blobs — they're invisible at mobile scale and burn GPU/battery */
+  /* Kill the blobs — they're invisible at mobile scale and burn GPU/battery */
   .hero-blob { display: none !important; }
-
-  /* gold-shimmer animates background-position which is not GPU-composited — it
-     forces a paint on every frame. Freeze it at initial position on mobile. */
-  .hero-gold-text { animation: none; }
 
   /* bob animation on the scroll indicator is decorative — skip on mobile */
   .animate-bob { animation: none; }
@@ -801,90 +790,13 @@ html {
  */
 @media (prefers-reduced-motion: reduce) {
   .lumen-burst        { animation: none !important; }
-  .hero-gold-text     { animation: none !important; }
   .animate-bob        { animation: none !important; }
-  .scroll-line        { animation: none !important; }
   .hero-blob-1,
   .hero-blob-2,
-  .hero-blob-3,
-  .hero-blob-4        { animation: none !important; }
   .animate-marquee    { animation-play-state: paused !important; }
   .page-enter-active,
   .page-leave-active  { transition-duration: 0.1s !important; }
   .crack-inner        { transition-duration: 0.1s !important; }
 }
 
-/* ── Void theme ────────────────────────────────────────────────────────────── */
-[data-theme="void"] {
-  /* — Backgrounds */
-  --theme-bg:           #020409;
-  --theme-surface:      #040810;
-  --theme-surface-alt:  #03060d;
-  --theme-surface-deep: #020408;
-  --theme-marquee-bg:   #030710;
 
-  /* — Text */
-  --theme-text:         #e0e8ff;
-  --theme-text-hi:      #8fa4e0;
-  --theme-text-body:    #4a5888;
-  --theme-text-muted:   #2e3860;
-  --theme-text-ghost:   #1e2848;
-  --theme-text-faint:   #111c38;
-
-  /* — Accent (electric cobalt) */
-  --theme-accent:       #3b82f6;
-  --theme-accent-dark:  #1d4ed8;
-  --theme-border-glow:  #f43f5e; /* rose pink */
-  --theme-btn-from:     #60a5fa;
-  --theme-btn-to:       #1d4ed8;
-  --theme-cta-text:     #f0f4ff;
-
-  /* — Glass surfaces */
-  --glass-card-bg:      rgba(30, 60, 180, 0.042);
-  --glass-card-border:  rgba(60, 120, 255, 0.1);
-  --glass-card-inset:   rgba(100, 160, 255, 0.07);
-  --glass-deep-bg:      rgba(20, 50, 150, 0.034);
-  --glass-deep-inset-1: rgba(80, 140, 255, 0.08);
-  --glass-deep-inset-2: rgba(60, 120, 220, 0.035);
-
-  /* — Blob mesh */
-  --blob-1: rgba(59,  130, 246, 0.13);
-  --blob-2: rgba(37,   99, 235, 0.09);
-  --blob-3: rgba(99,  102, 241, 0.07);
-  --blob-4: rgba(16,  185, 129, 0.05);
-
-  /* — Hero text gradient */
-  --hero-gradient: linear-gradient(110deg, #60a5fa 0%, #818cf8 35%, #93c5fd 60%, #3b82f6 100%);
-
-  /* — Pricing highlight */
-  --price-featured-bg:     rgba(59, 130, 246, 0.038);
-  --price-featured-border: rgba(59, 130, 246, 0.26);
-  --price-featured-inset:  rgba(59, 130, 246, 0.16);
-  --price-featured-glow:   rgba(59, 130, 246, 0.055);
-
-  /* — Misc */
-  --scrollbar-color:       rgba(59, 130, 246, 0.14);
-  --scrollbar-hover:       rgba(59, 130, 246, 0.28);
-  --focus-ring:            rgba(59, 130, 246, 0.55);
-
-  /* — Mosaic (electric grid) */
-  --mosaic-bg:
-    repeating-linear-gradient(
-      90deg,
-      transparent,
-      transparent 60px,
-      rgba(59, 130, 246, 0.014) 60px,
-      rgba(59, 130, 246, 0.014) 61px
-    );
-  --mosaic-size: auto;
-}
-
-[data-theme="void"] .nav-scrolled   { background: rgba(2, 4, 9, 0.94) !important; }
-[data-theme="void"] .tier-features li { color: #4a5888; }
-[data-theme="void"] .faq-q             { color: #4a5888; }
-[data-theme="void"] .faq-item[open] .faq-q { color: #e0e8ff; }
-[data-theme="void"] .faq-a             { color: #3a4878; }
-[data-theme="void"] .price-cta         { color: #3a4878; }
-[data-theme="void"] .fgroup label      { color: #2e3860; }
-[data-theme="void"] .fgroup input::placeholder,
-[data-theme="void"] .fgroup textarea::placeholder { color: rgba(46, 56, 96, 0.65); }

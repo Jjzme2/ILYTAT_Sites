@@ -11,6 +11,40 @@ export const siteConfig = {
     monthlyRate,
     priceRange: '$499–$1,499', // Used dynamically in SEO schema
 
+    /**
+     * Hero visual. Drop a real image at /public and point heroImage at it
+     * (e.g. '/hero.jpg') and the hero renders the photo. Until then the slot
+     * falls back to the typographic panel below, so it never looks unfinished.
+     */
+    heroImage: null as string | null,
+    /**
+     * Shown in the portfolio section while there are no published projects, so
+     * the section still makes the case instead of rendering an empty shelf.
+     */
+    deliverables: [
+        {
+            icon: 'i-heroicons-device-phone-mobile',
+            title: 'Built for phones first',
+            body: 'Most local searches happen on a phone. Your site is designed for that screen before any other.',
+        },
+        {
+            icon: 'i-heroicons-map-pin',
+            title: 'Found on Google Maps',
+            body: 'Local search setup and a connected Google Business Profile, so nearby customers actually find you.',
+        },
+        {
+            icon: 'i-heroicons-inbox-arrow-down',
+            title: 'Turns visitors into calls',
+            body: 'Contact and quote forms that reach your inbox immediately — not a contact page nobody uses.',
+        },
+    ],
+
+    heroStats: [
+        { value: '1 week',     label: 'Typical build time' },
+        { value: monthlyRate,  label: 'Managed hosting, per month' },
+        { value: '100%',       label: 'Code ownership, yours' },
+    ],
+
     pillars: [
         { icon: 'i-heroicons-lock-closed', title: 'You own your site' },
         { icon: 'i-heroicons-currency-dollar', title: 'Simple, clear pricing' },
