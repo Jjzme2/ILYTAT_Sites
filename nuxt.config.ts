@@ -1,28 +1,37 @@
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-import { readFileSync } from "node:fs";
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
 /**
- * Cron schedules, read from vercel.json so there is exactly one definition.
+ * Scheduled jobs. This is the ONLY place they are defined.
  *
- * ⚠️ The root vercel.json alone does NOT schedule anything for this project.
+ * ⚠️ Do not move these to vercel.json, and do not add a vercel.json that
+ * declares `crons`. Two things make that wrong:
  *
- * Nitro's vercel preset emits Build Output API v3, and `.vercel/output/
- * config.json` becomes the deployment configuration. Nothing copies `crons`
- * from the root vercel.json into it, so the two jobs declared there were never
- * registered — Vercel's Cron Jobs page showed no invocations at all, because
- * there were no cron jobs. A weekly blog post silently never happened and no
- * error was ever raised, because no code ran to raise one.
+ *   1. Nitro's vercel preset builds with the Build Output API, so
+ *      `.vercel/output/config.json` is the deployment configuration. Nothing
+ *      copies `crons` out of vercel.json into it. That is why these jobs were
+ *      declared for months and never once ran — Vercel's Cron Jobs page showed
+ *      no invocations because no cron jobs existed. A weekly blog post silently
+ *      never happened, and no error was raised because no code ran to raise one.
  *
- * They are injected below via nitro.vercel.config. vercel.json is kept as the
- * source both because it is where anyone would look first and because Vercel's
- * dashboard reads it — but the value that actually takes effect is this one.
+ *   2. Declaring them in *both* places is a hard deployment failure. Vercel
+ *      rejects a build whose crons come from vercel.json and the Build Output
+ *      API at the same time, so "belt and braces" is not an option here.
+ *
+ * Injected into the build output via nitro.vercel.config below.
+ *
+ * To confirm after any change:
+ *   VERCEL=1 npm run build
+ *   node -e "console.log(JSON.parse(require('fs').readFileSync('.vercel/output/config.json','utf8')).crons)"
+ * `undefined` there means nothing is scheduled.
  */
-const cronJobs: Array<{ path: string; schedule: string }> = JSON.parse(
-  readFileSync(resolve(__dirname, "vercel.json"), "utf8"),
-).crons ?? [];
+const cronJobs = [
+  // 2 AM CT daily — digest, retention pruning, price drift, blog watchdog.
+  { path: "/api/cron/nightly-report", schedule: "0 7 * * *" },
+  // Mondays 10 AM CT. Vercel fires within the hour, not on the minute.
+  { path: "/api/cron/weekly-blog", schedule: "0 15 * * 1" },
+];
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({

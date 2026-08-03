@@ -132,7 +132,7 @@ too, or a checkout will charge the old amount.
 
 ---
 
-## ⚠️ `vercel.json` crons do not work on their own here
+## ⚠️ Cron schedules live in `nuxt.config.ts`, never in `vercel.json`
 
 The scheduled jobs silently never ran — not once. Vercel's Cron Jobs page showed
 no invocations because there were no cron jobs registered.
@@ -142,9 +142,14 @@ no invocations because there were no cron jobs registered.
 `crons` out of the root `vercel.json` into it. The jobs looked correctly
 declared, the dashboard showed the file, and nothing was scheduled.
 
-**Fix:** `nuxt.config.ts` reads `vercel.json` and injects its `crons` via
-`nitro.vercel.config`. `vercel.json` stays as the single place schedules are
-written — change them there and the build carries them through.
+**Fix:** schedules are defined in `nuxt.config.ts` and injected via
+`nitro.vercel.config`. `vercel.json` was deleted — it contained nothing else.
+
+> **Do not re-add a `vercel.json` with `crons`.** Declaring them in both places
+> is a hard deployment failure, not a harmless duplicate: Vercel rejects a build
+> whose crons come from `vercel.json` and the Build Output API at once. That
+> mistake was made and caught here — the first attempt at this fix left the
+> `vercel.json` crons in place and the deployment errored.
 
 **To verify after any change to schedules or the Nitro config:**
 
