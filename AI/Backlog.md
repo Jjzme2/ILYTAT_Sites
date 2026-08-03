@@ -132,6 +132,48 @@ too, or a checkout will charge the old amount.
 
 ---
 
+## Observability — how it works now
+
+Nothing here needs configuring to work; the defaults are sensible. This is a
+map so future-you knows where to look.
+
+- **Every server error is captured automatically.** `app/server/plugins/
+  observability.ts` hooks Nitro and writes any unhandled 5xx to the `logs`
+  collection with the route, a request id, and the stack. 4xx responses are
+  recorded at `info` so patterns stay visible without crying wolf. Every
+  response carries an `x-request-id` header — if someone reports a problem, ask
+  for that id and search the Logs tab for it.
+- **Browser errors reach you too.** `app/plugins/error-reporting.client.ts`
+  forwards JavaScript failures to `/api/analytics/error`. They appear in the
+  admin Analytics tab under "Browser errors". Known browser noise
+  (ResizeObserver, extensions, cancelled navigations) is filtered out.
+- **Criticals email immediately**, throttled to one per 30 minutes per distinct
+  message. Everything else waits for the 2 AM digest.
+- **Repeated identical log lines collapse.** A failing dependency writes one
+  Firestore document per 5-minute window with a `repeats` count, rather than one
+  per request. The console still shows every occurrence.
+- **Only allowlisted analytics events are stored.** Adding a new `track()` call
+  means adding its name to `EVENTS` in
+  `app/server/api/analytics/event.post.ts`, or it is silently dropped. This is
+  deliberate — a typo should not create a metric nobody reads.
+
+Optional environment variables, both with working defaults:
+
+- `LOG_RETENTION_DAYS` (default 45) — logs older than this are deleted nightly.
+- `ANALYTICS_RETENTION_DAYS` (default 180) — same for `analytics_events`.
+
+### Turnstile can throw on locked-down networks
+
+If a visitor's network or extension blocks `challenges.cloudflare.com`,
+`nuxt-turnstile` throws `Cannot read properties of undefined (reading 'render')`
+and the contact form's verification widget never appears. This is a gap in the
+library, not our code, and it is invisible in dev. It will now show up in the
+Browser errors panel — if the count is more than a trickle, the fix is to gate
+the widget behind a load check and fall back to letting the form submit without
+it.
+
+---
+
 ## Known rough edges
 
 Not urgent, but worth knowing about.

@@ -694,17 +694,38 @@ async function loadAll() {
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
 interface AnalyticsSummary {
+  windowDays: number
   total: number
-  allCounts: Record<string, number>
+  truncated: boolean
+  pageViews30: number
+  pageViews7: number
+  pageViews1: number
+  sessions30: number
+  sessions7: number
+  submits30: number
+  conversionRate: number
+  errorCount7d: number
   day30Counts: Record<string, number>
   day7Counts: Record<string, number>
+  day1Counts: Record<string, number>
+  series: Array<{ date: string; views: number; sessions: number }>
+  topPages: Array<{ key: string; count: number }>
+  topReferrers: Array<{ key: string; count: number }>
+  devices: Record<string, number>
   ctaBreakdown: Record<string, number>
-  recent: Array<{ id: string; event: string; properties: Record<string, unknown>; sessionId: string; createdAt: string }>
+  toolUse: Record<string, number>
+  clientErrors: Array<{ id: string; message: string; path: string; repeats: number; createdAt: string }>
+  recent: Array<{ id: string; event: string; properties: Record<string, unknown>; path: string; sessionId: string; createdAt: string }>
   error?: string
 }
 
 const analytics = ref<AnalyticsSummary | null>(null)
 const analyticsLoading = ref(false)
+
+/** Tallest bar in the daily series, floored at 1 so an empty chart still renders. */
+const seriesPeak = computed(() =>
+  Math.max(1, ...(analytics.value?.series ?? []).map(d => d.views)),
+)
 
 async function loadAnalytics() {
   analyticsLoading.value = true
@@ -1188,29 +1209,121 @@ function onGlobalKeydown(e: KeyboardEvent) {
             ⚠ {{ analytics.error }}
           </div>
 
+          <!-- Truncation notice — the numbers below are a floor, not a total -->
+          <div v-if="analytics.truncated" style="background:color-mix(in srgb, var(--status-warn) 14%, transparent);color:var(--status-warn);border:1px solid color-mix(in srgb, var(--status-warn) 30%, transparent);padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:20px;">
+            Hit the {{ analytics.total }}-event read limit — figures below cover only the most recent events in the window, so treat them as a minimum.
+          </div>
+
           <!-- ── Summary cards ── -->
-          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:28px;">
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px;">
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:var(--status-good);">{{ analytics.day30Counts['contact_submit'] || 0 }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Contact submits<br><span style="font-size:10px;">(last 30 days)</span></p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:var(--theme-accent);">{{ analytics.pageViews30 }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Page views<br><span style="font-size:10px;">({{ analytics.windowDays }} days · {{ analytics.pageViews1 }} today)</span></p>
             </div>
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:var(--theme-accent);">{{ analytics.day30Counts['pricing_viewed'] || 0 }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Pricing views<br><span style="font-size:10px;">(last 30 days)</span></p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:var(--theme-accent);">{{ analytics.sessions30 }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Visitors<br><span style="font-size:10px;">({{ analytics.sessions7 }} in last 7 days)</span></p>
             </div>
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:var(--theme-accent);">{{ analytics.day30Counts['cta_click'] || 0 }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">CTA clicks<br><span style="font-size:10px;">(last 30 days)</span></p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:var(--status-good);">{{ analytics.submits30 }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Contact submits<br><span style="font-size:10px;">({{ analytics.windowDays }} days)</span></p>
             </div>
             <div class="record-card" style="text-align:center;padding:16px 12px;">
-              <p style="font-size:28px;font-weight:700;margin:0;color:var(--theme-accent);">{{ analytics.total }}</p>
-              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Total events<br><span style="font-size:10px;">(all time)</span></p>
+              <p style="font-size:28px;font-weight:700;margin:0;color:var(--status-good);">{{ analytics.conversionRate }}%</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Visitor → inquiry<br><span style="font-size:10px;">(share who made contact)</span></p>
+            </div>
+            <div class="record-card" style="text-align:center;padding:16px 12px;">
+              <p style="font-size:28px;font-weight:700;margin:0;" :style="{ color: analytics.errorCount7d ? 'var(--status-bad)' : 'var(--theme-text-muted)' }">{{ analytics.errorCount7d }}</p>
+              <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Errors logged<br><span style="font-size:10px;">(last 7 days)</span></p>
+            </div>
+          </div>
+
+          <!-- ── Daily traffic ── -->
+          <div class="record-card" style="margin-bottom:20px;">
+            <p class="dash-hint" style="font-weight:600;margin-bottom:14px;">Page views — last {{ analytics.windowDays }} days (peak {{ seriesPeak }})</p>
+            <div style="display:flex;align-items:flex-end;gap:2px;height:110px;">
+              <div
+                v-for="d in analytics.series"
+                :key="d.date"
+                :title="`${d.date} — ${d.views} views, ${d.sessions} visitors`"
+                style="flex:1;min-width:3px;border-radius:2px 2px 0 0;background:var(--theme-accent);transition:height .3s;"
+                :style="{
+                  height: Math.max(2, Math.round(d.views / seriesPeak * 100)) + '%',
+                  opacity: d.views ? 0.85 : 0.18,
+                }"
+              />
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:10px;color:var(--theme-text-muted);font-family:monospace;">
+              <span>{{ analytics.series[0]?.date }}</span>
+              <span>{{ analytics.series[analytics.series.length - 1]?.date }}</span>
+            </div>
+          </div>
+
+          <!-- ── Top pages / referrers / devices ── -->
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-bottom:20px;">
+            <div class="record-card">
+              <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">Top pages</p>
+              <div v-if="analytics.topPages.length" style="display:flex;flex-direction:column;gap:4px;">
+                <div v-for="p in analytics.topPages" :key="p.key" style="display:flex;justify-content:space-between;gap:10px;padding:5px 9px;border-radius:4px;background:var(--glass-card-bg);font-size:12.5px;">
+                  <span style="font-family:monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ p.key || '/' }}</span>
+                  <span style="color:var(--theme-accent);font-weight:600;">{{ p.count }}</span>
+                </div>
+              </div>
+              <p v-else style="color:var(--theme-text-muted);font-size:13px;margin:0;">No page views recorded yet.</p>
+            </div>
+
+            <div class="record-card">
+              <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">Where visitors came from</p>
+              <div v-if="analytics.topReferrers.length" style="display:flex;flex-direction:column;gap:4px;">
+                <div v-for="r in analytics.topReferrers" :key="r.key" style="display:flex;justify-content:space-between;gap:10px;padding:5px 9px;border-radius:4px;background:var(--glass-card-bg);font-size:12.5px;">
+                  <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ r.key }}</span>
+                  <span style="color:var(--theme-accent);font-weight:600;">{{ r.count }}</span>
+                </div>
+              </div>
+              <p v-else style="color:var(--theme-text-muted);font-size:13px;margin:0;">No referrer data yet.</p>
+            </div>
+
+            <div class="record-card">
+              <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">Devices</p>
+              <div v-if="Object.keys(analytics.devices).length" style="display:flex;flex-direction:column;gap:4px;">
+                <div v-for="[dev, cnt] in Object.entries(analytics.devices).sort((a,b) => (b[1] as number) - (a[1] as number))" :key="dev" style="display:flex;justify-content:space-between;gap:10px;padding:5px 9px;border-radius:4px;background:var(--glass-card-bg);font-size:12.5px;">
+                  <span style="text-transform:capitalize;">{{ dev }}</span>
+                  <span style="color:var(--theme-accent);font-weight:600;">{{ cnt }}</span>
+                </div>
+              </div>
+              <p v-else style="color:var(--theme-text-muted);font-size:13px;margin:0;">No device data yet.</p>
+            </div>
+          </div>
+
+          <!-- ── Free tool usage ── -->
+          <div v-if="Object.keys(analytics.toolUse).length" class="record-card" style="margin-bottom:20px;">
+            <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">Free tool runs ({{ analytics.windowDays }} days)</p>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <span v-for="[tool, cnt] in Object.entries(analytics.toolUse).sort((a,b) => (b[1] as number) - (a[1] as number))" :key="tool" style="padding:6px 12px;border-radius:5px;background:var(--glass-card-bg);font-size:12.5px;">
+                <span style="font-family:monospace;">{{ tool }}</span>
+                <strong style="color:var(--theme-accent);margin-left:8px;">{{ cnt }}</strong>
+              </span>
+            </div>
+          </div>
+
+          <!-- ── Browser errors ── -->
+          <div v-if="analytics.clientErrors.length" class="record-card" style="margin-bottom:20px;border-color:color-mix(in srgb, var(--status-bad) 30%, transparent);">
+            <p class="dash-hint" style="font-weight:600;margin-bottom:4px;color:var(--status-bad);">Browser errors (last 7 days)</p>
+            <p class="dash-hint" style="margin-bottom:12px;">JavaScript failures reported by real visitors' browsers. These break the page for whoever hit them.</p>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <div v-for="err in analytics.clientErrors" :key="err.id" style="padding:7px 10px;border-radius:4px;background:var(--glass-card-bg);font-size:12.5px;">
+                <div style="display:flex;justify-content:space-between;gap:10px;">
+                  <span style="font-family:monospace;color:var(--status-bad);word-break:break-word;">{{ err.message }}</span>
+                  <span style="color:var(--theme-text-muted);white-space:nowrap;font-size:11px;">{{ new Date(err.createdAt).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }) }}</span>
+                </div>
+                <span style="color:var(--theme-text-muted);font-size:11px;font-family:monospace;">{{ err.path || 'unknown page' }}<template v-if="err.repeats"> · +{{ err.repeats }} more</template></span>
+              </div>
             </div>
           </div>
 
           <!-- ── CTA breakdown ── -->
           <div v-if="analytics.ctaBreakdown && Object.keys(analytics.ctaBreakdown).length" class="record-card" style="margin-bottom:20px;">
-            <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">CTA clicks by label (all-time)</p>
+            <p class="dash-hint" style="font-weight:600;margin-bottom:12px;">CTA clicks by label ({{ analytics.windowDays }} days)</p>
             <div style="display:flex;flex-direction:column;gap:8px;">
               <div
                 v-for="[label, count] in Object.entries(analytics.ctaBreakdown).sort((a,b) => (b[1] as number) - (a[1] as number))"

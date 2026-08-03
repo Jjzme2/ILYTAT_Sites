@@ -120,6 +120,15 @@ export default defineNuxtConfig({
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || "",
     notificationEmail: process.env.NOTIFICATION_EMAIL,
     cronSecret: process.env.CRON_SECRET,
+    // Telemetry retention, enforced nightly. Both collections are append-only
+    // and were previously kept forever on a billed database, while every report
+    // that reads them only ever looks back 30 days.
+    // Logs are short-lived — once the nightly digest has gone out, an info line
+    // from six weeks ago has no reader.
+    logRetentionDays: Number(process.env.LOG_RETENTION_DAYS || 45),
+    // Events are kept longer so year-over-year and seasonal comparisons stay
+    // possible; they are also much smaller per document.
+    analyticsRetentionDays: Number(process.env.ANALYTICS_RETENTION_DAYS || 180),
     // Optional. PageSpeed Insights serves anonymous requests at a lower quota,
     // so /api/audit works without this and just gets more headroom with it.
     pagespeedApiKey: process.env.PAGESPEED_API_KEY || "",
