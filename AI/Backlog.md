@@ -132,6 +132,45 @@ too, or a checkout will charge the old amount.
 
 ---
 
+## ⚠️ `vercel.json` crons do not work on their own here
+
+The scheduled jobs silently never ran — not once. Vercel's Cron Jobs page showed
+no invocations because there were no cron jobs registered.
+
+**Why:** Nitro's `vercel` preset builds with the Build Output API, so
+`.vercel/output/config.json` *is* the deployment configuration. Nothing copies
+`crons` out of the root `vercel.json` into it. The jobs looked correctly
+declared, the dashboard showed the file, and nothing was scheduled.
+
+**Fix:** `nuxt.config.ts` reads `vercel.json` and injects its `crons` via
+`nitro.vercel.config`. `vercel.json` stays as the single place schedules are
+written — change them there and the build carries them through.
+
+**To verify after any change to schedules or the Nitro config:**
+
+```bash
+VERCEL=1 npm run build
+node -e "console.log(JSON.parse(require('fs').readFileSync('.vercel/output/config.json','utf8')).crons)"
+```
+
+If that prints `undefined`, nothing is scheduled no matter what `vercel.json`
+says.
+
+Route headers (`routeRules`) are *not* affected — those come from Nuxt config
+and are emitted correctly. `crons` was the only casualty, because it is the one
+setting that lives outside Nuxt config. Verified: the security headers all reach
+the build output.
+
+**Note on the watchdog.** The nightly report checks whether a blog post has
+appeared in the last nine days, but it is itself a cron — so it could not have
+caught this, since it was never registered either. It guards "the job ran and
+did nothing"; it cannot guard "no jobs exist." If crons ever go quiet again, the
+durable answer is an external trigger (a scheduled GitHub Actions workflow
+calling the endpoint with `CRON_SECRET`), which shares no machinery with Vercel
+scheduling.
+
+---
+
 ## Prices now follow Stripe automatically
 
 **One thing to do:** add `STRIPE_RESTRICTED_KEY` in Vercel. Until it is set the

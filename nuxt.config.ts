@@ -1,7 +1,28 @@
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
+import { readFileSync } from "node:fs";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Cron schedules, read from vercel.json so there is exactly one definition.
+ *
+ * ⚠️ The root vercel.json alone does NOT schedule anything for this project.
+ *
+ * Nitro's vercel preset emits Build Output API v3, and `.vercel/output/
+ * config.json` becomes the deployment configuration. Nothing copies `crons`
+ * from the root vercel.json into it, so the two jobs declared there were never
+ * registered — Vercel's Cron Jobs page showed no invocations at all, because
+ * there were no cron jobs. A weekly blog post silently never happened and no
+ * error was ever raised, because no code ran to raise one.
+ *
+ * They are injected below via nitro.vercel.config. vercel.json is kept as the
+ * source both because it is where anyone would look first and because Vercel's
+ * dashboard reads it — but the value that actually takes effect is this one.
+ */
+const cronJobs: Array<{ path: string; schedule: string }> = JSON.parse(
+  readFileSync(resolve(__dirname, "vercel.json"), "utf8"),
+).crons ?? [];
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -174,6 +195,13 @@ export default defineNuxtConfig({
     preset: process.env.VERCEL ? "vercel" : "node-server",
     externals: {
       inline: ["@aws-sdk/client-s3"],
+    },
+    // Merged into the generated .vercel/output/config.json. Without this the
+    // crons in vercel.json are inert — see the note at the top of this file.
+    vercel: {
+      config: {
+        crons: cronJobs,
+      },
     },
     // SWR route rules — stale data served instantly, revalidated in background.
     routeRules: {
