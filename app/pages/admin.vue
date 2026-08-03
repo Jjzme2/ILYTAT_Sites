@@ -742,9 +742,9 @@ const logsLoading   = ref(false)
 const logsFilter    = ref<'all' | 'critical' | 'error' | 'warn' | 'info'>('all')
 
 const LEVEL_COLOR: Record<string, string> = {
-  critical: '#dc2626',
+  critical: 'var(--status-bad)',
   error:    '#ea580c',
-  warn:     '#d97706',
+  warn:     'var(--status-warn)',
   info:     '#6b7280',
 }
 
@@ -792,8 +792,8 @@ const SPAM_REASON_LABEL: Record<SpamAttempt['reason'], string> = {
 
 const SPAM_REASON_COLOR: Record<SpamAttempt['reason'], string> = {
   honeypot:  '#7c3aed',
-  turnstile: '#dc2626',
-  gibberish: '#d97706',
+  turnstile: 'var(--status-bad)',
+  gibberish: 'var(--status-warn)',
 }
 
 async function loadSpamAttempts() {
@@ -1026,7 +1026,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
           <button type="button" class="back-link" style="display:inline;margin-top:0;" @click="magicLinkMode = false">Cancel</button>
         </div>
       </form>
-      <div v-else-if="magicLinkSent" style="background:rgba(74,222,128,0.07);border:1px solid rgba(74,222,128,0.2);border-radius:8px;padding:14px 16px;margin-top:4px;">
+      <div v-else-if="magicLinkSent" style="background:color-mix(in srgb, var(--status-good) 7%, transparent);border:1px solid color-mix(in srgb, var(--status-good) 20%, transparent);border-radius:8px;padding:14px 16px;margin-top:4px;">
         <p style="font-size:13px;color:var(--status-good);margin:0;line-height:1.6;">
           Link sent to <strong>{{ magicLinkEmail }}</strong>. Check your inbox and click the link to sign in.
         </p>
@@ -1080,7 +1080,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
       </header>
 
       <!-- Global error banner -->
-      <div v-if="adminError" style="background:var(--status-bad);color:#fff;padding:10px 20px;font-size:13px;font-family:monospace;white-space:pre-wrap;position:sticky;top:0;z-index:100;">
+      <div v-if="adminError" style="background:color-mix(in srgb, var(--status-bad) 14%, transparent);color:var(--status-bad);border-bottom:1px solid color-mix(in srgb, var(--status-bad) 30%, transparent);padding:10px 20px;font-size:13px;font-family:monospace;white-space:pre-wrap;position:sticky;top:0;z-index:100;">
         ⚠ {{ adminError }}
       </div>
 
@@ -1184,7 +1184,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
 
         <div v-else-if="analytics">
           <!-- Error from API -->
-          <div v-if="analytics.error" style="background:var(--status-bad);color:#fff;padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:20px;">
+          <div v-if="analytics.error" style="background:color-mix(in srgb, var(--status-bad) 14%, transparent);color:var(--status-bad);border:1px solid color-mix(in srgb, var(--status-bad) 30%, transparent);padding:10px 14px;border-radius:6px;font-size:13px;margin-bottom:20px;">
             ⚠ {{ analytics.error }}
           </div>
 
@@ -1218,7 +1218,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
                 style="display:flex;align-items:center;gap:10px;"
               >
                 <span style="width:120px;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ label }}</span>
-                <div style="flex:1;background:rgba(255,255,255,0.05);border-radius:4px;height:20px;overflow:hidden;">
+                <div style="flex:1;background:var(--glass-card-bg);border-radius:4px;height:20px;overflow:hidden;">
                   <div
                     style="height:100%;background:var(--theme-accent);border-radius:4px;transition:width 0.4s;"
                     :style="{ width: Math.round((count as number) / Math.max(...Object.values(analytics.ctaBreakdown) as number[]) * 100) + '%' }"
@@ -1236,7 +1236,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
               <div
                 v-for="[evt, cnt] in Object.entries(analytics.day7Counts).sort((a,b) => (b[1] as number) - (a[1] as number))"
                 :key="evt"
-                style="display:flex;justify-content:space-between;padding:6px 10px;border-radius:4px;background:rgba(255,255,255,0.03);font-size:13px;"
+                style="display:flex;justify-content:space-between;padding:6px 10px;border-radius:4px;background:var(--glass-card-bg);font-size:13px;"
               >
                 <span style="font-family:monospace;color:var(--theme-fg);">{{ evt }}</span>
                 <span style="color:var(--theme-accent);font-weight:600;">{{ cnt }}</span>
@@ -1278,8 +1278,8 @@ function onGlobalKeydown(e: KeyboardEvent) {
               v-for="lvl in ['all','critical','error','warn','info']" :key="lvl"
               style="padding:5px 12px;border-radius:5px;font-size:11px;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:.5px;border:1px solid transparent;transition:all .15s;"
               :style="{
-                background: logsFilter === lvl ? 'rgba(245,197,24,0.15)' : 'rgba(255,255,255,0.03)',
-                borderColor: logsFilter === lvl ? 'rgba(245,197,24,0.4)' : 'var(--theme-surface-alt)',
+                background: logsFilter === lvl ? 'color-mix(in srgb, var(--theme-accent) 15%, transparent)' : 'var(--glass-card-bg)',
+                borderColor: logsFilter === lvl ? 'color-mix(in srgb, var(--theme-accent) 40%, transparent)' : 'var(--theme-surface-alt)',
                 color: logsFilter === lvl ? 'var(--theme-accent)' : 'var(--theme-text-muted)',
               }"
               @click="logsFilter = (lvl as typeof logsFilter)"
@@ -1713,8 +1713,8 @@ v-model="newTestimonial.quote" rows="3"
               :key="docItem.key"
               style="padding: 10px 14px; cursor: pointer; border-radius: 6px; font-size: 13px; border: 1px solid transparent; transition: all 0.15s;"
               :style="{
-                background: selectedDocKey === docItem.key ? 'rgba(245,197,24,0.1)' : 'rgba(255,255,255,0.02)',
-                borderColor: selectedDocKey === docItem.key ? 'rgba(245,197,24,0.3)' : 'var(--theme-surface-alt)',
+                background: selectedDocKey === docItem.key ? 'color-mix(in srgb, var(--theme-accent) 10%, transparent)' : 'var(--glass-card-bg)',
+                borderColor: selectedDocKey === docItem.key ? 'color-mix(in srgb, var(--theme-accent) 30%, transparent)' : 'var(--theme-surface-alt)',
                 color: selectedDocKey === docItem.key ? 'var(--theme-accent)' : 'var(--theme-text-body)',
               }"
               @click="selectDoc(docItem.key)"
@@ -1865,7 +1865,7 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
           <div
             v-for="attempt in spamAttempts"
             :key="attempt.id"
-            style="background:rgba(255,255,255,0.025);border:1px solid var(--theme-surface-alt);border-radius:6px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;"
+            style="background:var(--glass-card-bg);border:1px solid var(--theme-surface-alt);border-radius:6px;padding:14px 16px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:start;"
           >
             <div>
               <!-- Reason badge + timestamp -->
@@ -2041,7 +2041,7 @@ h1 {
   transition: border-color 0.15s, color 0.15s;
 }
 .magic-link-btn:hover {
-  border-color: rgba(245, 197, 24, 0.3);
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, transparent);
   color: var(--theme-fg);
 }
 
@@ -2103,8 +2103,8 @@ h1 {
 }
 
 .dash-tab.active {
-  background: rgba(245, 197, 24, 0.1);
-  border-color: rgba(245, 197, 24, 0.3);
+  background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--theme-accent) 30%, transparent);
   color: var(--theme-accent);
 }
 
@@ -2123,7 +2123,7 @@ h1 {
 .logout-btn:hover { border-color: var(--theme-accent); color: var(--theme-accent); }
 
 .palette-trigger {
-  background: rgba(255,255,255,0.03);
+  background: var(--glass-card-bg);
   border: 1px solid var(--theme-surface-alt);
   border-radius: 6px;
   padding: 6px 10px;
@@ -2135,7 +2135,7 @@ h1 {
   transition: all 0.15s;
   flex-shrink: 0;
 }
-.palette-trigger:hover { border-color: rgba(245,197,24,0.4); color: var(--theme-accent); }
+.palette-trigger:hover { border-color: color-mix(in srgb, var(--theme-accent) 40%, transparent); color: var(--theme-accent); }
 
 /* ── Command palette ── */
 .palette-backdrop {
@@ -2158,7 +2158,7 @@ h1 {
   border: 1px solid #2e2e38;
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.04);
+  box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px var(--glass-card-bg);
 }
 
 .palette-search {
@@ -2189,7 +2189,7 @@ h1 {
 .palette-input::placeholder { color: var(--glass-card-border); }
 
 .palette-esc-hint {
-  background: rgba(255,255,255,0.04);
+  background: var(--glass-card-bg);
   border: 1px solid var(--theme-surface-alt);
   color: var(--glass-card-border);
   border-radius: 4px;
@@ -2235,7 +2235,7 @@ h1 {
   display: block;
 }
 .palette-item--active {
-  background: rgba(245,197,24,0.08);
+  background: color-mix(in srgb, var(--theme-accent) 8%, transparent);
   color: var(--theme-fg);
 }
 
@@ -2255,7 +2255,7 @@ h1 {
   color: var(--glass-card-border);
 }
 .palette-footer kbd {
-  background: rgba(255,255,255,0.05);
+  background: var(--glass-card-bg);
   border: 1px solid var(--theme-surface-alt);
   border-radius: 3px;
   padding: 1px 5px;
@@ -2330,7 +2330,7 @@ h3 {
   border-radius: 10px;
 }
 
-.record-card--new { border-color: rgba(245, 197, 24, 0.35); }
+.record-card--new { border-color: color-mix(in srgb, var(--theme-accent) 35%, transparent); }
 
 .record-card-inner {
   display: flex;
@@ -2465,8 +2465,8 @@ h3 {
   white-space: nowrap;
 }
 
-.badge-active { background: rgba(74, 222, 128, 0.12); border-color: rgba(74, 222, 128, 0.3); color: var(--status-good); }
-.badge-off { background: rgba(255, 255, 255, 0.05); border-color: var(--theme-surface-alt); color: var(--theme-text-muted); }
+.badge-active { background: color-mix(in srgb, var(--status-good) 12%, transparent); border-color: color-mix(in srgb, var(--status-good) 30%, transparent); color: var(--status-good); }
+.badge-off { background: var(--glass-card-bg); border-color: var(--theme-surface-alt); color: var(--theme-text-muted); }
 
 .danger-btn {
   font-size: 11px;
@@ -2478,7 +2478,7 @@ h3 {
   color: var(--theme-text-muted);
   transition: all 0.15s;
 }
-.danger-btn:hover { border-color: rgba(239, 68, 68, 0.4); color: #ef4444; }
+.danger-btn:hover { border-color: color-mix(in srgb, var(--status-bad) 40%, transparent); color: var(--status-bad); }
 
 .action-link {
   font-size: 12px;
@@ -2540,7 +2540,7 @@ textarea {
 input:focus,
 textarea:focus {
   outline: none;
-  border-color: rgba(245, 197, 24, 0.4);
+  border-color: color-mix(in srgb, var(--theme-accent) 40%, transparent);
 }
 
 input[type="checkbox"] { accent-color: var(--theme-accent); width: 14px; height: 14px; }
@@ -2564,7 +2564,7 @@ textarea { resize: vertical; }
 
 .form-error {
   font-size: 13px;
-  color: #ef4444;
+  color: var(--status-bad);
 }
 
 /* ── Log entries ── */
@@ -2587,7 +2587,7 @@ textarea { resize: vertical; }
   gap: 8px;
   padding: 7px 10px;
   border-radius: 4px;
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--glass-card-bg);
   font-size: 12px;
   align-items: start;
 }
@@ -2623,8 +2623,8 @@ textarea { resize: vertical; }
   justify-content: space-between;
   gap: 16px;
   padding: 14px 20px;
-  background: rgba(245, 197, 24, 0.07);
-  border: 1px solid rgba(245, 197, 24, 0.25);
+  background: color-mix(in srgb, var(--theme-accent) 7%, transparent);
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 25%, transparent);
   border-radius: 10px;
   margin-bottom: 20px;
 }
@@ -2640,7 +2640,7 @@ textarea { resize: vertical; }
 code {
   font-family: 'Space Mono', monospace;
   font-size: 12px;
-  background: rgba(245, 197, 24, 0.1);
+  background: color-mix(in srgb, var(--theme-accent) 10%, transparent);
   padding: 1px 6px;
   border-radius: 4px;
   color: var(--theme-accent);

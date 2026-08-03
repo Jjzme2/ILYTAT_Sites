@@ -5,7 +5,7 @@ const props = defineProps<{ post: Partial<BlogPost> }>()
 
 const DEFAULT_COVER = 'https://media.ilytat.com/blog-covers/general-image.png'
 
-const accent = computed(() => props.post.style?.accentColor || '#6366f1')
+const accent = computed(() => props.post.style?.accentColor || 'var(--theme-accent)')
 const coverImage = computed(() => props.post.coverImage || DEFAULT_COVER)
 
 function formatDate(d: Date | string | null | undefined) {
@@ -40,11 +40,11 @@ function formatDate(d: Date | string | null | undefined) {
 <style scoped>
 .post-card {
   display: flex; flex-direction: column; border-radius: 12px; overflow: hidden;
-  background: #13131a; border: 1px solid #2a2a32; text-decoration: none;
+  background: var(--theme-surface-alt); border: 1px solid var(--glass-card-border); text-decoration: none;
   transition: border-color .2s, box-shadow .2s;
 }
 .post-card:hover {
-  border-color: var(--accent, #6366f1);
+  border-color: var(--accent, var(--theme-accent));
   box-shadow: 0 4px 18px rgba(0,0,0,.25);
 }
 
@@ -56,24 +56,24 @@ function formatDate(d: Date | string | null | undefined) {
 
 .post-tags { display: flex; flex-wrap: wrap; gap: 6px; }
 .post-tag {
-  background: color-mix(in srgb, var(--accent, #6366f1) 18%, transparent);
-  color: var(--accent, #6366f1);
+  background: color-mix(in srgb, var(--accent, var(--theme-accent)) 18%, transparent);
+  color: var(--accent, var(--theme-accent));
   border-radius: 4px; padding: 2px 8px; font-size: 11px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .04em;
 }
 
 .post-title {
-  font-size: 18px; font-weight: 700; color: #f0ece6; line-height: 1.35;
+  font-size: 18px; font-weight: 700; color: var(--theme-fg); line-height: 1.35;
   margin: 0;
 }
-.post-card:hover .post-title { color: var(--accent, #6366f1); }
+.post-card:hover .post-title { color: var(--accent, var(--theme-accent)); }
 
-.post-excerpt { font-size: 14px; color: #9996a8; line-height: 1.6; margin: 0; flex: 1; }
+.post-excerpt { font-size: 14px; color: var(--theme-text-muted); line-height: 1.6; margin: 0; flex: 1; }
 
 .post-meta {
   display: flex; gap: 10px; align-items: center;
-  font-size: 12px; color: #666; margin-top: auto; padding-top: 4px;
-  border-top: 1px solid #1e1e28;
+  font-size: 12px; color: var(--theme-text-ghost); margin-top: auto; padding-top: 4px;
+  border-top: 1px solid var(--glass-card-border);
 }
-.post-author { font-weight: 600; color: #888; }
+.post-author { font-weight: 600; color: var(--theme-text-muted); }
 </style>

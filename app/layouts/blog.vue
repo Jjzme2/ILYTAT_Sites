@@ -62,7 +62,7 @@ const onPostPage = computed(() => route.name !== 'blog')
 </template>
 
 <style scoped>
-.blog-layout { min-height: 100vh; display: flex; flex-direction: column; background: #0f0f11; }
+.blog-layout { min-height: 100vh; display: flex; flex-direction: column; background: var(--theme-bg); }
 /* Offset and nav height both read --nav-h so they can never drift apart. They
    previously disagreed by 8px below 600px, hiding content under the nav. */
 .blog-layout-body { flex: 1; padding-top: var(--nav-h); }
@@ -74,8 +74,8 @@ const onPostPage = computed(() => route.name !== 'blog')
   transition: background .3s, border-color .3s, backdrop-filter .3s;
 }
 .blog-nav--scrolled {
-  background: rgba(15,15,17,.85);
-  border-color: rgba(255,255,255,.06);
+  background: var(--nav-surface);
+  border-color: var(--glass-card-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
 }
@@ -95,29 +95,29 @@ const onPostPage = computed(() => route.name !== 'blog')
   flex: 1;
 }
 .blog-nav-link {
-  font-size: 13px; color: #888; text-decoration: none;
+  font-size: 13px; color: var(--theme-text-muted); text-decoration: none;
   transition: color .15s;
 }
-.blog-nav-link:hover, .blog-nav-link--active { color: #c0bdb8; }
-.blog-nav-sep { color: #444; font-size: 13px; }
-.blog-nav-current { font-size: 13px; color: #c0bdb8; }
+.blog-nav-link:hover, .blog-nav-link--active { color: var(--theme-text-hi); }
+.blog-nav-sep { color: var(--theme-text-ghost); font-size: 13px; }
+.blog-nav-current { font-size: 13px; color: var(--theme-text-hi); }
 
 /* CTA */
 .blog-nav-cta {
   font-size: 13px; font-weight: 600; letter-spacing: .01em;
-  background: #f5c518; color: #0f0f11;
+  background: var(--theme-btn-from); color: var(--theme-cta-text);
   padding: 8px 18px; border-radius: 5px;
   text-decoration: none; white-space: nowrap;
   transition: background .2s, transform .2s;
   margin-left: auto;
 }
-.blog-nav-cta:hover { background: #d4a912; transform: translateY(-1px); }
+.blog-nav-cta:hover { background: var(--theme-accent-dark); transform: translateY(-1px); }
 
 /* ── Footer ───────────────────────────────────────────────────────────────── */
 .blog-footer {
-  border-top: 1px solid #1e1e28;
+  border-top: 1px solid var(--glass-card-border);
   padding: 32px 24px;
-  background: #0a0a0d;
+  background: var(--theme-surface-deep);
 }
 .blog-footer-inner {
   max-width: 1200px; margin: 0 auto;
@@ -125,10 +125,10 @@ const onPostPage = computed(() => route.name !== 'blog')
 }
 .blog-footer-logo { display: flex; align-items: center; }
 .blog-footer-logo-img { height: 24px; width: auto; opacity: .6; }
-.blog-footer-text { font-size: 13px; color: #555; text-align: center; margin: 0; }
+.blog-footer-text { font-size: 13px; color: var(--theme-text-ghost); text-align: center; margin: 0; }
 .blog-footer-links { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; }
-.blog-footer-link { font-size: 13px; color: #555; text-decoration: none; transition: color .15s; }
-.blog-footer-link:hover { color: #c0bdb8; }
+.blog-footer-link { font-size: 13px; color: var(--theme-text-ghost); text-decoration: none; transition: color .15s; }
+.blog-footer-link:hover { color: var(--theme-text-hi); }
 
 @media (max-width: 600px) {
   .blog-nav-inner { padding: 0 16px; gap: 0; }
