@@ -90,11 +90,23 @@ export default defineNuxtConfig({
     // change instead of a deploy.
     openrouterApiKey: process.env.OPENROUTER_API_KEY || "",
     openrouterBaseUrl: process.env.OPENROUTER_BASE_URL || "https://openrouter.ai/api/v1",
-    openrouterModel: process.env.OPENROUTER_MODEL || "google/gemini-2.5-flash",
+    // DeepSeek: roughly an order of magnitude cheaper than the Gemini/GPT tier
+    // and strong at the structured-JSON work every call here does.
+    openrouterModel: process.env.OPENROUTER_MODEL || "deepseek/deepseek-chat",
     // Optional fallback.
     geminiApiKey: process.env.GEMINI_API_KEY || "",
     geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
-    // Legacy names, still read so existing deployments keep working.
+    // ⚠️ NAMING NOTE — "opencloud" is a misnomer.
+    //
+    // These were the original env var names for what was always meant to be
+    // OpenRouter: the code appends /chat/completions and speaks the OpenAI
+    // wire format, which is exactly OpenRouter's API. There is no product
+    // called "OpenCloud" involved.
+    //
+    // They are still read so an existing deployment does not break, and
+    // OPENROUTER_* takes precedence when both are set. Prefer OPENROUTER_*
+    // everywhere; once no environment sets OPENCLOUD_* these two lines and
+    // their reads in server/utils/ai.ts can be deleted.
     opencloudBaseUrl: process.env.OPENCLOUD_BASE_URL || "",
     opencloudApiKey: process.env.OPENCLOUD_API_KEY || "",
     // Daily spend guard for the public AI tools (requests/day, all IPs).

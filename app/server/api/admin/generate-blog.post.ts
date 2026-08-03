@@ -8,6 +8,7 @@
 import { requireAdmin }      from '~/server/utils/verifyAdmin'
 import { createAiBlogPost }  from '~/server/utils/generateBlog'
 import { log }               from '~/server/utils/logger'
+import { notifyAdmin }       from '~/server/utils/notify'
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
@@ -38,6 +39,25 @@ export default defineEventHandler(async (event) => {
 
     await log('info', 'api', `Admin triggered AI blog: "${result.title}" → ${result.id} (${status})`)
 
+    // Fire-and-forget: a notification must never fail the generation it reports.
+    void notifyAdmin({
+      level: 'success',
+      subject: `Blog ${status}: ${result.title}`,
+      title: result.title,
+      lines: [
+        `A post was generated and saved as ${status}.`,
+        result.nextFocalPoint
+          ? `Next week's plan has rolled forward to: "${result.nextFocalPoint}"`
+          : 'No follow-up topic was suggested — set next week\'s plan manually.',
+      ],
+      action: {
+        label: status === 'published' ? 'View post' : 'Review draft',
+        url: status === 'published'
+          ? `${cfg.public.siteUrl}/blog/${result.slug}`
+          : `${cfg.public.siteUrl}/admin`,
+      },
+    })
+
     return {
       success: true,
       id: result.id,
@@ -53,6 +73,18 @@ export default defineEventHandler(async (event) => {
   catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     await log('error', 'api', `Admin AI blog generation failed: ${msg}`)
+
+    void notifyAdmin({
+      level: 'error',
+      subject: 'Blog generation failed',
+      title: 'A blog post could not be generated',
+      lines: [
+        `Focal point: "${focalPoint}"`,
+        'The provider error is below. Billing and quota problems are the usual cause.',
+      ],
+      detail: msg,
+      action: { label: 'Open admin', url: `${cfg.public.siteUrl}/admin` },
+    })
     // statusMessage (not message) is what reaches the client, so the admin UI
     // can show why it failed instead of a bare 500.
     throw createError({ statusCode: 502, statusMessage: `Generation failed — ${msg}` })

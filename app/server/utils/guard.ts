@@ -17,7 +17,7 @@
 interface Bucket { hits: number[] }
 
 const buckets = new Map<string, Bucket>()
-const daily = { day: '', count: 0 }
+const daily = { day: '', count: 0, notified: false }
 
 export function clientIp(event: Parameters<typeof getRequestHeader>[0]): string {
   return (
@@ -69,9 +69,24 @@ export function dailyBudget(cap: number): void {
   if (daily.day !== today) {
     daily.day = today
     daily.count = 0
+    daily.notified = false
   }
   daily.count += 1
   if (daily.count > cap) {
+    // Tell the owner once per day. Without this the public tools go quiet and
+    // the only signal is a visitor giving up — which nobody ever reports.
+    if (!daily.notified) {
+      daily.notified = true
+      void notifyAdmin({
+        level: 'error',
+        subject: 'AI tools hit the daily cap',
+        title: 'The free AI tools have stopped for today',
+        lines: [
+          `The daily request cap of ${cap} was reached, so the review writer and any other AI tool are returning a "try tomorrow" message.`,
+          'If this is normal traffic, raise AI_DAILY_REQUEST_CAP. If it is not, someone is hammering the endpoint.',
+        ],
+      })
+    }
     throw createError({
       statusCode: 503,
       statusMessage: 'This free tool has hit its daily limit. Try again tomorrow, or get in touch and I will just do it for you.',

@@ -87,7 +87,24 @@ changes needed.
 
 ## Configuration
 
-### 7. PageSpeed API key
+### 7. Rename OPENCLOUD_* to OPENROUTER_*
+
+- **What:** The env vars `OPENCLOUD_BASE_URL` and `OPENCLOUD_API_KEY` are a
+  misnomer. They were always meant to be OpenRouter — the code appends
+  `/chat/completions` and speaks the OpenAI wire format, which is exactly
+  OpenRouter's API. There is no product called "OpenCloud" involved.
+- **Current state:** both names are read, and `OPENROUTER_*` wins when both are
+  set, so nothing breaks either way.
+- **To finish:** set `OPENROUTER_API_KEY` (and `OPENROUTER_BASE_URL` if you are
+  not on the default) in Vercel, delete the `OPENCLOUD_*` vars, then remove the
+  two legacy lines in `nuxt.config.ts` and their reads in
+  `app/server/utils/ai.ts`.
+- **Model:** `OPENROUTER_MODEL` defaults to `deepseek/deepseek-chat` — roughly
+  an order of magnitude cheaper than the Gemini/GPT tier and strong at the
+  structured-JSON work every call here does. Change the env var to switch; no
+  deploy needed.
+
+### 8. PageSpeed API key
 
 - **What:** `/tools/website-audit` returns "Google is rate-limiting audits"
   without a key. Anonymous PageSpeed quota is per-IP, and Vercel functions
