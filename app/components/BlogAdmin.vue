@@ -143,14 +143,8 @@ const generateFocalPoint   = ref('')
 const generateNotes        = ref('')
 const generateStatus       = ref<'draft' | 'published'>('draft')
 const generatePanelOpen    = ref(false)
-// Next week's topic, suggested by the generation that just ran.
-const suggestedNext        = ref('')
+// Why the plan rolled forward to its current topic, from the last generation.
 const suggestedWhy         = ref('')
-
-function applySuggestion() {
-  plan.value.focalPoint = suggestedNext.value
-  suggestedNext.value = ''
-}
 
 async function generateNow() {
   const fp = generateFocalPoint.value.trim() || plan.value.focalPoint.trim()
@@ -175,18 +169,14 @@ async function generateNow() {
         },
       },
     )
-    // The model has just spent a full generation on this subject, so it is
-    // better placed than a fresh call to say what should follow. Only fill an
-    // empty field — never overwrite a plan already written by hand.
-    if (res.nextFocalPoint && !plan.value.focalPoint.trim()) {
+    // Always rolls the plan forward. The topic just shipped, so leaving it in
+    // place is the failure mode — an approval step here would mean the weekly
+    // cron silently regenerates the same subject if nobody clicks it.
+    if (res.nextFocalPoint) {
       plan.value.focalPoint = res.nextFocalPoint
-      suggestedNext.value   = res.nextFocalPoint
       suggestedWhy.value    = res.nextFocalPointWhy ?? ''
-    }
-    else if (res.nextFocalPoint) {
-      // A plan already exists — offer the suggestion instead of clobbering it.
-      suggestedNext.value = res.nextFocalPoint
-      suggestedWhy.value  = res.nextFocalPointWhy ?? ''
+      markPlanDirty()
+      await savePlan()
     }
 
     showSuccess(`✓ "${res.title}" saved as ${res.status}. Review it in the list below.`)
@@ -250,20 +240,11 @@ function isAiPost(post: BlogPost) {
                   @input="markPlanDirty"
                 />
 
-                <!-- Suggested by the generation that just ran. Shown as an
-                     offer rather than applied silently when a plan already
-                     exists, so a hand-written topic is never clobbered. -->
-                <p v-if="suggestedNext" class="ai-suggestion">
-                  <span class="ai-suggestion-label">Suggested next:</span>
-                  <span class="ai-suggestion-text">{{ suggestedNext }}</span>
-                  <span v-if="suggestedWhy" class="ai-suggestion-why">{{ suggestedWhy }}</span>
-                  <button
-                    v-if="plan.focalPoint !== suggestedNext"
-                    type="button"
-                    class="ai-suggestion-apply"
-                    @click="applySuggestion(); markPlanDirty()"
-                  >Use this</button>
-                  <span v-else class="ai-suggestion-applied">Filled in — remember to Save Plan</span>
+                <!-- Set automatically by the last generation. Shown so the
+                     change is explained rather than mysterious. -->
+                <p v-if="suggestedWhy" class="ai-suggestion">
+                  <span class="ai-suggestion-label">Rolled forward:</span>
+                  <span class="ai-suggestion-why">{{ suggestedWhy }}</span>
                 </p>
               </div>
             </div>
