@@ -2,6 +2,7 @@
  * PUT /api/admin/blog/:id
  * Admin: update an existing blog post.
  */
+import { sanitizePostHtml } from '~/server/utils/sanitizeHtml'
 import { requireAdmin } from '~/server/utils/verifyAdmin'
 import { firestoreRequest, toFirestoreFields, fromFirestoreFields } from '~/server/utils/firebaseAdmin'
 
@@ -28,7 +29,8 @@ export default defineEventHandler(async (event) => {
     title: String(body.title).trim(),
     slug: String(body.slug).trim(),
     excerpt: String(body.excerpt || '').trim(),
-    content: String(body.content || ''),
+    // The editor accepts raw HTML, so this path needs sanitising too.
+    content: sanitizePostHtml(String(body.content || '')),
     coverImage: String(body.coverImage || ''),
     tags: Array.isArray(body.tags) ? body.tags.map(String) : [],
     status: nowPublished ? 'published' : 'draft',

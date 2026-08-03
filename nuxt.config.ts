@@ -153,6 +153,29 @@ export default defineNuxtConfig({
     },
     // SWR route rules — stale data served instantly, revalidated in background.
     routeRules: {
+      // ── Security headers ──────────────────────────────────────────────
+      // None were set previously. These are the cheap, high-value ones; no
+      // CSP yet because the site inlines styles and third-party scripts
+      // (Turnstile, Vercel analytics, Plausible) would need enumerating
+      // first — a wrong CSP breaks the contact form silently.
+      "/**": {
+        headers: {
+          // Stop the browser guessing content types (MIME-confusion attacks).
+          "X-Content-Type-Options": "nosniff",
+          // Block framing — clickjacking, and nothing here needs embedding.
+          "X-Frame-Options": "DENY",
+          // Do not leak full URLs (which can carry query params) to third
+          // parties; send origin only on cross-origin requests.
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+          // Nothing here uses these; deny by default.
+          "Permissions-Policy": "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          // Force HTTPS for two years, including subdomains.
+          "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+        },
+      },
+      // Admin must never be cached by a proxy or archived by a crawler.
+      "/admin/**": { headers: { "X-Robots-Tag": "noindex, nofollow, noarchive", "Cache-Control": "no-store" } },
+      "/api/**": { headers: { "Cache-Control": "no-store" } },
       // Full-page HTML cache: homepage and blog listing are served from CDN edge
       // on repeat visits; most visitors never hit the Node server at all.
       "/": { swr: 60 }, // 60 s — matches the promo cache TTL

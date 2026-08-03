@@ -119,6 +119,19 @@ changes needed.
 
 ---
 
+## Reminders
+
+### Stripe prices need updating
+
+The site's package prices live in `app/config/site.config.ts` (Pop-Up $499 /
+Local Business $999 / Web Application $2,999, plus $89-$149/mo hosting).
+**Stripe does not read from this file** — there are no Stripe references left
+in the codebase at all, so the products and prices in the Stripe dashboard are
+maintained entirely by hand. Whenever pricing changes here, change it there
+too, or a checkout will charge the old amount.
+
+---
+
 ## Known rough edges
 
 Not urgent, but worth knowing about.

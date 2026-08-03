@@ -12,6 +12,7 @@
 
 import { firestoreRequest, toFirestoreFields } from "~/server/utils/firebaseAdmin";
 import { callAI as callProvider, parseAiJson } from "~/server/utils/ai";
+import { sanitizePostHtml } from "~/server/utils/sanitizeHtml";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -140,7 +141,9 @@ export async function generateBlogPost(opts: {
       .replace(/-+/g, "-")
       .replace(/^-|-$/g, ""),
     excerpt: String(parsed.excerpt || "").trim(),
-    content: String(parsed.content || ""),
+    // Sanitised here rather than at render: v-html executes whatever it is
+    // given, and post bodies are model-authored.
+    content: sanitizePostHtml(String(parsed.content || "")),
     tags: Array.isArray(parsed.tags) ? parsed.tags.map(String) : [],
     accentColor: validAccents.includes(parsed.accentColor) ? parsed.accentColor : "#6366f1",
     // Trimmed and length-capped: this lands in an admin input, and the model
