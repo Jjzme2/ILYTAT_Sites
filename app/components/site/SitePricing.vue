@@ -11,7 +11,13 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { siteConfig } from '~/config/site.config'
 import { useCheckout } from '~/composables/useCheckout'
 
-const { packages, monthlyRate, subscriptions, premiumRate, overageRate } = siteConfig
+const { packages, subscriptions, overageRate } = siteConfig
+
+// Every figure below comes from Stripe when it can be read and verified, and
+// from site.config.ts otherwise. Nothing here reads a committed price
+// directly — that is what let the page advertise $1,499 while Stripe billed
+// $999.
+const { pricing, packagePrice, formatPrice } = usePricing()
 
 // The feature list for whichever hosting tier is selected.
 const hostingFeatures = computed(() =>
@@ -25,14 +31,14 @@ const { track } = useAnalytics()
 // Derive the displayed hosting rate from the selected tier — prevents
 // showing a hardcoded $89 when premium ($149) is actively selected.
 const hostingMonthlyRate = computed(() =>
-  hostingTier.value === 'premium'
-    ? `$${subscriptions.PREMIUM_HOSTING.price}`
-    : monthlyRate
+  formatPrice(hostingTier.value === 'premium'
+    ? pricing.value.premiumHosting
+    : pricing.value.standardHosting),
 )
 const hostingYearlyRate = computed(() =>
-  hostingTier.value === 'premium'
-    ? `$${subscriptions.PREMIUM_HOSTING_YEARLY.price}/yr`
-    : `$${subscriptions.STANDARD_HOSTING_YEARLY.price}/yr`
+  `${formatPrice(hostingTier.value === 'premium'
+    ? pricing.value.premiumHostingYearly
+    : pricing.value.standardHostingYearly)}/yr`,
 )
 
 // Track when the pricing section first enters the viewport — fires once.
@@ -120,7 +126,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
       <div class="glass-card rounded-[var(--radius)] p-6 md:p-8 mb-8" data-reveal>
         <div class="flex flex-wrap items-baseline justify-between gap-3 mb-5">
           <h3 class="font-display text-[17px] font-bold tracking-[-0.01em] text-(--theme-fg)">
-            What the {{ hostingTier === 'premium' ? premiumRate : monthlyRate }}/month covers
+            What the {{ hostingMonthlyRate }}/month covers
           </h3>
           <span class="font-mono text-[11px] tracking-[0.12em] uppercase text-(--theme-accent)">
             {{ hostingTier === 'premium' ? 'Premium' : 'Standard' }} hosting
@@ -160,7 +166,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
             <div class="flex items-baseline gap-2">
               <span
                 class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-(--theme-fg)">{{
-                  pkg.price }}</span>
+                  packagePrice(pkg.name) }}</span>
               <span class="text-[12px] text-(--theme-text-ghost)">{{ pkg.note }}</span>
             </div>
           </div>

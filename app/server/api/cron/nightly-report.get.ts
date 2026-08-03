@@ -13,9 +13,16 @@
  * Sends a single HTML digest to NOTIFICATION_EMAIL via Resend.
  */
 
-import { firestoreRunQuery } from "~/server/utils/firebaseAdmin";
+import {
+  firestoreRunQuery,
+  firestoreRequest,
+  fromFirestoreFields,
+  toFirestoreFields,
+} from "~/server/utils/firebaseAdmin";
 import { log } from "~/server/utils/logger";
+import { notifyAdmin } from "~/server/utils/notify";
 import { pruneCollection } from "~/server/utils/retention";
+import { getPricing, tierLabels } from "~/server/utils/stripePricing";
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -472,6 +479,63 @@ export default defineEventHandler(async (event) => {
     pageViews: analytics.pageViews,
     visitors: analytics.visitors,
   });
+
+  // ── Stripe price drift ────────────────────────────────────────────────────
+  // The site now follows Stripe automatically, which is the point — but a price
+  // that changes on its own with nobody told is its own hazard. This reports
+  // any move since the last run, and shouts if a tier is stuck on the committed
+  // fallback (meaning the page and Stripe have silently diverged again).
+  try {
+    const pricing = await getPricing(true)
+    const labels = tierLabels()
+    const keys = Object.keys(labels) as Array<keyof typeof labels>
+
+    const current: Record<string, number> = {}
+    for (const k of keys) current[k] = pricing[k].amount
+
+    let previous: Record<string, number> = {}
+    try {
+      const doc = await firestoreRequest('GET', 'settings/pricingSnapshot')
+      previous = JSON.parse(String(fromFirestoreFields(doc.fields || {}).amounts || '{}'))
+    }
+    catch { /* first run, or the document does not exist yet */ }
+
+    const moved = keys
+      .filter(k => previous[k] != null && previous[k] !== current[k])
+      .map(k => `${labels[k]}: $${previous[k]} → $${current[k]}`)
+
+    const stuck = keys
+      .filter(k => pricing[k].source === 'fallback' && pricing[k].reason)
+      .map(k => `${labels[k]} — ${pricing[k].reason}`)
+
+    if (moved.length || stuck.length) {
+      await notifyAdmin({
+        level: stuck.length ? 'error' : 'info',
+        subject: stuck.length ? 'Stripe prices could not be read' : 'Site prices changed to match Stripe',
+        title: stuck.length
+          ? 'Some prices are not following Stripe'
+          : 'The site picked up a price change from Stripe',
+        lines: [
+          ...(moved.length ? ['These prices changed on the site because they changed in Stripe:'] : []),
+          ...moved,
+          ...(stuck.length
+            ? ['These tiers fell back to the price committed in the code, so the site and Stripe may not agree:']
+            : []),
+          ...stuck,
+        ],
+        action: { label: 'Open pricing', url: 'https://sites.ilytat.com/#pricing' },
+      })
+    }
+
+    await firestoreRequest('PATCH', 'settings/pricingSnapshot', {
+      fields: toFirestoreFields({ amounts: JSON.stringify(current), updatedAt: new Date().toISOString() }),
+    })
+  }
+  catch (err) {
+    await log('warn', 'cron', 'Stripe price check failed', {
+      error: err instanceof Error ? err.message : String(err),
+    })
+  }
 
   // ── Retention ─────────────────────────────────────────────────────────────
   // Runs after the email so pruning can never remove data the report needed,

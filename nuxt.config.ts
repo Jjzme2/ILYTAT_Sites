@@ -120,6 +120,21 @@ export default defineNuxtConfig({
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || "",
     notificationEmail: process.env.NOTIFICATION_EMAIL,
     cronSecret: process.env.CRON_SECRET,
+    // ⚠️ RESTRICTED KEY ONLY — must start with `rk_`.
+    //
+    // The site reads prices from Stripe so the pricing page cannot drift from
+    // what is actually billed. Reading the product catalogue is all it needs,
+    // and the catalogue is public information — it is printed on the pricing
+    // page. A full `sk_` secret would additionally expose customers, charges
+    // and balances and can move money, for no benefit here.
+    //
+    // server/utils/stripePricing.ts refuses an `sk_` key outright and falls
+    // back to the committed prices, so a mistake here degrades rather than
+    // leaks. Create at: Stripe → Developers → API keys → Create restricted
+    // key, with Products = Read and Prices = Read, everything else None.
+    //
+    // Deliberately outside `public` so it never reaches the browser.
+    stripeRestrictedKey: process.env.STRIPE_RESTRICTED_KEY || "",
     // Telemetry retention, enforced nightly. Both collections are append-only
     // and were previously kept forever on a billed database, while every report
     // that reads them only ever looks back 30 days.
@@ -194,6 +209,10 @@ export default defineNuxtConfig({
       "/api/projects": { cache: { maxAge: 300, swr: true } }, // 5 min
       "/api/testimonials": { cache: { maxAge: 3600, swr: true } }, // 1 hr
       "/api/promotion": { cache: { maxAge: 60, swr: true } }, // 1 min
+      // Prices change a few times a year at most. Cached hard at the edge so a
+      // traffic spike cannot turn into a burst of Stripe requests; the server
+      // memoises for 15 minutes on top of this.
+      "/api/pricing": { cache: { maxAge: 900, swr: true } }, // 15 min
       // Fortune is deterministic per-IP per-day; cache for 15 min at the edge.
       // The client also caches the result in localStorage, so repeat visitors
       // never hit this endpoint at all.

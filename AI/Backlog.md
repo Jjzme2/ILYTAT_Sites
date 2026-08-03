@@ -132,6 +132,64 @@ too, or a checkout will charge the old amount.
 
 ---
 
+## Prices now follow Stripe automatically
+
+**One thing to do:** add `STRIPE_RESTRICTED_KEY` in Vercel. Until it is set the
+site runs on the prices committed in `site.config.ts`, exactly as before — so
+there is no rush and nothing breaks in the meantime.
+
+### Creating the key (this part matters)
+
+Stripe → Developers → API keys → **Create restricted key**:
+
+- **Products: Read**
+- **Prices: Read**
+- Everything else: **None**
+
+Then set it in Vercel as `STRIPE_RESTRICTED_KEY`. It will start with `rk_`.
+
+**Do not use your normal secret key (`sk_live_…`).** A full secret can read
+customers, charges and balances and can move money. The site only needs to read
+the product catalogue, which is already printed on the pricing page — so a
+restricted key that leaks costs you nothing. `stripePricing.ts` refuses an `sk_`
+key outright and falls back to the committed prices, so a mistake here degrades
+instead of leaking, but it is worth getting right the first time.
+
+### What happens after that
+
+Change a price in the Stripe dashboard and the website follows within about 15
+minutes. No code change, no deploy, no asking.
+
+Guards, in case something goes wrong:
+
+- **Products are pinned by id and verified by name.** The Stripe account also
+  holds Can Do Crew and some promotional prices; a mis-pinned id fails closed
+  rather than publishing another venture's price here.
+- **Implausible amounts are rejected.** Anything below a quarter or above four
+  times the committed price is refused — that catches a cents/dollars unit
+  error or a $0 draft.
+- **Every failure falls back per tier**, so one bad product cannot blank the
+  pricing page.
+- **The nightly email reports any price that moved**, and shouts if a tier is
+  stuck on the fallback (meaning the site and Stripe have diverged again).
+- **Admin → Health** shows each tier and whether it is reading `stripe` or
+  `fallback`, with the reason. That is the place to confirm the key works.
+
+### Still maintained by hand
+
+- **Web Application ($2,999)** has no Stripe product, so it stays committed in
+  `site.config.ts`. Create the product in Stripe and add it to `TIERS` in
+  `app/server/utils/stripePricing.ts` if you want it synced too.
+- **`priceRange`** in the SEO schema, and the overage rate.
+- **Product *names*** — renaming a product in Stripe will fail the identity
+  check until `expectedName` in `TIERS` is updated to match. This is deliberate.
+
+> Product ids in `TIERS` were matched from the live catalogue by amount and
+> type. If Health reports a name mismatch on first run, the id is pointing at
+> the wrong product — correct it there.
+
+---
+
 ## Observability — how it works now
 
 Nothing here needs configuring to work; the defaults are sensible. This is a

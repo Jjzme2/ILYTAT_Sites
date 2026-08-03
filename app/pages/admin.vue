@@ -1462,6 +1462,44 @@ function onGlobalKeydown(e: KeyboardEvent) {
           </p>
         </div>
 
+        <!-- Whether the pricing page is actually following Stripe. Without this,
+             "configured" and "working" look identical from the outside — the
+             page shows a plausible number either way, which is how the site
+             advertised $1,499 while Stripe billed $999. -->
+        <div
+          v-if="healthResult?.pricing"
+          class="glass-card rounded-[var(--radius)] p-5 mb-4 flex flex-col gap-2">
+          <div class="flex items-center gap-2">
+            <UIcon
+              :name="(healthResult.pricing as Record<string, unknown>).ok ? 'i-heroicons-check-circle' : 'i-heroicons-exclamation-triangle'"
+              class="w-5 h-5"
+              :class="(healthResult.pricing as Record<string, unknown>).ok ? 'text-(--status-good)' : 'text-(--status-warn)'" />
+            <span class="font-semibold text-[15px] text-(--theme-fg)">
+              Pricing: {{ (healthResult.pricing as Record<string, number>).liveCount }} of {{ (healthResult.pricing as Record<string, number>).totalCount }} following Stripe
+            </span>
+          </div>
+          <div class="flex flex-col gap-1">
+            <div
+              v-for="t in ((healthResult.pricing as Record<string, unknown>).tiers as Array<Record<string, unknown>>)"
+              :key="String(t.label)"
+              class="flex items-baseline justify-between gap-3 text-[13px]">
+              <span class="text-(--theme-text-body)">{{ t.label }}</span>
+              <span class="flex items-baseline gap-2">
+                <strong class="text-(--theme-fg)">${{ t.amount }}</strong>
+                <span
+                  class="font-mono text-[10px] uppercase tracking-[0.08em]"
+                  :class="t.source === 'stripe' ? 'text-(--status-good)' : 'text-(--theme-text-muted)'">{{ t.source }}</span>
+              </span>
+            </div>
+          </div>
+          <p
+            v-for="t in ((healthResult.pricing as Record<string, unknown>).tiers as Array<Record<string, unknown>>).filter(x => x.reason)"
+            :key="`r-${t.label}`"
+            class="text-[12px] text-(--status-warn)">
+            {{ t.label }}: {{ t.reason }}
+          </p>
+        </div>
+
         <div v-if="healthResult" style="font-family:monospace;font-size:12px;background:var(--theme-surface-deep);color:var(--theme-text-hi);padding:20px;border-radius:8px;white-space:pre-wrap;overflow-x:auto;">{{ JSON.stringify(healthResult, null, 2) }}</div>
       </section>
 
