@@ -11,7 +11,14 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { siteConfig } from '~/config/site.config'
 import { useCheckout } from '~/composables/useCheckout'
 
-const { packages, monthlyRate, subscriptions } = siteConfig
+const { packages, monthlyRate, subscriptions, premiumRate, overageRate } = siteConfig
+
+// The feature list for whichever hosting tier is selected.
+const hostingFeatures = computed(() =>
+  hostingTier.value === 'premium'
+    ? subscriptions.PREMIUM_HOSTING.features
+    : subscriptions.STANDARD_HOSTING.features,
+)
 const { billingCycle, hostingTier } = useCheckout()
 const { track } = useAnalytics()
 
@@ -103,6 +110,35 @@ onUnmounted(() => pricingObserver.value?.disconnect())
             :class="hostingTier === 'premium' ? 'text-(--theme-accent) border border-[var(--theme-accent)]/20 rounded-[var(--radius)]' : 'text-(--theme-text-ghost) hover:text-(--theme-text-muted)'"
             @click="hostingTier = 'premium'">Premium</button>
         </div>
+      </div>
+
+      <!-- What the hosting fee actually buys.
+           These lists lived in siteConfig.subscriptions and were never
+           rendered, so the toggle swung $89 -> $149 with nothing to justify
+           it. The buyer's comparison is not an agency retainer, it is
+           Squarespace at $23/mo — so the human-edits line has to be visible. -->
+      <div class="glass-card rounded-[var(--radius)] p-6 md:p-8 mb-8" data-reveal>
+        <div class="flex flex-wrap items-baseline justify-between gap-3 mb-5">
+          <h3 class="font-display text-[17px] font-bold tracking-[-0.01em] text-(--theme-fg)">
+            What the {{ hostingTier === 'premium' ? premiumRate : monthlyRate }}/month covers
+          </h3>
+          <span class="font-mono text-[11px] tracking-[0.12em] uppercase text-(--theme-accent)">
+            {{ hostingTier === 'premium' ? 'Premium' : 'Standard' }} hosting
+          </span>
+        </div>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5">
+          <li
+            v-for="f in hostingFeatures"
+            :key="f"
+            class="flex items-start gap-2.5 text-[14.5px] leading-[1.6] text-(--theme-text-body)">
+            <UIcon name="i-heroicons-check" class="w-4 h-4 shrink-0 mt-1 text-(--theme-accent)" />
+            <span>{{ f }}</span>
+          </li>
+        </ul>
+        <p class="mt-5 text-[13.5px] leading-[1.7] text-(--theme-text-muted)">
+          First month free. Cancel any time with 30 days' notice — you keep the site and the code.
+          Edits beyond the included time are billed at {{ overageRate }}/hour, and unused time does not roll over.
+        </p>
       </div>
 
       <!-- Pricing cards -->

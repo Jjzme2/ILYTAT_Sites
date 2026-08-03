@@ -6,10 +6,18 @@
  */
 
 const monthlyRate = '$89'
+const premiumRate = '$149'
+// Stated rate for edits past the included time. Unbounded scope, not bad
+// pricing, is what kills one-person shops on retainers.
+const overageRate = '$85'
 
 export const siteConfig = {
     monthlyRate,
-    priceRange: '$499–$1,499', // Used dynamically in SEO schema
+    premiumRate,
+    overageRate,
+    // Ships in the LocalBusiness structured data on every page. Was '$499–$1,499',
+    // a leftover from a retired tier that under-stated the real top end.
+    priceRange: '$499–$5,000+', // Used dynamically in SEO schema
 
     /**
      * Hero visual. Drop a real image at /public and point heroImage at it
@@ -291,7 +299,7 @@ export const siteConfig = {
                 'Vercel Edge-Network Hosting',
                 'Custom Domain Name & Automated SSL',
                 'Up to 60 Minutes of Priority Content Edits/mo',
-                'Firestore Database Maintenance',
+                'Your data, backed up and looked after',
                 'Priority Support & Security Patching'
             ]
         },
@@ -318,7 +326,7 @@ export const siteConfig = {
                 'Vercel Edge-Network Hosting',
                 'Custom Domain Name & Automated SSL',
                 'Up to 60 Minutes of Priority Content Edits/mo',
-                'Firestore Database Maintenance',
+                'Your data, backed up and looked after',
                 'Priority Support & Security Patching'
             ]
         }
@@ -344,7 +352,10 @@ export const siteConfig = {
         {
             name: 'Local Business',
             includeStartingAt: false,
-            price: '$999',
+            // Raised from $999 to match Stripe, where the live price is now
+            // $1,499. Leaving these out of step means the page quotes one
+            // number and checkout charges another.
+            price: '$1,499',
             note: 'one-time build',
             best: 'Businesses that need a professional online presence',
             features: [
