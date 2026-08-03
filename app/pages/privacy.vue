@@ -80,6 +80,59 @@ useHead({
         transmitted with HTTP requests.
       </p>
 
+      <h2>Free Tools and Artificial Intelligence</h2>
+      <p>
+        This site offers free tools — a website audit, a review reply writer and a local SEO
+        checklist — and a quote estimator. Some of them send what you type to services operated by
+        other companies. This is what happens to that text.
+      </p>
+      <ul>
+        <li>
+          <strong>Review reply writer.</strong> The review text, star rating and business name you
+          enter are sent to <strong>OpenRouter</strong>, which routes the request to a language
+          model provider (currently <strong>DeepSeek</strong>) to draft the replies. We do not store
+          what you paste or what is generated — it exists only for the length of the request. Those
+          providers process it under their own terms and may retain it briefly for abuse monitoring.
+          <strong>Do not paste anything confidential.</strong>
+        </li>
+        <li>
+          <strong>Quote estimator.</strong> Your answers are sent to the same provider to produce a
+          recommendation. Treat it as an estimate, not a binding quote.
+        </li>
+        <li>
+          <strong>Website audit.</strong> The address you enter is sent to
+          <strong>Google PageSpeed Insights</strong>, which loads that page and returns performance
+          scores. Only the URL leaves this site.
+        </li>
+        <li>
+          <strong>Blog posts.</strong> Some articles are drafted with AI assistance and reviewed
+          before publication. Posts written this way are credited in the byline.
+        </li>
+      </ul>
+      <p>
+        None of these tools require an account, and none of them are used to build a profile of you.
+        We do not train any model on what you enter.
+      </p>
+
+      <h2>Service Providers</h2>
+      <p>
+        Running this site means relying on other companies. Each one only receives what it needs to
+        do its job, and each processes data under its own privacy policy.
+      </p>
+      <ul>
+        <li><strong>Vercel</strong> — hosting and delivery. Processes your IP address and request details as part of serving the site.</li>
+        <li><strong>Google Firebase / Firestore</strong> — stores contact form submissions, enquiries and site content.</li>
+        <li><strong>Cloudflare Turnstile</strong> — the anti-spam check on forms. Receives a token and your IP address to distinguish people from bots. It is not a tracking cookie and does not follow you across sites.</li>
+        <li><strong>Resend</strong> — delivers email, including the copy of your enquiry that reaches us.</li>
+        <li><strong>OpenRouter and DeepSeek</strong> — process text you enter into the AI tools, as described above.</li>
+        <li><strong>Google PageSpeed Insights</strong> — receives URLs submitted to the audit tool.</li>
+        <li><strong>Cloudflare R2</strong> — internal document storage. No visitor data.</li>
+      </ul>
+      <p>
+        We do not sell your personal information, and we do not share it for cross-context
+        behavioural advertising.
+      </p>
+
       <h2>Your Rights</h2>
       <p>
         You may request to view, correct, or delete any personal information we hold about you at any time.
