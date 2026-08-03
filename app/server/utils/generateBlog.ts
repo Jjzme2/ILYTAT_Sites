@@ -22,6 +22,14 @@ export interface GeneratedBlog {
   content: string; // HTML
   tags: string[];
   accentColor: string;
+  /**
+   * Suggested topic for next week, produced by the same call that wrote this
+   * post. Extracted separately and never rendered into the post itself — the
+   * model has just spent a full generation thinking about this subject, so it
+   * is better placed than a fresh call to say what should follow.
+   */
+  nextFocalPoint?: string;
+  nextFocalPointWhy?: string;
 }
 
 // ── System prompt (injected into every generation) ────────────────────────────
@@ -56,7 +64,9 @@ JSON object — no markdown fences, no commentary outside the JSON:
   "excerpt":     "2–3 sentence summary for the listing page, 120–160 characters",
   "content":     "Full post as HTML. Use only: <h2> <h3> <p> <ul> <ol> <li> <strong> <em> <blockquote>. No <html>/<body>/<head> wrappers.",
   "tags":        ["tag1", "tag2", "tag3"],
-  "accentColor": "Exactly one hex from this list: #6366f1 #10b981 #f59e0b #ef4444 #8b5cf6 #06b6d4"
+  "accentColor": "Exactly one hex from this list: #6366f1 #10b981 #f59e0b #ef4444 #8b5cf6 #06b6d4",
+  "nextFocalPoint": "A different topic for NEXT week's post, phrased as the question a business owner would actually type into Google. Must not repeat this week's topic, and should follow on naturally from it.",
+  "nextFocalPointWhy": "One short sentence on why that follows from this post."
 }
 
 Content requirements:
@@ -133,6 +143,10 @@ export async function generateBlogPost(opts: {
     content: String(parsed.content || ""),
     tags: Array.isArray(parsed.tags) ? parsed.tags.map(String) : [],
     accentColor: validAccents.includes(parsed.accentColor) ? parsed.accentColor : "#6366f1",
+    // Trimmed and length-capped: this lands in an admin input, and the model
+    // occasionally returns a paragraph where a question was asked for.
+    nextFocalPoint: String(parsed.nextFocalPoint ?? "").trim().slice(0, 200) || undefined,
+    nextFocalPointWhy: String(parsed.nextFocalPointWhy ?? "").trim().slice(0, 300) || undefined,
   };
 }
 
@@ -142,7 +156,7 @@ export async function createAiBlogPost(opts: {
   focalPoint: string;
   additionalNotes?: string;
   status?: "draft" | "published";
-}): Promise<{ id: string; title: string; slug: string }> {
+}): Promise<{ id: string; title: string; slug: string; nextFocalPoint?: string; nextFocalPointWhy?: string }> {
   const blog = await generateBlogPost(opts);
   const now = new Date().toISOString();
   const status = opts.status ?? "draft";
@@ -174,5 +188,7 @@ export async function createAiBlogPost(opts: {
     id: res.name?.split("/").pop() as string,
     title: blog.title,
     slug: blog.slug,
+    nextFocalPoint: blog.nextFocalPoint,
+    nextFocalPointWhy: blog.nextFocalPointWhy,
   };
 }

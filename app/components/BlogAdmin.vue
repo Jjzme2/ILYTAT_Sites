@@ -143,6 +143,14 @@ const generateFocalPoint   = ref('')
 const generateNotes        = ref('')
 const generateStatus       = ref<'draft' | 'published'>('draft')
 const generatePanelOpen    = ref(false)
+// Next week's topic, suggested by the generation that just ran.
+const suggestedNext        = ref('')
+const suggestedWhy         = ref('')
+
+function applySuggestion() {
+  plan.value.focalPoint = suggestedNext.value
+  suggestedNext.value = ''
+}
 
 async function generateNow() {
   const fp = generateFocalPoint.value.trim() || plan.value.focalPoint.trim()
@@ -152,7 +160,10 @@ async function generateNow() {
   }
   generating.value = true
   try {
-    const res = await $fetch<{ id: string; title: string; slug: string; status: string }>(
+    const res = await $fetch<{
+      id: string; title: string; slug: string; status: string
+      nextFocalPoint: string | null; nextFocalPointWhy: string | null
+    }>(
       '/api/admin/generate-blog',
       {
         method:  'POST',
@@ -164,6 +175,20 @@ async function generateNow() {
         },
       },
     )
+    // The model has just spent a full generation on this subject, so it is
+    // better placed than a fresh call to say what should follow. Only fill an
+    // empty field — never overwrite a plan already written by hand.
+    if (res.nextFocalPoint && !plan.value.focalPoint.trim()) {
+      plan.value.focalPoint = res.nextFocalPoint
+      suggestedNext.value   = res.nextFocalPoint
+      suggestedWhy.value    = res.nextFocalPointWhy ?? ''
+    }
+    else if (res.nextFocalPoint) {
+      // A plan already exists — offer the suggestion instead of clobbering it.
+      suggestedNext.value = res.nextFocalPoint
+      suggestedWhy.value  = res.nextFocalPointWhy ?? ''
+    }
+
     showSuccess(`✓ "${res.title}" saved as ${res.status}. Review it in the list below.`)
     generateFocalPoint.value = ''
     generateNotes.value      = ''
@@ -224,6 +249,22 @@ function isAiPost(post: BlogPost) {
                   placeholder="e.g. Why every contractor in Kankakee County needs a website"
                   @input="markPlanDirty"
                 />
+
+                <!-- Suggested by the generation that just ran. Shown as an
+                     offer rather than applied silently when a plan already
+                     exists, so a hand-written topic is never clobbered. -->
+                <p v-if="suggestedNext" class="ai-suggestion">
+                  <span class="ai-suggestion-label">Suggested next:</span>
+                  <span class="ai-suggestion-text">{{ suggestedNext }}</span>
+                  <span v-if="suggestedWhy" class="ai-suggestion-why">{{ suggestedWhy }}</span>
+                  <button
+                    v-if="plan.focalPoint !== suggestedNext"
+                    type="button"
+                    class="ai-suggestion-apply"
+                    @click="applySuggestion(); markPlanDirty()"
+                  >Use this</button>
+                  <span v-else class="ai-suggestion-applied">Filled in — remember to Save Plan</span>
+                </p>
               </div>
             </div>
 
@@ -394,8 +435,8 @@ function isAiPost(post: BlogPost) {
 
 /* Banners */
 .ba-banner { padding: 10px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 12px; }
-.ba-banner-error   { background: rgba(239,68,68,.12);  border: 1px solid rgba(239,68,68,.3);  color: var(--status-bad); }
-.ba-banner-success { background: rgba(34,197,94,.10);  border: 1px solid rgba(34,197,94,.25); color: var(--status-good); }
+.ba-banner-error   { background: color-mix(in srgb, var(--status-bad) 12%, transparent);  border: 1px solid color-mix(in srgb, var(--status-bad) 30%, transparent);  color: var(--status-bad); }
+.ba-banner-success { background: color-mix(in srgb, var(--status-good) 10%, transparent);  border: 1px solid color-mix(in srgb, var(--status-good) 25%, transparent); color: var(--status-good); }
 
 /* ── AI Panel ──────────────────────────────────────────────────────────────── */
 .ai-panel {
@@ -456,6 +497,23 @@ function isAiPost(post: BlogPost) {
 .ai-input:focus { border-color: var(--theme-accent); }
 .ai-textarea { resize: vertical; min-height: 56px; }
 
+.ai-suggestion {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px;
+  margin: 8px 0 0; padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent);
+  background: color-mix(in srgb, var(--theme-accent) 8%, transparent);
+  border-radius: 5px; font-size: 12.5px; line-height: 1.5;
+}
+.ai-suggestion-label { font-weight: 700; color: var(--theme-accent); }
+.ai-suggestion-text { color: var(--theme-fg); }
+.ai-suggestion-why { color: var(--theme-text-muted); flex-basis: 100%; }
+.ai-suggestion-apply {
+  background: var(--theme-btn-from); color: var(--theme-cta-text);
+  border: none; border-radius: 4px; padding: 4px 10px;
+  font-size: 12px; font-weight: 700; cursor: pointer;
+}
+.ai-suggestion-applied { color: var(--theme-text-muted); font-style: italic; }
+
 .ai-saved-at { font-size: 11px; color: var(--theme-text-ghost); }
 
 .ai-divider { height: 1px; background: var(--glass-card-border); margin: 14px 0; }
@@ -488,7 +546,7 @@ function isAiPost(post: BlogPost) {
 .ai-btn-secondary:hover:not(:disabled) { border-color: var(--theme-accent); color: var(--theme-accent); }
 
 .ai-spinner {
-  width: 12px; height: 12px; border: 2px solid rgba(255,255,255,.3);
+  width: 12px; height: 12px; border: 2px solid color-mix(in srgb, var(--theme-cta-text) 30%, transparent);
   border-top-color: var(--theme-cta-text); border-radius: 50%;
   animation: ai-spin .7s linear infinite; flex-shrink: 0;
 }
@@ -529,8 +587,8 @@ function isAiPost(post: BlogPost) {
 .ba-item-meta { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 12px; color: var(--theme-text-ghost); }
 .ba-slug      { font-family: 'Space Mono', monospace; color: var(--theme-text-muted); }
 .ba-status    { border-radius: 4px; padding: 1px 7px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
-.ba-status-pub   { background: rgba(34,197,94,.15);  color: var(--status-good); }
-.ba-status-draft { background: rgba(251,191,36,.12); color: var(--status-warn); }
+.ba-status-pub   { background: color-mix(in srgb, var(--status-good) 15%, transparent);  color: var(--status-good); }
+.ba-status-draft { background: color-mix(in srgb, var(--status-warn) 14%, transparent); color: var(--status-warn); }
 .ba-date  { color: var(--theme-text-ghost); }
 .ba-tags  { color: var(--theme-text-muted); font-style: italic; }
 .ba-excerpt { font-size: 13px; color: var(--theme-text-muted); margin: 6px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -546,8 +604,8 @@ function isAiPost(post: BlogPost) {
 .ba-action-btn:hover         { background: var(--glass-card-border); color: var(--theme-fg); }
 .ba-action-view              { color: var(--theme-accent); }
 .ba-action-view:hover        { color: var(--theme-accent); background: color-mix(in srgb, var(--theme-accent) 25%, transparent); }
-.ba-action-delete:hover      { background: rgba(239,68,68,.1); color: var(--status-bad); }
-.ba-action-confirm           { color: var(--status-bad) !important; background: rgba(239,68,68,.1) !important; }
+.ba-action-delete:hover      { background: color-mix(in srgb, var(--status-bad) 10%, transparent); color: var(--status-bad); }
+.ba-action-confirm           { color: var(--status-bad) !important; background: color-mix(in srgb, var(--status-bad) 10%, transparent) !important; }
 
 /* ── Editor Modal ─────────────────────────────────────────────────────────── */
 .ba-modal-overlay {

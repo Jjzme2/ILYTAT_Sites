@@ -38,7 +38,17 @@ export default defineEventHandler(async (event) => {
 
     await log('info', 'api', `Admin triggered AI blog: "${result.title}" → ${result.id} (${status})`)
 
-    return { success: true, id: result.id, title: result.title, slug: result.slug, status }
+    return {
+      success: true,
+      id: result.id,
+      title: result.title,
+      slug: result.slug,
+      status,
+      // Suggested topic for next week, produced by the same call that wrote
+      // this post — no extra request, no extra spend.
+      nextFocalPoint: result.nextFocalPoint ?? null,
+      nextFocalPointWhy: result.nextFocalPointWhy ?? null,
+    }
   }
   catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
