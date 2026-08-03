@@ -253,6 +253,28 @@ export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useR
   throw new AiError(`All AI providers failed — ${failures.join(' | ')}`, 'all')
 }
 
+/**
+ * Whether any AI provider is usable.
+ *
+ * Exported so nothing has to re-derive it. The weekly blog cron had its own
+ * copy of this test, written before the move to OpenRouter, and the two drifted
+ * apart: `callAI` accepts `OPENROUTER_API_KEY` on its own (the base URL has a
+ * default), while the cron's copy knew only about Gemini and OpenCloud and
+ * demanded a base URL alongside the key. It also read `process.env` directly
+ * rather than runtimeConfig, so it could not see a `NUXT_`-prefixed override at
+ * all.
+ *
+ * The result was a cron that reported "no AI provider configured", returned
+ * HTTP 200, sent no email, and skipped a week of posts — while the AI it had
+ * just declared missing would have answered fine.
+ *
+ * Any future check must call this rather than write its own.
+ */
+export function hasAiProvider(event?: Parameters<typeof useRuntimeConfig>[0]): boolean {
+  const cfg = useRuntimeConfig(event)
+  return Boolean(cfg.openrouterApiKey || cfg.opencloudApiKey || cfg.geminiApiKey)
+}
+
 /** Parses a JSON response, tolerating a model that wrapped it in prose. */
 export function parseAiJson<T>(raw: string): T {
   try {

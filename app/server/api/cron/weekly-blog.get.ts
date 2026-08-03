@@ -12,6 +12,7 @@
  */
 
 import { createAiBlogPost } from "~/server/utils/generateBlog";
+import { hasAiProvider } from "~/server/utils/ai";
 import {
   firestoreRequest,
   fromFirestoreFields,
@@ -62,15 +63,32 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 401, message: "Unauthorized" });
   }
 
-  if (
-    !process.env.GEMINI_API_KEY &&
-    !(process.env.OPENCLOUD_API_KEY && process.env.OPENCLOUD_BASE_URL)
-  ) {
-    await log("warn", "cron", "weekly-blog skipped: no AI provider configured");
+  const config = useRuntimeConfig(event);
+
+  // Shared with callAI, deliberately. This check used to be a local copy that
+  // predated the OpenRouter migration: it knew only about Gemini and OpenCloud,
+  // demanded a base URL that has a default, and read process.env directly so it
+  // could not see a NUXT_-prefixed override. With OPENROUTER_API_KEY set it
+  // reported "no provider", skipped the week, and returned 200.
+  if (!hasAiProvider(event)) {
+    // `error`, not `critical`: critical auto-emails a generic alert, and the
+    // specific one below carries the actual fix. One useful email beats two.
+    await log("error", "cron", "weekly-blog skipped: no AI provider configured");
+    // Skipping used to be silent — a warning in a log nobody reads, and an
+    // HTTP 200. From the outside that is indistinguishable from success, so a
+    // missed post could only be noticed by its absence, weeks later.
+    await notifyAdmin({
+      level: "error",
+      subject: "Weekly blog skipped — no AI provider configured",
+      title: "This week's post was not generated",
+      lines: [
+        "The weekly job ran but found no usable AI key, so nothing was written.",
+        "Set OPENROUTER_API_KEY (or GEMINI_API_KEY) in Vercel, then trigger the job manually to catch up this week.",
+      ],
+      action: { label: "Open admin", url: `${config.public.siteUrl}/admin` },
+    });
     return { skipped: true, reason: "No AI provider configured" };
   }
-
-  const config = useRuntimeConfig();
 
   // ── Read saved plan ─────────────────────────────────────────────────────────
   let focalPoint = defaultTopic();

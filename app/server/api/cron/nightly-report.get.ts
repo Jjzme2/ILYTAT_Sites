@@ -480,6 +480,54 @@ export default defineEventHandler(async (event) => {
     visitors: analytics.visitors,
   });
 
+  // ── Weekly blog watchdog ──────────────────────────────────────────────────
+  // A job that never runs cannot report that it never ran. When the weekly
+  // blog cron silently skipped a week, the only signal was noticing the missing
+  // post days later — every alert in that job is code that only executes once
+  // the job has already started.
+  //
+  // So a different job checks for the absence. This one runs daily, and simply
+  // asks whether a post has appeared recently enough. It catches the whole
+  // class at once: a bad provider check, a Vercel scheduling change, a plan
+  // limit, a broken deploy, an expired cron secret.
+  try {
+    const recentPosts = await firestoreRunQuery({
+      collectionId: "blog_posts",
+      whereField: "createdAt",
+      whereOp: "GREATER_THAN_OR_EQUAL",
+      // Nine days, not seven: the job runs weekly, so a strict seven-day window
+      // would false-alarm every time it ran a few hours later than the previous
+      // week. Nine gives a two-day grace period and still catches a real miss
+      // on the next nightly run.
+      whereValue: new Date(Date.now() - 9 * 86_400_000).toISOString(),
+      orderByField: "createdAt",
+      orderByDir: "DESCENDING",
+      limit: 5,
+    });
+
+    if (!recentPosts.length) {
+      // `error` rather than `critical` — the explicit email below is the alert,
+      // and critical would send a second, vaguer one alongside it.
+      await log("error", "cron", "No blog post created in the last 9 days");
+      await notifyAdmin({
+        level: "error",
+        subject: "The weekly blog has stopped running",
+        title: "No post has been created in over a week",
+        lines: [
+          "The weekly job should produce a draft every Monday, and nothing has appeared in nine days.",
+          "That usually means the job is not being triggered at all, rather than failing — a failure would have emailed you separately.",
+          "Check Vercel → the project → Cron Jobs to see whether the last run fired, then trigger it by hand to catch up.",
+        ],
+        action: { label: "Open admin", url: "https://sites.ilytat.com/admin" },
+      });
+    }
+  }
+  catch (err) {
+    await log("warn", "cron", "Blog watchdog check failed", {
+      error: err instanceof Error ? err.message : String(err),
+    });
+  }
+
   // ── Stripe price drift ────────────────────────────────────────────────────
   // The site now follows Stripe automatically, which is the point — but a price
   // that changes on its own with nobody told is its own hazard. This reports
