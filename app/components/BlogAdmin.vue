@@ -146,6 +146,39 @@ const generatePanelOpen    = ref(false)
 // Why the plan rolled forward to its current topic, from the last generation.
 const suggestedWhy         = ref('')
 
+// ── Reroll ──────────────────────────────────────────────────────────────────
+const rerolling = ref(false)
+// Every topic shown and passed over this session. Sent with each reroll so
+// pressing repeatedly keeps moving instead of cycling the same two answers.
+const rejected  = ref<string[]>([])
+
+async function rerollPlan() {
+  if (rerolling.value) return
+  rerolling.value = true
+  try {
+    const current = plan.value.focalPoint.trim()
+    if (current && !rejected.value.includes(current)) rejected.value.push(current)
+
+    const res = await $fetch<{ focalPoint: string; why: string | null }>(
+      '/api/admin/reroll-plan',
+      {
+        method: 'POST',
+        headers: await getAdminHeaders(),
+        body: {
+          current,
+          avoid: rejected.value.slice(-20),
+          steer: plan.value.additionalNotes.trim() || undefined,
+        },
+      },
+    )
+    plan.value.focalPoint = res.focalPoint
+    suggestedWhy.value    = res.why ?? ''
+    markPlanDirty()
+  }
+  catch (e: unknown) { showError(apiErrorMessage(e, 'Could not suggest a topic.')) }
+  finally { rerolling.value = false }
+}
+
 async function generateNow() {
   const fp = generateFocalPoint.value.trim() || plan.value.focalPoint.trim()
   if (!fp) {
@@ -240,12 +273,23 @@ function isAiPost(post: BlogPost) {
                   @input="markPlanDirty"
                 />
 
-                <!-- Set automatically by the last generation. Shown so the
-                     change is explained rather than mysterious. -->
+                <!-- Set automatically by the last generation or a reroll.
+                     Shown so the change is explained rather than mysterious. -->
                 <p v-if="suggestedWhy" class="ai-suggestion">
-                  <span class="ai-suggestion-label">Rolled forward:</span>
+                  <span class="ai-suggestion-label">Why this one:</span>
                   <span class="ai-suggestion-why">{{ suggestedWhy }}</span>
                 </p>
+
+                <button
+                  type="button"
+                  class="ai-reroll"
+                  :disabled="rerolling"
+                  title="Suggest a different topic. Costs a fraction of a generation."
+                  @click="rerollPlan"
+                >
+                  <span v-if="rerolling" class="ai-spinner" />
+                  {{ rerolling ? 'Thinking…' : '↻ Suggest a different topic' }}
+                </button>
               </div>
             </div>
 
@@ -477,6 +521,21 @@ function isAiPost(post: BlogPost) {
 }
 .ai-input:focus { border-color: var(--theme-accent); }
 .ai-textarea { resize: vertical; min-height: 56px; }
+
+.ai-reroll {
+  align-self: flex-start;
+  margin-top: 8px;
+  display: inline-flex; align-items: center; gap: 8px;
+  background: none; border: 1px solid var(--glass-card-border);
+  border-radius: 5px; padding: 6px 12px;
+  color: var(--theme-text-hi); font-size: 12.5px; cursor: pointer;
+  transition: border-color .15s, color .15s;
+}
+.ai-reroll:hover:not(:disabled) {
+  border-color: color-mix(in srgb, var(--theme-accent) 45%, transparent);
+  color: var(--theme-accent);
+}
+.ai-reroll:disabled { opacity: .6; cursor: not-allowed; }
 
 .ai-suggestion {
   display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 10px;
