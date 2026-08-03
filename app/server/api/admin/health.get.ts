@@ -13,6 +13,7 @@
 
 import { firestoreRequest, toFirestoreFields, fromFirestoreFields } from '~/server/utils/firebaseAdmin'
 import { requireAdmin } from '~/server/utils/verifyAdmin'
+import { getPricing, tierLabels } from '~/server/utils/stripePricing'
 
 interface CollectionResult {
   collection: string
@@ -115,8 +116,39 @@ export default defineEventHandler(async (event) => {
     collections: results,
     projectId: config.public.firebaseProjectId,
     ai: aiStatus(config),
+    pricing: await pricingStatus(),
   }
 })
+
+/**
+ * Whether each displayed price is coming from Stripe or from the committed
+ * fallback, and why.
+ *
+ * This is the one place to confirm the Stripe key is working. Without it,
+ * "the sync is configured" and "the sync is actually running" look identical
+ * from the outside — the page shows a plausible price either way, which is
+ * exactly how the $999-vs-$1,499 divergence went unnoticed.
+ *
+ * Reports amounts and reasons only; never the key.
+ */
+async function pricingStatus() {
+  const pricing = await getPricing(true)
+  const labels = tierLabels()
+  const keys = Object.keys(labels) as Array<keyof typeof labels>
+  const live = keys.filter(k => pricing[k].source === 'stripe').length
+
+  return {
+    ok: live === keys.length,
+    liveCount: live,
+    totalCount: keys.length,
+    tiers: keys.map(k => ({
+      label: labels[k],
+      amount: pricing[k].amount,
+      source: pricing[k].source,
+      reason: pricing[k].reason ?? null,
+    })),
+  }
+}
 
 /**
  * Which AI provider will actually be used, and with what model.

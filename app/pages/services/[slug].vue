@@ -3,7 +3,8 @@ import { siteConfig } from '~/config/site.config'
 import { siteContent } from '~/utils/siteContent'
 
 const route = useRoute()
-const { services, steps, monthlyRate, priceRange } = siteConfig
+const { services, steps, priceRange } = siteConfig
+const { pricing, formatPrice } = usePricing()
 
 const service = services.find(s => s.slug === route.params.slug)
 
@@ -190,7 +191,7 @@ useReveal()
             Let's see where your site stands today
           </h2>
           <p class="mt-5 text-[16px] leading-[1.7] text-(--theme-text-body) max-w-[520px] mx-auto">
-            Free audit, no obligation. Managed hosting from {{ monthlyRate }}/month once you're live.
+            Free audit, no obligation. Managed hosting from {{ formatPrice(pricing.standardHosting) }}/month once you're live.
           </p>
           <div class="mt-9 flex flex-wrap items-center justify-center gap-4">
             <NuxtLink to="/#contact" class="btn-primary">Get a Free Audit</NuxtLink>

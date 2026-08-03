@@ -3,7 +3,8 @@ import { ref } from 'vue'
 import { siteConfig } from '~/config/site.config'
 
 const { track } = useAnalytics()
-const { monthlyRate, heroImage, heroStats } = siteConfig
+const { heroImage, heroStats } = siteConfig
+const { pricing, formatPrice } = usePricing()
 
 const heroRef  = ref<HTMLElement | null>(null)
 const blob1Ref = ref<HTMLElement | null>(null)
@@ -85,7 +86,7 @@ onMounted(() => {
         </h1>
 
         <p class="text-[17px] md:text-[18px] text-(--theme-text-body) max-w-[520px] mb-10 leading-[1.7] [animation:fade-up_0.8s_0.36s_ease_both]">
-          Custom-built, not templated. You own every line of code. Managed hosting from {{ monthlyRate }}/month.
+          Custom-built, not templated. You own every line of code. Managed hosting from {{ formatPrice(pricing.standardHosting) }}/month.
         </p>
 
         <div class="flex items-center gap-4 flex-wrap [animation:fade-up_0.8s_0.46s_ease_both]">

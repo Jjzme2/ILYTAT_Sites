@@ -1,7 +1,37 @@
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
-
 const __dirname = dirname(fileURLToPath(import.meta.url));
+
+/**
+ * Scheduled jobs. This is the ONLY place they are defined.
+ *
+ * ⚠️ Do not move these to vercel.json, and do not add a vercel.json that
+ * declares `crons`. Two things make that wrong:
+ *
+ *   1. Nitro's vercel preset builds with the Build Output API, so
+ *      `.vercel/output/config.json` is the deployment configuration. Nothing
+ *      copies `crons` out of vercel.json into it. That is why these jobs were
+ *      declared for months and never once ran — Vercel's Cron Jobs page showed
+ *      no invocations because no cron jobs existed. A weekly blog post silently
+ *      never happened, and no error was raised because no code ran to raise one.
+ *
+ *   2. Declaring them in *both* places is a hard deployment failure. Vercel
+ *      rejects a build whose crons come from vercel.json and the Build Output
+ *      API at the same time, so "belt and braces" is not an option here.
+ *
+ * Injected into the build output via nitro.vercel.config below.
+ *
+ * To confirm after any change:
+ *   VERCEL=1 npm run build
+ *   node -e "console.log(JSON.parse(require('fs').readFileSync('.vercel/output/config.json','utf8')).crons)"
+ * `undefined` there means nothing is scheduled.
+ */
+const cronJobs = [
+  // 2 AM CT daily — digest, retention pruning, price drift, blog watchdog.
+  { path: "/api/cron/nightly-report", schedule: "0 7 * * *" },
+  // Mondays 10 AM CT. Vercel fires within the hour, not on the minute.
+  { path: "/api/cron/weekly-blog", schedule: "0 15 * * 1" },
+];
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -120,6 +150,30 @@ export default defineNuxtConfig({
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || "",
     notificationEmail: process.env.NOTIFICATION_EMAIL,
     cronSecret: process.env.CRON_SECRET,
+    // ⚠️ RESTRICTED KEY ONLY — must start with `rk_`.
+    //
+    // The site reads prices from Stripe so the pricing page cannot drift from
+    // what is actually billed. Reading the product catalogue is all it needs,
+    // and the catalogue is public information — it is printed on the pricing
+    // page. A full `sk_` secret would additionally expose customers, charges
+    // and balances and can move money, for no benefit here.
+    //
+    // server/utils/stripePricing.ts refuses an `sk_` key outright and falls
+    // back to the committed prices, so a mistake here degrades rather than
+    // leaks. Create at: Stripe → Developers → API keys → Create restricted
+    // key, with Products = Read and Prices = Read, everything else None.
+    //
+    // Deliberately outside `public` so it never reaches the browser.
+    stripeRestrictedKey: process.env.STRIPE_RESTRICTED_KEY || "",
+    // Telemetry retention, enforced nightly. Both collections are append-only
+    // and were previously kept forever on a billed database, while every report
+    // that reads them only ever looks back 30 days.
+    // Logs are short-lived — once the nightly digest has gone out, an info line
+    // from six weeks ago has no reader.
+    logRetentionDays: Number(process.env.LOG_RETENTION_DAYS || 45),
+    // Events are kept longer so year-over-year and seasonal comparisons stay
+    // possible; they are also much smaller per document.
+    analyticsRetentionDays: Number(process.env.ANALYTICS_RETENTION_DAYS || 180),
     // Optional. PageSpeed Insights serves anonymous requests at a lower quota,
     // so /api/audit works without this and just gets more headroom with it.
     pagespeedApiKey: process.env.PAGESPEED_API_KEY || "",
@@ -151,8 +205,38 @@ export default defineNuxtConfig({
     externals: {
       inline: ["@aws-sdk/client-s3"],
     },
+    // Merged into the generated .vercel/output/config.json. Without this the
+    // crons in vercel.json are inert — see the note at the top of this file.
+    vercel: {
+      config: {
+        crons: cronJobs,
+      },
+    },
     // SWR route rules — stale data served instantly, revalidated in background.
     routeRules: {
+      // ── Security headers ──────────────────────────────────────────────
+      // None were set previously. These are the cheap, high-value ones; no
+      // CSP yet because the site inlines styles and third-party scripts
+      // (Turnstile, Vercel analytics, Plausible) would need enumerating
+      // first — a wrong CSP breaks the contact form silently.
+      "/**": {
+        headers: {
+          // Stop the browser guessing content types (MIME-confusion attacks).
+          "X-Content-Type-Options": "nosniff",
+          // Block framing — clickjacking, and nothing here needs embedding.
+          "X-Frame-Options": "DENY",
+          // Do not leak full URLs (which can carry query params) to third
+          // parties; send origin only on cross-origin requests.
+          "Referrer-Policy": "strict-origin-when-cross-origin",
+          // Nothing here uses these; deny by default.
+          "Permissions-Policy": "camera=(), microphone=(), geolocation=(), interest-cohort=()",
+          // Force HTTPS for two years, including subdomains.
+          "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+        },
+      },
+      // Admin must never be cached by a proxy or archived by a crawler.
+      "/admin/**": { headers: { "X-Robots-Tag": "noindex, nofollow, noarchive", "Cache-Control": "no-store" } },
+      "/api/**": { headers: { "Cache-Control": "no-store" } },
       // Full-page HTML cache: homepage and blog listing are served from CDN edge
       // on repeat visits; most visitors never hit the Node server at all.
       "/": { swr: 60 }, // 60 s — matches the promo cache TTL
@@ -162,6 +246,10 @@ export default defineNuxtConfig({
       "/api/projects": { cache: { maxAge: 300, swr: true } }, // 5 min
       "/api/testimonials": { cache: { maxAge: 3600, swr: true } }, // 1 hr
       "/api/promotion": { cache: { maxAge: 60, swr: true } }, // 1 min
+      // Prices change a few times a year at most. Cached hard at the edge so a
+      // traffic spike cannot turn into a burst of Stripe requests; the server
+      // memoises for 15 minutes on top of this.
+      "/api/pricing": { cache: { maxAge: 900, swr: true } }, // 15 min
       // Fortune is deterministic per-IP per-day; cache for 15 min at the edge.
       // The client also caches the result in localStorage, so repeat visitors
       // never hit this endpoint at all.

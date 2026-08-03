@@ -181,7 +181,10 @@ useHead({
           </div>
 
           <p class="mt-4 text-[13px] text-(--theme-text-muted)">
-            Nothing is stored. Read each reply before you post it — you know your customer, the model doesn't.
+            Nothing is stored. Your text is sent to an AI provider (OpenRouter/DeepSeek) to draft the
+            replies — so don't paste anything confidential. Read each reply before you post it; you
+            know your customer, the model doesn't.
+            <NuxtLink to="/privacy" class="underline hover:text-(--theme-accent)">How this works</NuxtLink>.
           </p>
         </form>
 

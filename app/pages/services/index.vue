@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { siteConfig } from '~/config/site.config'
 
-const { services, monthlyRate } = siteConfig
+const { services } = siteConfig
+const { pricing, formatPrice } = usePricing()
 
 const canonical = 'https://sites.ilytat.com/services'
 const title = 'Website Design Services — Kankakee County, IL | ILYTAT'
@@ -61,7 +62,7 @@ useReveal()
           Websites and software for Kankakee County businesses
         </h1>
         <p class="mt-6 text-[17px] md:text-[18px] leading-[1.7] text-(--theme-text-body) max-w-[620px]">
-          Every build is custom, mobile-first, and yours to keep. Managed hosting from {{ monthlyRate }}/month.
+          Every build is custom, mobile-first, and yours to keep. Managed hosting from {{ formatPrice(pricing.standardHosting) }}/month.
         </p>
       </section>
 

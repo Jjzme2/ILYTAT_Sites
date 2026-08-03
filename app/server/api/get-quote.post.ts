@@ -60,7 +60,7 @@ export default defineEventHandler(async (event) => {
     // normalizeQuote forces the tier and price back onto the real price list —
     // this quotes actual money, so a hallucinated figure would be worse than
     // a failed request.
-    return normalizeQuote(parseAiJson(raw))
+    return await normalizeQuote(parseAiJson(raw))
   }
   catch {
     throw createError({

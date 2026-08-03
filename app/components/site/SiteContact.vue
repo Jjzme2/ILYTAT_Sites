@@ -11,7 +11,8 @@ const props = defineProps<{ prefilledService?: string }>()
 // Build-time constant — tree-shaken to `false` in production bundles.
 const isDev = import.meta.dev
 
-const { packages, monthlyRate } = siteConfig
+const { packages } = siteConfig
+const { pricing, packagePrice, formatPrice } = usePricing()
 const { form, submitting, submitted, handleSubmit } = useContactForm()
 
 watch(() => props.prefilledService, (name) => {
@@ -112,8 +113,8 @@ watch(() => props.prefilledService, (name) => {
               <div class="select-wrap">
                 <select id="form-service" v-model="form.service">
                   <option value="">Select a package…</option>
-                  <option v-for="pkg in packages" :key="pkg.name" :value="`${pkg.name} — ${pkg.price}`">
-                    {{ pkg.name }} — {{ pkg.price }}
+                  <option v-for="pkg in packages" :key="pkg.name" :value="`${pkg.name} — ${packagePrice(pkg.name)}`">
+                    {{ pkg.name }} — {{ packagePrice(pkg.name) }}
                   </option>
                   <option value="Not sure yet">Not sure yet</option>
                 </select>
@@ -124,7 +125,7 @@ watch(() => props.prefilledService, (name) => {
               <label for="form-billing">Billing Preference</label>
               <div class="select-wrap">
                 <select id="form-billing" v-model="form.billingPreference">
-                  <option value="monthly">Monthly ({{ monthlyRate }}/mo)</option>
+                  <option value="monthly">Monthly ({{ formatPrice(pricing.standardHosting) }}/mo)</option>
                   <option value="yearly">Yearly ($799/yr) — Save $269</option>
                 </select>
                 <UIcon name="i-heroicons-chevron-down" class="select-arrow w-4 h-4" />

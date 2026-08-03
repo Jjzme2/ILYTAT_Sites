@@ -119,6 +119,163 @@ changes needed.
 
 ---
 
+## Reminders
+
+### Stripe prices need updating
+
+The site's package prices live in `app/config/site.config.ts` (Pop-Up $499 /
+Local Business $999 / Web Application $2,999, plus $89-$149/mo hosting).
+**Stripe does not read from this file** — there are no Stripe references left
+in the codebase at all, so the products and prices in the Stripe dashboard are
+maintained entirely by hand. Whenever pricing changes here, change it there
+too, or a checkout will charge the old amount.
+
+---
+
+## ⚠️ Cron schedules live in `nuxt.config.ts`, never in `vercel.json`
+
+The scheduled jobs silently never ran — not once. Vercel's Cron Jobs page showed
+no invocations because there were no cron jobs registered.
+
+**Why:** Nitro's `vercel` preset builds with the Build Output API, so
+`.vercel/output/config.json` *is* the deployment configuration. Nothing copies
+`crons` out of the root `vercel.json` into it. The jobs looked correctly
+declared, the dashboard showed the file, and nothing was scheduled.
+
+**Fix:** schedules are defined in `nuxt.config.ts` and injected via
+`nitro.vercel.config`. `vercel.json` was deleted — it contained nothing else.
+
+> **Do not re-add a `vercel.json` with `crons`.** Declaring them in both places
+> is a hard deployment failure, not a harmless duplicate: Vercel rejects a build
+> whose crons come from `vercel.json` and the Build Output API at once. That
+> mistake was made and caught here — the first attempt at this fix left the
+> `vercel.json` crons in place and the deployment errored.
+
+**To verify after any change to schedules or the Nitro config:**
+
+```bash
+VERCEL=1 npm run build
+node -e "console.log(JSON.parse(require('fs').readFileSync('.vercel/output/config.json','utf8')).crons)"
+```
+
+If that prints `undefined`, nothing is scheduled no matter what `vercel.json`
+says.
+
+Route headers (`routeRules`) are *not* affected — those come from Nuxt config
+and are emitted correctly. `crons` was the only casualty, because it is the one
+setting that lives outside Nuxt config. Verified: the security headers all reach
+the build output.
+
+**Note on the watchdog.** The nightly report checks whether a blog post has
+appeared in the last nine days, but it is itself a cron — so it could not have
+caught this, since it was never registered either. It guards "the job ran and
+did nothing"; it cannot guard "no jobs exist." If crons ever go quiet again, the
+durable answer is an external trigger (a scheduled GitHub Actions workflow
+calling the endpoint with `CRON_SECRET`), which shares no machinery with Vercel
+scheduling.
+
+---
+
+## Prices now follow Stripe automatically
+
+**One thing to do:** add `STRIPE_RESTRICTED_KEY` in Vercel. Until it is set the
+site runs on the prices committed in `site.config.ts`, exactly as before — so
+there is no rush and nothing breaks in the meantime.
+
+### Creating the key (this part matters)
+
+Stripe → Developers → API keys → **Create restricted key**:
+
+- **Products: Read**
+- **Prices: Read**
+- Everything else: **None**
+
+Then set it in Vercel as `STRIPE_RESTRICTED_KEY`. It will start with `rk_`.
+
+**Do not use your normal secret key (`sk_live_…`).** A full secret can read
+customers, charges and balances and can move money. The site only needs to read
+the product catalogue, which is already printed on the pricing page — so a
+restricted key that leaks costs you nothing. `stripePricing.ts` refuses an `sk_`
+key outright and falls back to the committed prices, so a mistake here degrades
+instead of leaking, but it is worth getting right the first time.
+
+### What happens after that
+
+Change a price in the Stripe dashboard and the website follows within about 15
+minutes. No code change, no deploy, no asking.
+
+Guards, in case something goes wrong:
+
+- **Products are pinned by id and verified by name.** The Stripe account also
+  holds Can Do Crew and some promotional prices; a mis-pinned id fails closed
+  rather than publishing another venture's price here.
+- **Implausible amounts are rejected.** Anything below a quarter or above four
+  times the committed price is refused — that catches a cents/dollars unit
+  error or a $0 draft.
+- **Every failure falls back per tier**, so one bad product cannot blank the
+  pricing page.
+- **The nightly email reports any price that moved**, and shouts if a tier is
+  stuck on the fallback (meaning the site and Stripe have diverged again).
+- **Admin → Health** shows each tier and whether it is reading `stripe` or
+  `fallback`, with the reason. That is the place to confirm the key works.
+
+### Still maintained by hand
+
+- **Web Application ($2,999)** has no Stripe product, so it stays committed in
+  `site.config.ts`. Create the product in Stripe and add it to `TIERS` in
+  `app/server/utils/stripePricing.ts` if you want it synced too.
+- **`priceRange`** in the SEO schema, and the overage rate.
+- **Product *names*** — renaming a product in Stripe will fail the identity
+  check until `expectedName` in `TIERS` is updated to match. This is deliberate.
+
+> Product ids in `TIERS` were matched from the live catalogue by amount and
+> type. If Health reports a name mismatch on first run, the id is pointing at
+> the wrong product — correct it there.
+
+---
+
+## Observability — how it works now
+
+Nothing here needs configuring to work; the defaults are sensible. This is a
+map so future-you knows where to look.
+
+- **Every server error is captured automatically.** `app/server/plugins/
+  observability.ts` hooks Nitro and writes any unhandled 5xx to the `logs`
+  collection with the route, a request id, and the stack. 4xx responses are
+  recorded at `info` so patterns stay visible without crying wolf. Every
+  response carries an `x-request-id` header — if someone reports a problem, ask
+  for that id and search the Logs tab for it.
+- **Browser errors reach you too.** `app/plugins/error-reporting.client.ts`
+  forwards JavaScript failures to `/api/analytics/error`. They appear in the
+  admin Analytics tab under "Browser errors". Known browser noise
+  (ResizeObserver, extensions, cancelled navigations) is filtered out.
+- **Criticals email immediately**, throttled to one per 30 minutes per distinct
+  message. Everything else waits for the 2 AM digest.
+- **Repeated identical log lines collapse.** A failing dependency writes one
+  Firestore document per 5-minute window with a `repeats` count, rather than one
+  per request. The console still shows every occurrence.
+- **Only allowlisted analytics events are stored.** Adding a new `track()` call
+  means adding its name to `EVENTS` in
+  `app/server/api/analytics/event.post.ts`, or it is silently dropped. This is
+  deliberate — a typo should not create a metric nobody reads.
+
+Optional environment variables, both with working defaults:
+
+- `LOG_RETENTION_DAYS` (default 45) — logs older than this are deleted nightly.
+- `ANALYTICS_RETENTION_DAYS` (default 180) — same for `analytics_events`.
+
+### Turnstile can throw on locked-down networks
+
+If a visitor's network or extension blocks `challenges.cloudflare.com`,
+`nuxt-turnstile` throws `Cannot read properties of undefined (reading 'render')`
+and the contact form's verification widget never appears. This is a gap in the
+library, not our code, and it is invisible in dev. It will now show up in the
+Browser errors panel — if the count is more than a trickle, the fix is to gate
+the widget behind a load check and fall back to letting the form submit without
+it.
+
+---
+
 ## Known rough edges
 
 Not urgent, but worth knowing about.

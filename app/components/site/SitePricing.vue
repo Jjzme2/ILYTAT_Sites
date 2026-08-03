@@ -11,21 +11,34 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { siteConfig } from '~/config/site.config'
 import { useCheckout } from '~/composables/useCheckout'
 
-const { packages, monthlyRate, subscriptions } = siteConfig
+const { packages, subscriptions, overageRate } = siteConfig
+
+// Every figure below comes from Stripe when it can be read and verified, and
+// from site.config.ts otherwise. Nothing here reads a committed price
+// directly — that is what let the page advertise $1,499 while Stripe billed
+// $999.
+const { pricing, packagePrice, formatPrice } = usePricing()
+
+// The feature list for whichever hosting tier is selected.
+const hostingFeatures = computed(() =>
+  hostingTier.value === 'premium'
+    ? subscriptions.PREMIUM_HOSTING.features
+    : subscriptions.STANDARD_HOSTING.features,
+)
 const { billingCycle, hostingTier } = useCheckout()
 const { track } = useAnalytics()
 
 // Derive the displayed hosting rate from the selected tier — prevents
 // showing a hardcoded $89 when premium ($149) is actively selected.
 const hostingMonthlyRate = computed(() =>
-  hostingTier.value === 'premium'
-    ? `$${subscriptions.PREMIUM_HOSTING.price}`
-    : monthlyRate
+  formatPrice(hostingTier.value === 'premium'
+    ? pricing.value.premiumHosting
+    : pricing.value.standardHosting),
 )
 const hostingYearlyRate = computed(() =>
-  hostingTier.value === 'premium'
-    ? `$${subscriptions.PREMIUM_HOSTING_YEARLY.price}/yr`
-    : `$${subscriptions.STANDARD_HOSTING_YEARLY.price}/yr`
+  `${formatPrice(hostingTier.value === 'premium'
+    ? pricing.value.premiumHostingYearly
+    : pricing.value.standardHostingYearly)}/yr`,
 )
 
 // Track when the pricing section first enters the viewport — fires once.
@@ -105,6 +118,35 @@ onUnmounted(() => pricingObserver.value?.disconnect())
         </div>
       </div>
 
+      <!-- What the hosting fee actually buys.
+           These lists lived in siteConfig.subscriptions and were never
+           rendered, so the toggle swung $89 -> $149 with nothing to justify
+           it. The buyer's comparison is not an agency retainer, it is
+           Squarespace at $23/mo — so the human-edits line has to be visible. -->
+      <div class="glass-card rounded-[var(--radius)] p-6 md:p-8 mb-8" data-reveal>
+        <div class="flex flex-wrap items-baseline justify-between gap-3 mb-5">
+          <h3 class="font-display text-[17px] font-bold tracking-[-0.01em] text-(--theme-fg)">
+            What the {{ hostingMonthlyRate }}/month covers
+          </h3>
+          <span class="font-mono text-[11px] tracking-[0.12em] uppercase text-(--theme-accent)">
+            {{ hostingTier === 'premium' ? 'Premium' : 'Standard' }} hosting
+          </span>
+        </div>
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-2.5">
+          <li
+            v-for="f in hostingFeatures"
+            :key="f"
+            class="flex items-start gap-2.5 text-[14.5px] leading-[1.6] text-(--theme-text-body)">
+            <UIcon name="i-heroicons-check" class="w-4 h-4 shrink-0 mt-1 text-(--theme-accent)" />
+            <span>{{ f }}</span>
+          </li>
+        </ul>
+        <p class="mt-5 text-[13.5px] leading-[1.7] text-(--theme-text-muted)">
+          First month free. Cancel any time with 30 days' notice — you keep the site and the code.
+          Edits beyond the included time are billed at {{ overageRate }}/hour, and unused time does not roll over.
+        </p>
+      </div>
+
       <!-- Pricing cards -->
       <div class="grid grid-cols-1 gap-4 items-start sm:grid-cols-2 lg:grid-cols-3">
         <div v-for="(pkg, i) in packages" :key="pkg.name"
@@ -124,7 +166,7 @@ onUnmounted(() => pricingObserver.value?.disconnect())
             <div class="flex items-baseline gap-2">
               <span
                 class="font-display text-[44px] sm:text-[54px] font-extrabold tracking-[-3px] leading-none text-(--theme-fg)">{{
-                  pkg.price }}</span>
+                  packagePrice(pkg.name) }}</span>
               <span class="text-[12px] text-(--theme-text-ghost)">{{ pkg.note }}</span>
             </div>
           </div>
