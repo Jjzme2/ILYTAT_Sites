@@ -1,0 +1,120 @@
+# Scheduled jobs, triggered from GitHub rather than Vercel.
+#
+# Vercel scheduling has failed twice here, both times silently:
+#
+#   1. The crons declared in vercel.json were never registered at all, because
+#      Nitro's vercel preset builds with the Build Output API and nothing copies
+#      `crons` into it. Months of weekly posts simply never happened.
+#   2. After fixing that, the nightly digest still did not arrive.
+#
+# Every alert the application can raise is code that runs *inside* a job, so a
+# job that is never invoked cannot report anything. The nine-day "no post"
+# watchdog in the nightly report has the same flaw — it is itself a cron.
+#
+# This workflow shares no machinery with Vercel scheduling. If Vercel fires the
+# job too, the run is harmless: generation is idempotent enough that the only
+# cost is a duplicate draft, and the nightly digest is a report, not a mutation.
+#
+# It also gives something Vercel's Hobby plan does not: a visible run history,
+# and a failure that is loud. A non-2xx response fails the workflow, which
+# emails you through GitHub's own notifications — an alert that does not depend
+# on the site being healthy enough to send mail.
+#
+# ── Setup (one time) ────────────────────────────────────────────────────────
+# Settings → Secrets and variables → Actions → New repository secret:
+#   CRON_SECRET  — the same value as the CRON_SECRET env var in Vercel
+#   SITE_URL     — https://sites.ilytat.com   (no trailing slash)
+#
+# Until both exist the workflow fails fast with a clear message rather than
+# firing unauthenticated requests at production.
+
+name: Scheduled jobs
+
+on:
+  schedule:
+    # Nightly digest — 07:00 UTC (2 AM CT). GitHub queues scheduled runs under
+    # load, so treat the time as approximate, same as Vercel.
+    - cron: "0 7 * * *"
+    # Weekly blog draft — Mondays 15:00 UTC (10 AM CT).
+    - cron: "0 15 * * 1"
+  # Lets you run either job by hand from the Actions tab without a terminal.
+  workflow_dispatch:
+    inputs:
+      job:
+        description: "Which job to run"
+        required: true
+        default: nightly-report
+        type: choice
+        options:
+          - nightly-report
+          - weekly-blog
+
+permissions:
+  contents: read
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check secrets are configured
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+        run: |
+          missing=""
+          [ -z "$CRON_SECRET" ] && missing="$missing CRON_SECRET"
+          [ -z "$SITE_URL" ] && missing="$missing SITE_URL"
+          if [ -n "$missing" ]; then
+            echo "::error::Missing repository secret(s):$missing — see the comment at the top of this workflow."
+            exit 1
+          fi
+
+      - name: Pick the endpoint for this trigger
+        id: pick
+        run: |
+          # schedule runs carry the cron expression that fired them; manual runs
+          # carry the chosen job instead.
+          case "${{ github.event.schedule }}" in
+            "0 15 * * 1") job="weekly-blog" ;;
+            "0 7 * * *")  job="nightly-report" ;;
+            *)            job="${{ inputs.job }}" ;;
+          esac
+          echo "job=$job" >> "$GITHUB_OUTPUT"
+          echo "Running: $job"
+
+      - name: Call the endpoint
+        env:
+          CRON_SECRET: ${{ secrets.CRON_SECRET }}
+          SITE_URL: ${{ secrets.SITE_URL }}
+          JOB: ${{ steps.pick.outputs.job }}
+        run: |
+          set -o pipefail
+          url="${SITE_URL%/}/api/cron/${JOB}"
+          echo "POST-less GET → ${url}"
+
+          # --max-time generously above the AI generation path, which waits on a
+          # third-party model. Retries cover a cold start or a transient 5xx;
+          # they are safe because a second nightly report is just a second email
+          # and a second draft is deletable.
+          code=$(curl -sS -o response.json -w "%{http_code}" \
+            --max-time 240 --retry 2 --retry-delay 15 --retry-connrefused \
+            -H "x-cron-secret: ${CRON_SECRET}" \
+            "$url") || true
+
+          echo "HTTP ${code}"
+          echo "--- response ---"
+          cat response.json 2>/dev/null || echo "(empty)"
+          echo
+
+          if [ "$code" != "200" ]; then
+            echo "::error::${JOB} returned HTTP ${code}"
+            exit 1
+          fi
+
+          # A 200 is not success on its own. weekly-blog returns
+          # {"skipped":true} when it finds no AI provider — the exact shape that
+          # let a missing post go unnoticed for weeks. Fail loudly on it.
+          if grep -q '"skipped":true' response.json; then
+            echo "::error::${JOB} returned 200 but skipped its work — see the response above."
+            exit 1
+          fi

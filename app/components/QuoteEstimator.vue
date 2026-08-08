@@ -298,9 +298,9 @@ async function submitLead() {
               placeholder="Tell us more (optional)…"
               rows="2"
               class="mt-1 w-full px-4 py-3 rounded-[var(--radius)] text-[14px] resize-none transition-colors focus:outline-none"
-              style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-fg);"
+              style="background: var(--theme-surface); border: 1px solid var(--glass-card-border); color: var(--theme-fg);"
               @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
-              @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
+              @blur="($event.target as HTMLElement).style.borderColor = 'var(--glass-card-border)'"
             />
           </div>
 
@@ -480,9 +480,9 @@ async function submitLead() {
                 placeholder="Your name *"
                 autocomplete="name"
                 class="w-full px-4 py-3 rounded-[var(--radius)] text-[14px] transition-colors focus:outline-none"
-                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-fg);"
+                style="background: var(--theme-surface); border: 1px solid var(--glass-card-border); color: var(--theme-fg);"
                 @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
-                @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
+                @blur="($event.target as HTMLElement).style.borderColor = 'var(--glass-card-border)'"
               />
               <input
                 v-model="leadEmail"
@@ -490,9 +490,9 @@ async function submitLead() {
                 placeholder="Email address *"
                 autocomplete="email"
                 class="w-full px-4 py-3 rounded-[var(--radius)] text-[14px] transition-colors focus:outline-none"
-                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-fg);"
+                style="background: var(--theme-surface); border: 1px solid var(--glass-card-border); color: var(--theme-fg);"
                 @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
-                @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
+                @blur="($event.target as HTMLElement).style.borderColor = 'var(--glass-card-border)'"
               />
               <input
                 v-model="leadPhone"
@@ -500,9 +500,9 @@ async function submitLead() {
                 placeholder="Phone (optional)"
                 autocomplete="tel"
                 class="w-full px-4 py-3 rounded-[var(--radius)] text-[14px] transition-colors focus:outline-none"
-                style="background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); color: var(--theme-fg);"
+                style="background: var(--theme-surface); border: 1px solid var(--glass-card-border); color: var(--theme-fg);"
                 @focus="($event.target as HTMLElement).style.borderColor = 'color-mix(in srgb, var(--theme-accent) 50%, transparent)'"
-                @blur="($event.target as HTMLElement).style.borderColor = 'rgba(255,255,255,0.08)'"
+                @blur="($event.target as HTMLElement).style.borderColor = 'var(--glass-card-border)'"
               />
             </div>
 

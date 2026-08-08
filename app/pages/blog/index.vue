@@ -49,7 +49,7 @@ const { data: posts, pending, error } = await useFetch<BlogPost[]>('/api/blog')
 .blog-index-hero {
   padding: 48px 20px 36px;
   text-align: center;
-  background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(99,102,241,.18), transparent);
+  background: radial-gradient(ellipse 80% 60% at 50% -20%, color-mix(in srgb, var(--theme-accent) 16%, transparent), transparent);
   border-bottom: 1px solid var(--glass-card-border);
 }
 .blog-index-heading {

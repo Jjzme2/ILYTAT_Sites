@@ -89,6 +89,27 @@
   --status-warn: #7d6000;  /* 5.6:1 — matches --theme-accent */
   --status-bad:  #b3261e;
 
+  /* Inline code and callouts.
+     These were hardcoded per-file with values that assumed a dark page —
+     #1e1e2e code blocks and indigo tints sat unreadably on the light theme,
+     and indigo is not a colour this site uses anywhere else. Tinted from the
+     surface so they follow whichever theme is active. */
+  /* Hottest point of the hover glow. White reads as "hot" on a dark page but
+     vanishes on a light one, so light mode uses a saturated gold core. */
+  --lumen-core:       color-mix(in srgb, var(--theme-accent-bright) 88%, white);
+  --scrim:            rgba(20, 18, 16, 0.45);
+  --code-bg:          rgba(20, 18, 16, 0.06);
+  --code-fg:          #33302b;
+  --quote-bg:         rgba(20, 18, 16, 0.035);
+  --callout-info-bg:     rgba(184, 134, 11, 0.09);
+  --callout-info-border: rgba(184, 134, 11, 0.30);
+  --callout-warn-bg:     rgba(125, 96, 0, 0.09);
+  --callout-warn-border: rgba(125, 96, 0, 0.30);
+  --callout-ok-bg:       rgba(15, 123, 61, 0.09);
+  --callout-ok-border:   rgba(15, 123, 61, 0.30);
+  --callout-bad-bg:      rgba(179, 38, 30, 0.08);
+  --callout-bad-border:  rgba(179, 38, 30, 0.28);
+
   --mosaic-bg:   none;
   --mosaic-size: 48px 48px;
 }
@@ -159,6 +180,21 @@
   --status-warn: #f5c518;
   --status-bad:  #ff8f85;
 
+  /* Dark-theme counterparts — see the note in the light block. */
+  --lumen-core:       rgba(255, 255, 255, 0.55);
+  --scrim:            rgba(0, 0, 0, 0.65);
+  --code-bg:          rgba(255, 255, 255, 0.07);
+  --code-fg:          #c8c4be;
+  --quote-bg:         rgba(255, 255, 255, 0.04);
+  --callout-info-bg:     rgba(245, 197, 24, 0.10);
+  --callout-info-border: rgba(245, 197, 24, 0.28);
+  --callout-warn-bg:     rgba(245, 197, 24, 0.10);
+  --callout-warn-border: rgba(245, 197, 24, 0.28);
+  --callout-ok-bg:       rgba(94, 224, 141, 0.10);
+  --callout-ok-border:   rgba(94, 224, 141, 0.28);
+  --callout-bad-bg:      rgba(255, 143, 133, 0.10);
+  --callout-bad-border:  rgba(255, 143, 133, 0.28);
+
   --mosaic-bg:   none;
   --mosaic-size: 48px 48px;
 }
@@ -183,6 +219,47 @@ html {
   background-color: var(--theme-bg);
   background-image: var(--mosaic-bg);
   background-size: var(--mosaic-size);
+}
+
+/* ── @nuxt/ui bridge ───────────────────────────────────────────────────────── */
+/* @nuxt/ui ships `body { background-color: var(--ui-bg); color: var(--ui-text);
+   color-scheme: light }`, and switches those tokens under a `.dark` class that
+   nothing here ever sets — this site themes via `data-theme` on <html>.
+
+   Left alone: the page body stays white in dark mode (only hidden where a page
+   wrapper happens to paint over it, so it showed through on overscroll and any
+   uncovered gap), and `color-scheme: light` forced native scrollbars, form
+   controls and autofill to render light on a near-black page.
+
+   Mapping the tokens rather than only overriding body means any @nuxt/ui
+   component picks up the active theme too, instead of each one needing a patch.
+   These rules follow the @import above, so they win on source order.           */
+:root {
+  color-scheme: light;
+  --ui-bg:              var(--theme-bg);
+  --ui-bg-muted:        var(--theme-surface-alt);
+  --ui-bg-elevated:     var(--theme-surface);
+  --ui-bg-accented:     var(--theme-surface-deep);
+  --ui-bg-inverted:     var(--theme-fg);
+  --ui-text:            var(--theme-text-body);
+  --ui-text-highlighted: var(--theme-fg);
+  --ui-text-toned:      var(--theme-text-hi);
+  --ui-text-muted:      var(--theme-text-muted);
+  --ui-text-dimmed:     var(--theme-text-ghost);
+  --ui-text-inverted:   var(--theme-bg);
+  --ui-border:          var(--glass-card-border);
+  --ui-border-muted:    var(--glass-card-bg);
+  --ui-border-accented: var(--glass-card-border);
+  --ui-border-inverted: var(--theme-fg);
+}
+
+[data-theme="dark"] {
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--theme-bg);
+  color: var(--theme-text-body);
 }
 
 /* ── Page transitions ──────────────────────────────────────────────────────── */

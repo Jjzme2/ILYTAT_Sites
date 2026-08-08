@@ -20,7 +20,7 @@ defineProps<{
       <LumenSurface
         v-for="(t, i) in testimonials"
         :key="t.id"
-        class="glass-deep rounded-[var(--radius)] flex flex-col transition-[border-color,box-shadow] duration-300 hover:border-[var(--glass-card-border)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.35)]"
+        class="glass-deep rounded-[var(--radius)] flex flex-col transition-[border-color,box-shadow] duration-300 hover:border-[var(--glass-card-border)] hover:shadow-[var(--card-shadow)]"
         data-reveal
         :data-reveal-delay="i * 100">
         <span class="absolute top-0 right-5 font-serif text-[96px] leading-none text-(--theme-accent)/[0.055] select-none pointer-events-none translate-y-[-8px]" aria-hidden="true">"</span>

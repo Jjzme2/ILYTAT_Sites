@@ -24,7 +24,7 @@
       <div class="mb-6">
         <p class="font-mono text-[8px] tracking-[2.5px] uppercase text-(--theme-text-ghost) mb-3 flex items-center gap-3">
           <span>Mobile</span>
-          <span class="flex-1 h-px" style="background: rgba(255,255,255,0.04)" />
+          <span class="flex-1 h-px" style="background: var(--glass-card-border)" />
         </p>
         <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div
@@ -44,7 +44,7 @@
       <div class="mb-8">
         <p class="font-mono text-[8px] tracking-[2.5px] uppercase text-(--theme-text-ghost) mb-3 flex items-center gap-3">
           <span>Desktop</span>
-          <span class="flex-1 h-px" style="background: rgba(255,255,255,0.04)" />
+          <span class="flex-1 h-px" style="background: var(--glass-card-border)" />
         </p>
         <div class="grid grid-cols-2 gap-3 md:grid-cols-4">
           <div
@@ -70,7 +70,7 @@
     <!-- Bottom border -->
     <div
       class="absolute bottom-0 left-0 right-0 h-px pointer-events-none"
-      style="background: linear-gradient(to right, transparent, rgba(255,255,255,0.04) 50%, transparent)"
+      style="background: linear-gradient(to right, transparent, var(--glass-card-border) 50%, transparent)"
       aria-hidden="true" />
 
   </div>

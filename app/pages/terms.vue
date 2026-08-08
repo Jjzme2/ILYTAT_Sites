@@ -156,15 +156,15 @@ useHead({
 
 <style scoped>
 .terms-page {
-  background: #0f0f11;
-  color: #f0ece6;
+  background: var(--theme-bg);
+  color: var(--theme-fg);
   min-height: 100vh;
   font-family: 'Inter', sans-serif;
 }
 
 .terms-nav {
   padding: 20px 48px;
-  border-bottom: 1px solid #2a2a32;
+  border-bottom: 1px solid var(--glass-card-border);
 }
 
 @media (max-width: 640px) {
@@ -177,12 +177,12 @@ useHead({
   font-weight: 700;
   font-size: 15px;
   letter-spacing: 1px;
-  color: #f0ece6;
+  color: var(--theme-fg);
   text-decoration: none;
 }
 
 .logo span {
-  color: #f5c518;
+  color: var(--theme-accent);
 }
 
 .terms-body {
@@ -202,7 +202,7 @@ h1 {
 
 .updated {
   font-size: 13px;
-  color: #68667a;
+  color: var(--theme-text-muted);
   margin-bottom: 40px;
 }
 
@@ -212,11 +212,11 @@ h2 {
   font-weight: 700;
   margin-top: 40px;
   margin-bottom: 12px;
-  color: #f0ece6;
+  color: var(--theme-fg);
 }
 
 p, li {
-  color: #b8b4ae;
+  color: var(--theme-text-body);
   font-size: 15px;
 }
 
@@ -230,7 +230,7 @@ li {
 }
 
 a {
-  color: #f5c518;
+  color: var(--theme-accent);
   text-decoration: none;
 }
 
@@ -241,7 +241,7 @@ a:hover {
 .terms-back {
   margin-top: 64px;
   padding-top: 24px;
-  border-top: 1px solid #2a2a32;
+  border-top: 1px solid var(--glass-card-border);
   font-size: 14px;
   display: flex;
   gap: 12px;
@@ -249,6 +249,6 @@ a:hover {
 }
 
 .sep {
-  color: #3a3840;
+  color: var(--theme-text-faint);
 }
 </style>

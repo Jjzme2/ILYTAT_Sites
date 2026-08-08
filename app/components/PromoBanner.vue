@@ -61,8 +61,8 @@ function dismiss() {
   justify-content: center;
   gap: 14px;
   padding: 10px 44px 10px 16px;
-  background: #f5c518;
-  color: #18181c;
+  background: var(--theme-accent-bright);
+  color: var(--theme-cta-text);
   font-size: 13.5px;
   font-weight: 500;
   position: relative;
@@ -77,7 +77,7 @@ function dismiss() {
   font-weight: 700;
   font-size: 12px;
   letter-spacing: 0.3px;
-  color: #18181c;
+  color: var(--theme-cta-text);
   background: rgba(0, 0, 0, 0.12);
   border-radius: 4px;
   padding: 4px 12px;
@@ -95,7 +95,7 @@ function dismiss() {
   background: none;
   border: none;
   cursor: pointer;
-  color: #18181c;
+  color: var(--theme-cta-text);
   opacity: 0.6;
   padding: 4px;
   display: flex;

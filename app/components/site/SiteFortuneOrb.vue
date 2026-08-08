@@ -203,7 +203,7 @@ function reset(): void {
 }
 
 .orb-btn:focus-visible {
-  box-shadow: 0 0 0 3px var(--focus-ring, rgba(245,197,24,0.55));
+  box-shadow: 0 0 0 3px var(--focus-ring);
 }
 
 .orb-btn:hover:not(:disabled):not(.is-spinning):not(.is-revealed) {
@@ -234,11 +234,11 @@ function reset(): void {
 
 /* ── SVG fills ───────────────────────────────────────────────────────────── */
 .yang-fill {
-  fill: color-mix(in srgb, var(--theme-accent) 22%, var(--theme-surface, #141210));
+  fill: color-mix(in srgb, var(--theme-accent) 22%, var(--theme-surface));
 }
 
 .yin-fill {
-  fill: var(--theme-bg, #0d0b09);
+  fill: var(--theme-bg);
 }
 
 .yang-dot {
@@ -246,7 +246,7 @@ function reset(): void {
 }
 
 .yin-dot {
-  fill: var(--theme-bg, #0d0b09);
+  fill: var(--theme-bg);
 }
 
 .orb-border {
@@ -271,7 +271,7 @@ function reset(): void {
   font-size: 9px;
   letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: var(--theme-text-ghost, #2e2a26);
+  color: var(--theme-text-ghost);
   white-space: nowrap;
   pointer-events: none;
 }
@@ -311,7 +311,7 @@ function reset(): void {
   font-size: 8px;
   letter-spacing: 2px;
   text-transform: uppercase;
-  color: var(--theme-text-ghost, #2e2a26);
+  color: var(--theme-text-ghost);
   margin: 0;
 }
 
@@ -320,7 +320,7 @@ function reset(): void {
   font-style: italic;
   font-size: 13.5px;
   line-height: 1.75;
-  color: var(--theme-fg, #f0ece6);
+  color: var(--theme-fg);
   margin: 0;
 }
 
