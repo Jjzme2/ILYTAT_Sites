@@ -764,9 +764,10 @@ const logsFilter    = ref<'all' | 'critical' | 'error' | 'warn' | 'info'>('all')
 
 const LEVEL_COLOR: Record<string, string> = {
   critical: 'var(--status-bad)',
-  error:    '#ea580c',
+  // Between warn and critical; derived from the bad token so it tracks the theme.
+  error:    'color-mix(in srgb, var(--status-bad) 78%, var(--theme-accent))',
   warn:     'var(--status-warn)',
-  info:     '#6b7280',
+  info:     'var(--theme-text-muted)',
 }
 
 const filteredLogs = computed(() =>
@@ -812,7 +813,7 @@ const SPAM_REASON_LABEL: Record<SpamAttempt['reason'], string> = {
 }
 
 const SPAM_REASON_COLOR: Record<SpamAttempt['reason'], string> = {
-  honeypot:  '#7c3aed',
+  honeypot:  'var(--theme-text-muted)',
   turnstile: 'var(--status-bad)',
   gibberish: 'var(--status-warn)',
 }
@@ -1952,7 +1953,7 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
             <span style="font-size:13px;color:var(--theme-text-body);">Status:</span>
             <span
               style="display:inline-block;padding:2px 10px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;"
-              :style="totpEnabled ? 'background:#16a34a22;color:var(--status-good);border:1px solid var(--status-good)44;' : 'background:var(--status-bad)1a;color:var(--status-bad);border:1px solid var(--status-bad)33;'"
+              :style="totpEnabled ? 'background:color-mix(in srgb, var(--status-good) 14%, transparent);color:var(--status-good);border:1px solid color-mix(in srgb, var(--status-good) 40%, transparent);' : 'background:color-mix(in srgb, var(--status-bad) 12%, transparent);color:var(--status-bad);border:1px solid color-mix(in srgb, var(--status-bad) 30%, transparent);'"
             >{{ totpEnabled ? 'Enabled' : 'Disabled' }}</span>
             <button v-if="!totpEnabled" class="submit-btn" style="padding:6px 14px;font-size:12px;" :disabled="totpSetupLoading" @click="totpGenerateSecret">
               {{ totpSetupLoading ? 'Generating…' : 'Set Up 2FA' }}
@@ -2169,7 +2170,7 @@ h1 {
   align-items: center;
   gap: 12px;
   margin: 20px 0 16px;
-  color: #3a3840;
+  color: var(--theme-text-faint);
   font-size: 12px;
 }
 .login-divider::before,
@@ -2292,7 +2293,7 @@ h1 {
 .palette-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.55);
+  background: var(--scrim);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   z-index: 900;
@@ -2305,11 +2306,11 @@ h1 {
 .palette-modal {
   width: calc(100% - 32px);
   max-width: 520px;
-  background: #18181d;
-  border: 1px solid #2e2e38;
+  background: var(--theme-surface);
+  border: 1px solid var(--glass-card-border);
   border-radius: 14px;
   overflow: hidden;
-  box-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 0 0 1px var(--glass-card-bg);
+  box-shadow: var(--card-shadow-deep), 0 0 0 1px var(--glass-card-bg);
 }
 
 .palette-search {
@@ -2317,7 +2318,7 @@ h1 {
   align-items: center;
   gap: 10px;
   padding: 14px 16px;
-  border-bottom: 1px solid #232328;
+  border-bottom: 1px solid var(--glass-card-border);
 }
 
 .palette-search-icon {
@@ -2699,7 +2700,7 @@ input[type="checkbox"] { accent-color: var(--theme-accent); width: 14px; height:
 textarea { resize: vertical; }
 
 .submit-btn {
-  background: linear-gradient(110deg, var(--theme-accent), #f09420);
+  background: linear-gradient(110deg, var(--theme-accent), var(--theme-accent-dark));
   color: var(--theme-bg);
   border: none;
   border-radius: 8px;

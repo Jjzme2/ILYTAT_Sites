@@ -64,14 +64,14 @@ function formatDate(d: Date | string | null | undefined) {
 .post-preview {
   min-height: 100%;
   font-family: var(--font-body, 'Inter', system-ui, sans-serif);
-  background: #0a0a0e;
+  background: var(--theme-bg);
 }
 
 /* Draft badge */
 .preview-badge {
   display: flex; align-items: center; justify-content: center;
-  padding: 6px; background: rgba(251,191,36,.08);
-  border-bottom: 1px solid rgba(251,191,36,.2);
+  padding: 6px; background: var(--callout-warn-bg);
+  border-bottom: 1px solid var(--callout-warn-border);
   font-size: 11px; font-weight: 600; text-transform: uppercase;
   letter-spacing: .06em; color: var(--status-warn);
 }
@@ -108,14 +108,14 @@ function formatDate(d: Date | string | null | undefined) {
   line-height: 1.2; margin: 0 0 12px;
 }
 .post-excerpt { font-size: clamp(13px, 1.8vw, 15px); color: var(--theme-text-muted); margin: 0 auto 16px; line-height: 1.6; }
-.post-byline { font-size: 13px; color: #777; display: flex; gap: 6px; justify-content: center; }
+.post-byline { font-size: 13px; color: var(--theme-text-muted); display: flex; gap: 6px; justify-content: center; }
 .byline-sep { color: var(--theme-text-ghost); }
 
 /* Cover image */
 .post-cover-img { max-width: 760px; margin: 0 auto; padding: 0 16px; }
 .post-cover-img img {
   width: 100%; border-radius: 8px; display: block;
-  margin-top: -16px; box-shadow: 0 16px 48px rgba(0,0,0,.4);
+  margin-top: -16px; box-shadow: var(--card-shadow-deep);
 }
 
 /* ── Body ──────────────────────────────────────────────────────────────────── */
@@ -137,11 +137,11 @@ function formatDate(d: Date | string | null | undefined) {
 :deep(.prose li) { margin: .3em 0; }
 :deep(.prose blockquote) {
   border-left: 3px solid var(--accent, var(--theme-accent)); margin: 1.2em 0;
-  padding: .6em 1em; background: rgba(99,102,241,.06);
+  padding: .6em 1em; background: var(--quote-bg);
   border-radius: 0 6px 6px 0; color: var(--theme-text-muted); font-style: italic;
 }
 :deep(.prose code) {
-  background: #1e1e2e; border-radius: 4px; padding: 2px 5px;
+  background: var(--code-bg); border-radius: 4px; padding: 2px 5px;
   font-family: 'Space Mono', monospace; font-size: .87em; color: var(--theme-text-hi);
 }
 :deep(.prose pre) {
@@ -156,10 +156,10 @@ function formatDate(d: Date | string | null | undefined) {
 :deep(.prose [data-callout]) {
   border-radius: 8px; margin: 1.2em 0; overflow: hidden; border: 1px solid;
 }
-:deep(.prose [data-callout='info'])    { background: rgba(99,102,241,.08);  border-color: rgba(99,102,241,.3); }
-:deep(.prose [data-callout='warning']) { background: rgba(251,191,36,.08);  border-color: rgba(251,191,36,.3); }
-:deep(.prose [data-callout='success']) { background: rgba(34,197,94,.08);   border-color: rgba(34,197,94,.3); }
-:deep(.prose [data-callout='danger'])  { background: rgba(239,68,68,.08);   border-color: rgba(239,68,68,.3); }
+:deep(.prose [data-callout='info'])    { background: var(--callout-info-bg);  border-color: var(--callout-info-border); }
+:deep(.prose [data-callout='warning']) { background: var(--callout-warn-bg);  border-color: var(--callout-warn-border); }
+:deep(.prose [data-callout='success']) { background: var(--callout-ok-bg);   border-color: var(--callout-ok-border); }
+:deep(.prose [data-callout='danger'])  { background: var(--callout-bad-bg);   border-color: var(--callout-bad-border); }
 :deep(.prose [data-callout] .callout-type-select) { display: none; }
 :deep(.prose [data-callout] .block-exit-hint) { display: none; }
 :deep(.prose [data-callout] .callout-header),
@@ -170,7 +170,7 @@ function formatDate(d: Date | string | null | undefined) {
 }
 :deep(.prose [data-callout='info']    .callout-header) { color: var(--theme-accent); }
 :deep(.prose [data-callout='warning'] .callout-header) { color: var(--status-warn); }
-:deep(.prose [data-callout='success'] .callout-header) { color: #4ade80; }
+:deep(.prose [data-callout='success'] .callout-header) { color: var(--status-good); }
 :deep(.prose [data-callout='danger']  .callout-header) { color: var(--status-bad); }
 :deep(.prose [data-callout] .callout-content),
 :deep(.prose [data-callout] > div:last-child) { padding: 10px 14px; }

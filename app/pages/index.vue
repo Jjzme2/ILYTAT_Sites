@@ -164,7 +164,7 @@
             class="glass-deep rounded-[var(--radius)] flex flex-col no-underline text-inherit transition-[border-color,box-shadow] duration-300 group"
             :class="
               proj.url
-                ? 'hover:border-[rgba(245,197,24,0.22)] hover:shadow-[0_6px_24px_rgba(0,0,0,0.4)]'
+                ? 'hover:border-[color-mix(in_srgb,var(--theme-accent)_30%,transparent)] hover:shadow-[var(--card-shadow)]'
                 : ''
             "
             :href="proj.url ? normalizeUrl(proj.url) : undefined"
@@ -252,6 +252,11 @@
       />
 
       <LazySiteAbout />
+
+      <!-- Sits after About and before the FAQ: the founder section establishes
+           who is doing the work, the posts are the evidence, and the FAQ then
+           answers whatever is left. Renders nothing when no post is published. -->
+      <LazySiteBlogPreview />
 
       <!-- ── FAQ ───────────────────────────────────────────────────────────── -->
       <section

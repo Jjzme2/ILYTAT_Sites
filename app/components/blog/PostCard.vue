@@ -45,7 +45,7 @@ function formatDate(d: Date | string | null | undefined) {
 }
 .post-card:hover {
   border-color: var(--accent, var(--theme-accent));
-  box-shadow: 0 4px 18px rgba(0,0,0,.25);
+  box-shadow: var(--card-shadow);
 }
 
 .post-cover { aspect-ratio: 16/9; overflow: hidden; }

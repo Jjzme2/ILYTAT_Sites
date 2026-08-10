@@ -611,7 +611,7 @@ function isAiPost(post: BlogPost) {
 /* Post list */
 .ba-list { display: flex; flex-direction: column; gap: 1px; border: 1px solid var(--theme-surface-alt); border-radius: 8px; overflow: hidden; }
 .ba-item { display: flex; align-items: stretch; gap: 0; background: var(--theme-surface-deep); transition: background .15s; }
-.ba-item:hover { background: #16161e; }
+.ba-item:hover { background: var(--theme-surface-alt); }
 .ba-item-accent { width: 4px; flex-shrink: 0; }
 .ba-item-info   { flex: 1; padding: 14px 16px; min-width: 0; }
 
@@ -649,13 +649,13 @@ function isAiPost(post: BlogPost) {
 
 /* ── Editor Modal ─────────────────────────────────────────────────────────── */
 .ba-modal-overlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,.7); z-index: 1000;
+  position: fixed; inset: 0; background: var(--scrim); z-index: 1000;
   display: flex; align-items: stretch; justify-content: flex-end;
 }
 .ba-modal {
   width: min(820px, 96vw); display: flex; flex-direction: column;
-  background: #0f0f14; overflow: hidden;
-  box-shadow: -8px 0 40px rgba(0,0,0,.5);
+  background: var(--theme-surface); overflow: hidden;
+  box-shadow: var(--card-shadow-deep);
   transition: width .25s ease;
 }
 .ba-modal-wide { width: 100vw; }
@@ -672,7 +672,7 @@ function isAiPost(post: BlogPost) {
 }
 .ba-modal-close:hover { background: var(--glass-card-border); color: var(--theme-fg); }
 .ba-preview-toggle {
-  background: none; border: 1px solid #3a3a48; border-radius: 5px;
+  background: none; border: 1px solid var(--glass-card-border); border-radius: 5px;
   color: var(--theme-text-muted); font-size: 12px; padding: 5px 12px; cursor: pointer;
   transition: border-color .15s, color .15s, background .15s;
   white-space: nowrap;
@@ -685,7 +685,7 @@ function isAiPost(post: BlogPost) {
 
 .ba-modal-split  { display: flex; flex-direction: row; overflow: hidden; }
 .ba-editor-pane  { flex: 0 0 50%; overflow-y: auto; border-right: 1px solid var(--theme-surface-alt); }
-.ba-preview-pane { flex: 1; overflow-y: auto; background: #0a0a0e; }
+.ba-preview-pane { flex: 1; overflow-y: auto; background: var(--theme-bg); }
 
 @media (max-width: 768px) {
   .ba-modal-split  { flex-direction: column; }

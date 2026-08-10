@@ -59,7 +59,7 @@ const attrs = useAttrs()
   z-index: 0;
   background:
     /* White-hot core: very small, very bright */
-    radial-gradient(circle 14% at 42% 44%, rgba(255, 255, 255, 0.55) 0%, transparent 100%),
+    radial-gradient(circle 14% at 42% 44%, var(--lumen-core) 0%, transparent 100%),
     /* Primary color burst */
     radial-gradient(circle 58% at 38% 42%, var(--ex-c1, var(--theme-accent)) 0%, transparent 70%),
     /* Secondary color burst — offset for depth */
