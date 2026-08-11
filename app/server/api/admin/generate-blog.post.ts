@@ -14,7 +14,7 @@ export default defineEventHandler(async (event) => {
   await requireAdmin(event)
 
   const cfg = useRuntimeConfig(event)
-  if (!cfg.openrouterApiKey && !cfg.opencloudApiKey && !cfg.geminiApiKey) {
+  if (!cfg.openrouterApiKey && !cfg.opencloudApiKey) {
     throw createError({
       statusCode: 503,
       statusMessage: 'No AI provider configured. Set OPENROUTER_API_KEY in the environment.',

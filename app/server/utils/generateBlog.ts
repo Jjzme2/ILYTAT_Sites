@@ -2,8 +2,7 @@
  * generateBlog.ts
  *
  * Calls the AI to write a blog post for ILYTAT, then persists it to Firestore.
- * Provider order: Gemini (primary) → OpenCloud/OpenRouter (fallback).
- * Pattern mirrors app/utils/aiProvider.js.
+ * Provider: OpenRouter, via the shared client in server/utils/ai.ts.
  *
  * Called by:
  *   - POST /api/admin/generate-blog  (manual admin trigger)
@@ -11,7 +10,7 @@
  */
 
 import { firestoreRequest, toFirestoreFields } from "~/server/utils/firebaseAdmin";
-import { callAI as callProvider, parseAiJson } from "~/server/utils/ai";
+import { callAI as callProvider, parseAiJson, BACKGROUND_TIMEOUT_MS } from "~/server/utils/ai";
 import { sanitizePostHtml } from "~/server/utils/sanitizeHtml";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -77,6 +76,11 @@ Content requirements:
 - At least one <ul> or <ol> list
 - Close with a short CTA paragraph mentioning ILYTAT by name
 - Tone: warm, practical, no tech jargon
+
+nextFocalPoint and nextFocalPointWhy are the final two keys and are never
+optional. They set next week's topic automatically, so an object that omits them
+leaves the schedule with nothing to write about. If you are running long, shorten
+the post rather than dropping them.
 `.trim();
 
 // ── Startup config warnings ───────────────────────────────────────────────────
@@ -97,6 +101,11 @@ async function callAI(userMessage: string): Promise<string> {
     // Configurable: OpenRouter reserves against the requested ceiling, so this
     // has to fit the available balance, not the expected post length.
     maxTokens: useRuntimeConfig().aiBlogMaxTokens,
+    // A whole post is a few thousand tokens of generation and routinely takes
+    // longer than the interactive default, which is what aborted this call with
+    // "The operation was aborted due to timeout". Nobody is waiting on a spinner
+    // here — a cron is — so it gets the long budget.
+    timeoutMs: BACKGROUND_TIMEOUT_MS,
   });
 }
 

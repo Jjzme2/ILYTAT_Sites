@@ -31,4 +31,7 @@ Thumbs.db
 .firebase
 
 # Claude
+# Kept out of the repo by choice. Response-format preferences belong in the
+# Claude app's own personal preferences, which apply across every chat and
+# project rather than just this one.
 CLAUDE.md

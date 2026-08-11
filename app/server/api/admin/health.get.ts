@@ -156,19 +156,19 @@ async function pricingStatus() {
  */
 function aiStatus(config: ReturnType<typeof useRuntimeConfig>) {
   const openrouter = Boolean(config.openrouterApiKey || config.opencloudApiKey)
-  const gemini = Boolean(config.geminiApiKey)
 
   return {
-    configured: openrouter || gemini,
-    primary: openrouter ? 'OpenRouter' : gemini ? 'Gemini' : null,
-    model: openrouter
-      ? (config.openrouterModel || 'google/gemini-2.5-flash')
-      : gemini
-        ? (config.geminiModel || 'gemini-2.5-flash')
-        : null,
-    fallback: openrouter && gemini ? 'Gemini' : null,
+    configured: openrouter,
+    primary: openrouter ? 'OpenRouter' : null,
+    model: openrouter ? (config.openrouterModel || 'deepseek/deepseek-chat') : null,
+    // There is no second provider by design — see server/utils/ai.ts.
+    fallback: null,
     dailyCap: config.aiDailyRequestCap,
-    hint: openrouter || gemini
+    // Surfaced because it is the setting most likely to need changing: too low
+    // and long posts are truncated, too high and OpenRouter holds more credit
+    // per request than it needs to.
+    blogMaxTokens: config.aiBlogMaxTokens,
+    hint: openrouter
       ? null
       : 'Set NUXT_OPENROUTER_API_KEY in Vercel (runtime, no redeploy needed).',
   }

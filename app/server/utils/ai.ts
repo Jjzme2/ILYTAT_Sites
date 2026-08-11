@@ -7,13 +7,19 @@
  *
  * Provider is OpenRouter (OpenAI-compatible). One key, one bill, and the model
  * is a config value rather than a URL path — so a model being retired is an env
- * change, not a deploy. Gemini stays as an optional fallback.
+ * change, not a deploy.
+ *
+ * There is deliberately no fallback provider. A Gemini fallback used to sit
+ * behind this; with its credit depleted it could only ever turn one clear
+ * failure into two confusing ones, and it ran after OpenRouter had already
+ * spent the time budget. One provider that reports honestly beats two that
+ * disagree.
  *
  * Two things this fixes about the old code:
  *
  *   1. Errors were swallowed. `callAI` caught the real provider failure into a
- *      console.warn, then threw "No AI provider available. Configure
- *      GEMINI_API_KEY" — which was false whenever that key WAS set and the
+ *      console.warn, then threw a generic "No AI provider available" — which
+ *      was false whenever a key WAS set and the
  *      provider had failed for some other reason (retired model, bad key,
  *      quota). Every underlying error is now preserved and surfaced.
  *
@@ -33,7 +39,30 @@ export interface AiCallOptions {
   temperature?: number
   /** Overrides the configured model. */
   model?: string
+  /**
+   * How long to wait for the provider, in ms.
+   *
+   * This was a single hardcoded 45s for every call, which is wrong in both
+   * directions. A visitor waiting on the review writer will not sit through 45
+   * seconds — they reload or leave. A blog post, meanwhile, is a few thousand
+   * tokens of generation that can legitimately take longer than 45s, and when
+   * it did, the call aborted with "The operation was aborted due to timeout"
+   * and the failure read like a provider outage rather than a deadline.
+   *
+   * Defaults to INTERACTIVE_TIMEOUT_MS. Background work should pass
+   * BACKGROUND_TIMEOUT_MS.
+   */
+  timeoutMs?: number
 }
+
+/** A person is watching a spinner. Fail fast enough that they can retry. */
+export const INTERACTIVE_TIMEOUT_MS = 28_000
+/**
+ * Nobody is waiting; a cron is. Bounded by the serverless function's own
+ * ceiling — overrunning that kills the process with no error handler and so no
+ * email, which is strictly worse than a clean failure.
+ */
+export const BACKGROUND_TIMEOUT_MS = 50_000
 
 export class AiError extends Error {
   constructor(
@@ -111,7 +140,7 @@ async function callOpenRouter(opts: AiCallOptions, cfg: {
         'HTTP-Referer': cfg.siteUrl,
         'X-Title': 'ILYTAT',
       },
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? INTERACTIVE_TIMEOUT_MS),
       body: JSON.stringify({
         model: opts.model || cfg.model,
         messages: [
@@ -153,65 +182,37 @@ async function callOpenRouter(opts: AiCallOptions, cfg: {
   }
 
   const data = (await res.json()) as OpenAiResponse
-  const text = data.choices?.[0]?.message?.content
+  const choice = data.choices?.[0]
+  const text = choice?.message?.content
   if (!text) {
-    const reason = data.choices?.[0]?.finish_reason ?? data.error?.message ?? 'unknown'
+    const reason = choice?.finish_reason ?? data.error?.message ?? 'unknown'
     throw new AiError(`OpenRouter returned no content (${reason})`, 'openrouter')
   }
-  return text
-}
 
-async function callGemini(opts: AiCallOptions, cfg: { key: string, model: string }): Promise<string> {
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${cfg.model}:generateContent?key=${cfg.key}`
-  let res: Response
-  try {
-    res = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(45_000),
-      body: JSON.stringify({
-        system_instruction: { parts: [{ text: opts.system }] },
-        contents: [{ role: 'user', parts: [{ text: opts.user }] }],
-        generationConfig: {
-          temperature: opts.temperature ?? 0.7,
-          maxOutputTokens: opts.maxTokens ?? 2048,
-          ...(opts.json ? { responseMimeType: 'application/json' } : {}),
-        },
-      }),
-    })
-  }
-  catch (e) {
-    const why = e instanceof Error ? e.message : String(e)
-    throw new AiError(`Gemini request failed: ${why}`, 'gemini')
-  }
-
-  if (!res.ok) {
-    const body = await res.text().catch(() => '')
+  // A truncated response is worse than an empty one, because it looks like a
+  // success. finish_reason was only consulted when the content was empty, so a
+  // response cut off at max_tokens was returned intact and failed later as a
+  // JSON parse error — which names the wrong cause entirely.
+  //
+  // It also fails asymmetrically: JSON is emitted in field order, so the tail
+  // is lost first. For blog generation that is precisely nextFocalPoint and
+  // nextFocalPointWhy, which is why next week's topic kept coming back empty.
+  if (choice.finish_reason === 'length') {
     throw new AiError(
-      `Gemini ${res.status}: ${body.slice(0, 400) || res.statusText}`,
-      'gemini',
-      res.status,
-    )
-  }
-
-  const data = await res.json() as {
-    candidates?: { content?: { parts?: { text?: string }[] }, finishReason?: string }[]
-  }
-  const text = data.candidates?.[0]?.content?.parts?.[0]?.text
-  if (!text) {
-    throw new AiError(
-      `Gemini returned no content (finishReason: ${data.candidates?.[0]?.finishReason ?? 'unknown'})`,
-      'gemini',
+      `OpenRouter hit the ${opts.maxTokens ?? 2048}-token ceiling and the reply was cut off `
+      + 'mid-structure, so the trailing fields are missing. Raise AI_BLOG_MAX_TOKENS '
+      + '(or lower the requested length).',
+      'openrouter',
     )
   }
   return text
 }
 
 /**
- * Calls the configured provider, falling back to Gemini if one is set.
+ * Calls OpenRouter.
  *
- * On total failure it throws an AiError naming every provider tried and why
- * each failed, rather than a generic "no provider configured".
+ * On failure it throws an AiError carrying the provider's own message, rather
+ * than a generic "no provider configured".
  */
 export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useRuntimeConfig>[0]): Promise<string> {
   const cfg = useRuntimeConfig(event)
@@ -223,20 +224,8 @@ export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useR
       return await callOpenRouter(opts, {
         key: orKey,
         baseUrl: cfg.openrouterBaseUrl || cfg.opencloudBaseUrl || 'https://openrouter.ai/api/v1',
-        model: cfg.openrouterModel || 'google/gemini-2.5-flash',
+        model: cfg.openrouterModel || 'deepseek/deepseek-chat',
         siteUrl: cfg.public?.siteUrl || 'https://sites.ilytat.com',
-      })
-    }
-    catch (e) {
-      failures.push(e instanceof Error ? e.message : String(e))
-    }
-  }
-
-  if (cfg.geminiApiKey) {
-    try {
-      return await callGemini(opts, {
-        key: cfg.geminiApiKey,
-        model: cfg.geminiModel || 'gemini-2.5-flash',
       })
     }
     catch (e) {
@@ -246,11 +235,14 @@ export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useR
 
   if (!failures.length) {
     throw new AiError(
-      'No AI provider configured. Set OPENROUTER_API_KEY (or GEMINI_API_KEY).',
+      'No AI provider configured. Set OPENROUTER_API_KEY.',
       'none',
     )
   }
-  throw new AiError(`All AI providers failed — ${failures.join(' | ')}`, 'all')
+  // Singular now that OpenRouter is the only provider. "All AI providers
+  // failed" implied a multi-provider outage and sent diagnosis in exactly the
+  // wrong direction when the real cause was a deadline or a token ceiling.
+  throw new AiError(`AI request failed — ${failures.join(' | ')}`, 'openrouter')
 }
 
 /**
@@ -259,7 +251,7 @@ export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useR
  * Exported so nothing has to re-derive it. The weekly blog cron had its own
  * copy of this test, written before the move to OpenRouter, and the two drifted
  * apart: `callAI` accepts `OPENROUTER_API_KEY` on its own (the base URL has a
- * default), while the cron's copy knew only about Gemini and OpenCloud and
+ * default), while the cron's copy knew only about the older providers and
  * demanded a base URL alongside the key. It also read `process.env` directly
  * rather than runtimeConfig, so it could not see a `NUXT_`-prefixed override at
  * all.
@@ -272,7 +264,7 @@ export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useR
  */
 export function hasAiProvider(event?: Parameters<typeof useRuntimeConfig>[0]): boolean {
   const cfg = useRuntimeConfig(event)
-  return Boolean(cfg.openrouterApiKey || cfg.opencloudApiKey || cfg.geminiApiKey)
+  return Boolean(cfg.openrouterApiKey || cfg.opencloudApiKey)
 }
 
 /** Parses a JSON response, tolerating a model that wrapped it in prose. */
