@@ -104,6 +104,13 @@
           geo: { "@type": "GeoCoordinates", latitude: 41.2503, longitude: -87.8384 },
           image: "https://media.ilytat.com/logo-144.webp",
           logo: "https://media.ilytat.com/logo-144.webp",
+          // Links this site to the same business elsewhere — above all the
+          // Google Business Profile, which is where the reviews and local
+          // prominence live. Omitted entirely while empty: an empty sameAs is
+          // worse than none, since it asserts the business exists nowhere else.
+          ...(Object.values(siteConfig.profiles).filter(Boolean).length
+            ? { sameAs: Object.values(siteConfig.profiles).filter(Boolean) }
+            : {}),
         }),
       },
       {
