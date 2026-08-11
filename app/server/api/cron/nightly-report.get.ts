@@ -34,6 +34,15 @@ interface LogEntry {
   data: string | null;
   priority: number;
   createdAt: string;
+  /**
+   * Identical entries collapsed into this one by the logger's dedup.
+   *
+   * Without it the digest reads a four-hundred-occurrence outage as one line,
+   * which is the opposite of what a daily summary is for.
+   */
+  repeats?: number;
+  path?: string;
+  requestId?: string;
 }
 
 interface Order {
@@ -148,7 +157,7 @@ function buildEmail(opts: {
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;white-space:nowrap;font-size:12px;color:#9ca3af;">${ct(e.createdAt)}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;">${badge(e.level)} ${areaTag(e.area)}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;font-size:13px;color:#111827;">${e.message}${e.data ? `<br><span style="font-size:11px;color:#9ca3af;font-family:monospace;">${e.data}</span>` : ""}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;font-size:13px;color:#111827;">${e.message}${e.repeats ? ` <strong style="font-size:11px;color:#b3261e;">×${e.repeats + 1}</strong>` : ""}${e.path ? `<br><span style="font-size:11px;color:#6b7280;font-family:monospace;">${e.path}${e.requestId ? ` · req:${e.requestId}` : ""}</span>` : ""}${e.data ? `<br><span style="font-size:11px;color:#9ca3af;font-family:monospace;">${e.data}</span>` : ""}</td>
       </tr>`,
       )
       .join("");
