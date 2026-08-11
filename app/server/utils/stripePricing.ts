@@ -132,25 +132,25 @@ const TIERS: Record<TierKey, {
   },
   standardHosting: {
     productId: 'prod_UGnGHV02szLvRS',
-    expectedName: 'Standard Hosting',
+    expectedName: 'Managed Hosting & Infrastructure',
     kind: 'month',
     label: 'Standard hosting, monthly',
   },
   premiumHosting: {
     productId: 'prod_UKGX81DmGc4BsR',
-    expectedName: 'Premium Hosting',
+    expectedName: 'Managed Hosting and Infrastructure (Premium)',
     kind: 'month',
     label: 'Premium hosting, monthly',
   },
   standardHostingYearly: {
     productId: 'prod_UKGars7KYxDP0x',
-    expectedName: 'Standard Hosting',
+    expectedName: 'Managed Hosting and Infrastructure -Yearly',
     kind: 'year',
     label: 'Standard hosting, yearly',
   },
   premiumHostingYearly: {
     productId: 'prod_UKGYIOhAdZi74O',
-    expectedName: 'Premium Hosting',
+    expectedName: 'Managed Hosting and Infrastructure (Premium) - Yearly',
     kind: 'year',
     label: 'Premium hosting, yearly',
   },
@@ -220,6 +220,25 @@ async function fetchProduct(id: string, key: string): Promise<StripeProduct> {
   }
 }
 
+/**
+ * Normalises a product name for comparison.
+ *
+ * The names in Stripe are inconsistent in ways that carry no meaning — one uses
+ * "&" where the others use "and", and one runs "-Yearly" together where its
+ * sibling has " - Yearly". Comparing raw strings would fail the identity check
+ * on a cosmetic difference, which reads as "the site and Stripe disagree" when
+ * they do not. Case, spacing, punctuation and the and/&/ampersand split are all
+ * flattened; the words themselves still have to match, so a genuinely
+ * mis-pinned product still fails.
+ */
+function normalizeName(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
 /** Applies every identity, shape and magnitude check. Returns null if it passes. */
 function reject(
   spec: typeof TIERS[TierKey],
@@ -230,9 +249,7 @@ function reject(
 ): string | null {
   if (product.active === false) return 'product is archived in Stripe'
 
-  const actual = (product.name ?? '').trim().toLowerCase()
-  const expected = spec.expectedName.trim().toLowerCase()
-  if (actual !== expected) {
+  if (normalizeName(product.name ?? '') !== normalizeName(spec.expectedName)) {
     return `product is named "${product.name}", expected "${spec.expectedName}"`
   }
 
