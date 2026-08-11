@@ -11,7 +11,7 @@
  */
 
 import { firestoreRequest, toFirestoreFields } from "~/server/utils/firebaseAdmin";
-import { callAI as callProvider, parseAiJson } from "~/server/utils/ai";
+import { callAI as callProvider, parseAiJson, BACKGROUND_TIMEOUT_MS } from "~/server/utils/ai";
 import { sanitizePostHtml } from "~/server/utils/sanitizeHtml";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -97,6 +97,11 @@ async function callAI(userMessage: string): Promise<string> {
     // Configurable: OpenRouter reserves against the requested ceiling, so this
     // has to fit the available balance, not the expected post length.
     maxTokens: useRuntimeConfig().aiBlogMaxTokens,
+    // A whole post is a few thousand tokens of generation and routinely takes
+    // longer than the interactive default, which is what aborted this call with
+    // "The operation was aborted due to timeout". Nobody is waiting on a spinner
+    // here — a cron is — so it gets the long budget.
+    timeoutMs: BACKGROUND_TIMEOUT_MS,
   });
 }
 

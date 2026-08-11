@@ -33,7 +33,31 @@ export interface AiCallOptions {
   temperature?: number
   /** Overrides the configured model. */
   model?: string
+  /**
+   * How long to wait for the provider, in ms.
+   *
+   * This was a single hardcoded 45s for every call, which is wrong in both
+   * directions. A visitor waiting on the review writer will not sit through 45
+   * seconds — they reload or leave. A blog post, meanwhile, is a few thousand
+   * tokens of generation that can legitimately take longer than 45s, and when
+   * it did the call aborted with "The operation was aborted due to timeout",
+   * fell through to a Gemini account with no credit, and produced a failure
+   * that looked like a provider outage rather than a deadline.
+   *
+   * Defaults to INTERACTIVE_TIMEOUT_MS. Background work should pass
+   * BACKGROUND_TIMEOUT_MS.
+   */
+  timeoutMs?: number
 }
+
+/** A person is watching a spinner. Fail fast enough that they can retry. */
+export const INTERACTIVE_TIMEOUT_MS = 28_000
+/**
+ * Nobody is waiting; a cron is. Bounded by the serverless function's own
+ * ceiling — overrunning that kills the process with no error handler and so no
+ * email, which is strictly worse than a clean failure.
+ */
+export const BACKGROUND_TIMEOUT_MS = 50_000
 
 export class AiError extends Error {
   constructor(
@@ -111,7 +135,7 @@ async function callOpenRouter(opts: AiCallOptions, cfg: {
         'HTTP-Referer': cfg.siteUrl,
         'X-Title': 'ILYTAT',
       },
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? INTERACTIVE_TIMEOUT_MS),
       body: JSON.stringify({
         model: opts.model || cfg.model,
         messages: [
@@ -168,7 +192,7 @@ async function callGemini(opts: AiCallOptions, cfg: { key: string, model: string
     res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      signal: AbortSignal.timeout(45_000),
+      signal: AbortSignal.timeout(opts.timeoutMs ?? INTERACTIVE_TIMEOUT_MS),
       body: JSON.stringify({
         system_instruction: { parts: [{ text: opts.system }] },
         contents: [{ role: 'user', parts: [{ text: opts.user }] }],
@@ -216,7 +240,11 @@ async function callGemini(opts: AiCallOptions, cfg: { key: string, model: string
 export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useRuntimeConfig>[0]): Promise<string> {
   const cfg = useRuntimeConfig(event)
   const failures: string[] = []
+  const startedAt = Date.now()
+  const budgetMs = opts.timeoutMs ?? INTERACTIVE_TIMEOUT_MS
 
+  // OpenRouter is and stays the primary. Gemini runs only if OpenRouter is
+  // unconfigured or fails with time still on the clock.
   const orKey = cfg.openrouterApiKey || cfg.opencloudApiKey
   if (orKey) {
     try {
@@ -232,9 +260,20 @@ export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useR
     }
   }
 
-  if (cfg.geminiApiKey) {
+  // Falling back is only useful if there is time left to fall back *into*.
+  // When OpenRouter burns the whole budget on a timeout, the serverless function
+  // is already near its own ceiling; starting a second provider from there
+  // either overruns it — killing the process with no error handler, so no email
+  // and no log — or fails anyway and buries the real cause ("timed out") under a
+  // second, unrelated message. That is exactly how a deadline problem came to
+  // look like a provider outage.
+  const elapsed = Date.now() - startedAt
+  const remaining = budgetMs - elapsed
+  const MIN_FALLBACK_MS = 8_000
+
+  if (cfg.geminiApiKey && remaining >= MIN_FALLBACK_MS) {
     try {
-      return await callGemini(opts, {
+      return await callGemini({ ...opts, timeoutMs: remaining }, {
         key: cfg.geminiApiKey,
         model: cfg.geminiModel || 'gemini-2.5-flash',
       })
@@ -242,6 +281,12 @@ export async function callAI(opts: AiCallOptions, event?: Parameters<typeof useR
     catch (e) {
       failures.push(e instanceof Error ? e.message : String(e))
     }
+  }
+  else if (cfg.geminiApiKey) {
+    failures.push(
+      `Gemini fallback skipped — OpenRouter used ${Math.round(elapsed / 1000)}s of the `
+      + `${Math.round(budgetMs / 1000)}s budget, leaving too little to retry.`,
+    )
   }
 
   if (!failures.length) {

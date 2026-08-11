@@ -211,6 +211,18 @@ export default defineNuxtConfig({
       config: {
         crons: cronJobs,
       },
+      // Sibling of `config`, not inside it — this writes each function's
+      // .vc-config.json, whereas `config` writes the top-level output config.
+      //
+      // Blog generation waits on a language model writing ~1000 words, which
+      // does not fit the platform default. Left unset, the function is killed
+      // mid-generation with no error handler — no log, no email, and no clue
+      // why the post never appeared. 60s is the Hobby ceiling; the AI client's
+      // background timeout sits just under it, so the deadline is hit by our
+      // code, which can report it, rather than by the platform, which cannot.
+      functions: {
+        maxDuration: 60,
+      },
     },
     // SWR route rules — stale data served instantly, revalidated in background.
     routeRules: {
