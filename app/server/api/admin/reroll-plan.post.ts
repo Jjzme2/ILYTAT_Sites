@@ -14,8 +14,8 @@
  * Body: { current?: string, avoid?: string[], steer?: string }
  */
 import { callAI, fenceUserInput, looksOffTask, parseAiJson } from '~/server/utils/ai'
+import { recentTitles } from '~/server/utils/blogHistory'
 import { requireAdmin } from '~/server/utils/verifyAdmin'
-import { firestoreRequest, fromFirestoreFields } from '~/server/utils/firebaseAdmin'
 
 const SYSTEM = `You suggest blog topics for ILYTAT LLC, a web design company in Manteno, Illinois serving small businesses in Kankakee County.
 
@@ -35,22 +35,6 @@ Return ONLY this JSON:
 {"focalPoint":"the question, 40-90 characters","why":"one short sentence on who this is for and why it earns a click"}`
 
 interface Suggestion { focalPoint?: string, why?: string }
-
-/** Recent post titles, so a reroll does not land on something already written. */
-async function recentTitles(limit = 15): Promise<string[]> {
-  try {
-    const res = await firestoreRequest('GET', 'blog_posts')
-    const docs = (res.documents ?? []) as { fields: Record<string, unknown> }[]
-    return docs
-      .map(d => String((fromFirestoreFields(d.fields) as { title?: string }).title ?? '').trim())
-      .filter(Boolean)
-      .slice(-limit)
-  }
-  catch {
-    // Best-effort: a Firestore hiccup should not block a reroll.
-    return []
-  }
-}
 
 export default defineEventHandler(async (event) => {
   await requireAdmin(event)
