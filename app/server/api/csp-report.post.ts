@@ -70,7 +70,29 @@ export default defineEventHandler(async (event) => {
   // cannot become a write amplifier against the log collection.
   rateLimit({ scope: 'csp-report', ip, max: 20, windowMs: 60_000 })
 
-  const body = await readBody(event).catch(() => null)
+  // Read the raw text and parse it here rather than relying on readBody.
+  //
+  // Browsers post these as `application/csp-report` or
+  // `application/reports+json`, and h3 only auto-parses JSON content types. It
+  // handed back an empty object instead, which sailed straight through the
+  // checks below and produced log entries with every field blank — worse than
+  // no entry, because an empty row still looks like data.
+  const raw = await readRawBody(event).catch(() => null)
+  if (!raw) return setResponseStatus(event, 204)
+
+  let body: unknown
+  try {
+    body = JSON.parse(typeof raw === 'string' ? raw : raw.toString('utf8'))
+  }
+  catch {
+    // Log what actually arrived rather than dropping it — the shape is the
+    // thing we would need to add support for.
+    await log('warn', 'security', 'Unparseable CSP report', {
+      sample: String(raw).slice(0, 300),
+      contentType: getRequestHeader(event, 'content-type') ?? '',
+    }, { ip })
+    return setResponseStatus(event, 204)
+  }
   if (!body || typeof body !== 'object') return setResponseStatus(event, 204)
 
   // Browsers send either the legacy `{"csp-report": {...}}` shape (report-uri)
@@ -85,6 +107,17 @@ export default defineEventHandler(async (event) => {
     const source = pick(r, 'sourceFile', 'source-file').slice(0, 200)
 
     if (IGNORED_SOURCES.some(p => blocked.startsWith(p) || source.startsWith(p))) continue
+
+    // A report naming neither a directive nor a blocked resource tells us
+    // nothing. Record the payload once so the shape can be supported, rather
+    // than emitting "CSP would have blocked unknown" with every field empty.
+    if (directive === 'unknown' && !blocked && !source) {
+      await log('warn', 'security', 'CSP report in an unrecognised shape', {
+        keys: Object.keys(r).slice(0, 12).join(', '),
+        sample: JSON.stringify(r).slice(0, 300),
+      }, { ip })
+      continue
+    }
 
     // The logger already collapses identical entries per window, so a violation
     // firing on every page load costs one document, not one per visitor.
