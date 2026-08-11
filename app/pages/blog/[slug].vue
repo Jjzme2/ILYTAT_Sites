@@ -26,6 +26,9 @@ const postVars = computed(() => {
   }
 })
 
+const ORIGIN = 'https://sites.ilytat.com'
+const postUrl = computed(() => `${ORIGIN}/blog/${post.value?.slug ?? ''}`)
+
 useHead(() => ({
   title: post.value ? `${post.value.title} — ILYTAT Blog` : 'Blog — ILYTAT',
   meta: [
@@ -34,7 +37,55 @@ useHead(() => ({
     { property: 'og:description', content: post.value?.excerpt || '' },
     { property: 'og:image', content: coverImage.value },
     { property: 'og:type', content: 'article' },
+    { property: 'article:published_time', content: String(post.value?.publishedAt ?? '') },
+    { name: 'twitter:card', content: 'summary_large_image' },
   ],
+  // Canonical was missing entirely. Without it a post reachable by more than
+  // one URL splits its own ranking signals between them.
+  link: post.value ? [{ rel: 'canonical', href: postUrl.value }] : [],
+  script: post.value
+    ? [
+        {
+          // Posts carried no structured data at all — the weekly generation
+          // produces the site's only regular content, and every piece of it was
+          // invisible to article rich results. Author and publisher are what
+          // tie each post back to the business entity, which is the point for
+          // local search: it is the business being established as the source,
+          // not just the page.
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BlogPosting',
+            headline: post.value.title,
+            description: post.value.excerpt || '',
+            image: coverImage.value || undefined,
+            datePublished: post.value.publishedAt || undefined,
+            dateModified: post.value.updatedAt || post.value.publishedAt || undefined,
+            author: { '@type': 'Organization', name: 'ILYTAT LLC', url: ORIGIN },
+            publisher: {
+              '@type': 'Organization',
+              name: 'ILYTAT LLC',
+              url: ORIGIN,
+              logo: { '@type': 'ImageObject', url: 'https://media.ilytat.com/logo-144.webp' },
+            },
+            mainEntityOfPage: { '@type': 'WebPage', '@id': postUrl.value },
+            keywords: Array.isArray(post.value.tags) ? post.value.tags.join(', ') : undefined,
+          }),
+        },
+        {
+          type: 'application/ld+json',
+          innerHTML: JSON.stringify({
+            '@context': 'https://schema.org',
+            '@type': 'BreadcrumbList',
+            itemListElement: [
+              { '@type': 'ListItem', position: 1, name: 'Home', item: `${ORIGIN}/` },
+              { '@type': 'ListItem', position: 2, name: 'Blog', item: `${ORIGIN}/blog` },
+              { '@type': 'ListItem', position: 3, name: post.value.title, item: postUrl.value },
+            ],
+          }),
+        },
+      ]
+    : [],
 }))
 
 function formatDate(d: Date | string | null | undefined) {
