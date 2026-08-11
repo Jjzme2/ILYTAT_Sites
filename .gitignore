@@ -31,11 +31,7 @@ Thumbs.db
 .firebase
 
 # Claude
-#
-# CLAUDE.md is deliberately NOT ignored. Sessions run in ephemeral containers
-# that clone this repo fresh, so an ignored CLAUDE.md exists only for the life
-# of one session and its preferences are lost with it. Committing the file is
-# what makes it apply to every future session.
-#
-# It holds working preferences and hard-won project traps, not secrets — check
-# that stays true before adding to it.
+# Kept out of the repo by choice. Response-format preferences belong in the
+# Claude app's own personal preferences, which apply across every chat and
+# project rather than just this one.
+CLAUDE.md
