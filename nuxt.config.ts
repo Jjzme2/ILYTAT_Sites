@@ -249,6 +249,52 @@ export default defineNuxtConfig({
           "Permissions-Policy": "camera=(), microphone=(), geolocation=(), interest-cohort=()",
           // Force HTTPS for two years, including subdomains.
           "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+
+          // ── Content Security Policy — REPORT ONLY ──────────────────────
+          //
+          // Deliberately not enforcing yet. A CSP derived from reading the code
+          // is how a contact form breaks silently: the page renders, the script
+          // that submits it does not run, and nobody notices until leads stop.
+          // In report-only the browser blocks nothing and posts what it *would*
+          // have blocked to /api/csp-report, which logs it.
+          //
+          // Every source below was measured by driving the built site in
+          // Chromium across /, /blog, /privacy, /tools/* and the contact form,
+          // and recording each host actually contacted — not inferred.
+          //
+          // TO ENFORCE: watch the Logs tab (area `security`) for a week or two.
+          // When the only reports left are browser extensions, rename this
+          // header to `Content-Security-Policy`. Do not enforce sooner.
+          "Content-Security-Policy-Report-Only": [
+            "default-src 'self'",
+            // 'unsafe-inline' is unavoidable today: the measured page carries 5
+            // inline scripts (Nuxt's payload and the no-flash theme stamp) and
+            // 6 inline <style> blocks. Removing it needs per-request nonces
+            // threaded through Nitro, which is its own project — the policy is
+            // still worth having without it, since it closes off every source
+            // we do NOT expect.
+            "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://plausible.io",
+            // 93 inline style attributes across the admin and marketing pages.
+            "style-src 'self' 'unsafe-inline'",
+            // Blog cover images accept an arbitrary URL, so this stays open to
+            // https. Images are the lowest-risk source type and locking it to a
+            // host list would break a post the moment a cover is set.
+            "img-src 'self' data: blob: https:",
+            "font-src 'self' data:",
+            "connect-src 'self' https://plausible.io",
+            // Turnstile renders its challenge in an iframe.
+            "frame-src https://challenges.cloudflare.com",
+            "object-src 'none'",
+            "base-uri 'self'",
+            "form-action 'self'",
+            "frame-ancestors 'none'",
+            "report-uri /api/csp-report",
+            "report-to csp",
+          ].join("; "),
+          // report-uri is deprecated but still the only mechanism Safari and
+          // older Firefox honour; report-to is the modern one. Both are sent so
+          // reports arrive regardless of browser.
+          "Reporting-Endpoints": 'csp="/api/csp-report"',
         },
       },
       // Admin must never be cached by a proxy or archived by a crawler.
