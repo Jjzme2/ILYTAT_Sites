@@ -21,6 +21,9 @@
 import type { H3Event } from 'h3'
 import { firestoreRequest, fromFirestoreFields } from '~/server/utils/firebaseAdmin'
 import { verifyTOTPSession } from '~/server/utils/totp'
+import { recordAdminAccess } from '~/server/utils/adminAudit'
+import { log } from '~/server/utils/logger'
+import { clientIp, rateLimit } from '~/server/utils/guard'
 
 // Cache the TOTP secret in memory to avoid a Firestore round-trip on every request.
 let _totpCache: { secret: string | null, at: number } | null = null
@@ -40,7 +43,19 @@ export async function getTotpSecret(): Promise<string | null> {
   catch {
     // If Firestore is unavailable, don't enforce TOTP to avoid lockouts.
     // Retain any existing cache entry rather than caching a null.
-    return _totpCache?.secret ?? null
+    //
+    // Note what this means: with no cached secret and Firestore down, two-factor
+    // silently stops applying and the admin API falls back to password-only.
+    // That is the right trade — being locked out of your own site during an
+    // outage is worse — but it must not be silent, or the one window where the
+    // second factor is off is also the one window nothing says so.
+    const fallback = _totpCache?.secret ?? null
+    if (!fallback) {
+      void log('warn', 'auth', 'TOTP not enforced — could not read the secret from Firestore', {
+        effect: 'admin API is password-only until Firestore recovers',
+      })
+    }
+    return fallback
   }
 }
 
@@ -50,8 +65,20 @@ export function bustTotpCache() {
 }
 
 export async function requireAdmin(event: H3Event, opts: { skipTotp?: boolean } = {}): Promise<void> {
+  // Bounds credential-stuffing against the admin API. Deliberately generous —
+  // the admin UI issues several calls per screen, so this only bites a script.
+  // It is a cap on attempts, not a substitute for the audit trail below.
+  rateLimit({
+    scope: 'admin-auth',
+    ip: clientIp(event),
+    max: 120,
+    windowMs: 60_000,
+    message: 'Too many admin requests. Wait a minute and try again.',
+  })
+
   const authHeader = getHeader(event, 'authorization')
   if (!authHeader?.startsWith('Bearer ')) {
+    await recordAdminAccess(event, 'invalid', { reason: 'no bearer token' })
     throw createError({ statusCode: 401, message: 'Unauthorized' })
   }
 
@@ -75,10 +102,12 @@ export async function requireAdmin(event: H3Event, opts: { skipTotp?: boolean } 
     email = data.users?.[0]?.email
   }
   catch {
+    await recordAdminAccess(event, 'invalid', { reason: 'token rejected by Firebase' })
     throw createError({ statusCode: 401, message: 'Invalid or expired token' })
   }
 
   if (!email) {
+    await recordAdminAccess(event, 'invalid', { reason: 'token contains no email' })
     throw createError({ statusCode: 401, message: 'Token contains no email' })
   }
 
@@ -87,6 +116,8 @@ export async function requireAdmin(event: H3Event, opts: { skipTotp?: boolean } 
   const adminEmails = rawList.split(',').map(e => e.trim().toLowerCase())
 
   if (!adminEmails.includes(email.toLowerCase())) {
+    // The one that matters: a real, authenticated account that is not yours.
+    await recordAdminAccess(event, 'denied', { email, reason: 'not on the admin list' })
     throw createError({ statusCode: 403, message: 'Forbidden' })
   }
 
@@ -97,8 +128,14 @@ export async function requireAdmin(event: H3Event, opts: { skipTotp?: boolean } 
       const sessionToken = getHeader(event, 'x-totp-session') ?? ''
       const uid = verifyTOTPSession(sessionToken, totpSecret)
       if (!uid) {
+        await recordAdminAccess(event, 'totp', {
+          email,
+          reason: sessionToken ? 'TOTP session invalid or expired' : 'no TOTP session supplied',
+        })
         throw createError({ statusCode: 401, message: 'TOTP session required' })
       }
     }
   }
+
+  await recordAdminAccess(event, 'granted', { email })
 }
