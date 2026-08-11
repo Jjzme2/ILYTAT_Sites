@@ -3,6 +3,7 @@ import {
   useFirebaseAuth,
   useFirebaseApp,
   signInWithEmailAndPassword,
+  sendPasswordResetEmail,
   signOut,
   onAuthStateChanged,
   sendSignInLinkToEmail,
@@ -114,19 +115,65 @@ onUnmounted(() => {
   window.removeEventListener('keydown', onGlobalKeydown)
 })
 
+/**
+ * Tells the server a sign-in was attempted.
+ *
+ * Firebase auth happens entirely in this browser, so without this a failed
+ * password produces no server-side trace at all — no log, no alert. Every other
+ * admin guard only fires once a caller already has a token, which left password
+ * guessing as the one attack nobody would hear about.
+ *
+ * Deliberately fire-and-forget: reporting must never delay the login, and if it
+ * fails the person signing in should not see an error about it.
+ */
+function reportLoginAttempt(outcome: 'failed' | 'succeeded', code = '') {
+  void $fetch('/api/admin/login-event', {
+    method: 'POST',
+    body: { outcome, email: loginEmail.value, code },
+  }).catch(() => { /* never block or surface */ })
+}
+
 async function login() {
   loginError.value = ''
   loginLoading.value = true
   try {
     await signInWithEmailAndPassword(useFirebaseAuth(), loginEmail.value, loginPassword.value)
+    reportLoginAttempt('succeeded')
     // onAuthStateChanged fires and sets user.value; then we check TOTP status.
   }
   catch (e: unknown) {
     loginError.value = 'Invalid email or password.'
+    reportLoginAttempt('failed', (e as { code?: string })?.code ?? '')
     console.error(e)
   }
   finally {
     loginLoading.value = false
+  }
+}
+
+// ── Password reset ────────────────────────────────────────────────────────────
+// The composable already wrapped Firebase's sendPasswordResetEmail; nothing on
+// the login screen ever called it, so the only way back in from a forgotten
+// password was the Firebase console.
+const resetSent    = ref(false)
+const resetLoading = ref(false)
+
+async function sendReset() {
+  if (!loginEmail.value.trim() || resetLoading.value) return
+  resetLoading.value = true
+  loginError.value = ''
+  try {
+    await sendPasswordResetEmail(useFirebaseAuth(), loginEmail.value.trim())
+  }
+  catch (e) {
+    // Deliberately not surfaced as a failure: telling an anonymous visitor
+    // whether an address has an account is an account-enumeration oracle.
+    console.error(e)
+  }
+  finally {
+    // Same message either way, for the same reason.
+    resetSent.value = true
+    resetLoading.value = false
   }
 }
 
@@ -1026,6 +1073,20 @@ function onGlobalKeydown(e: KeyboardEvent) {
         <p v-if="loginError" class="form-error">{{ loginError }}</p>
         <button type="submit" class="submit-btn" :disabled="loginLoading">
           {{ loginLoading ? 'Signing in…' : 'Sign In' }}
+        </button>
+        <!-- The reset helper existed in useAuth but nothing ever called it, so
+             a forgotten password meant a trip to the Firebase console. -->
+        <p v-if="resetSent" class="dash-hint" style="margin-top:12px;text-align:center;">
+          If that address has an account, a reset link is on its way. Check spam too.
+        </p>
+        <button
+          v-else
+          type="button"
+          class="back-link"
+          style="background:none;border:none;cursor:pointer;margin-top:12px;width:100%;text-align:center;"
+          :disabled="!loginEmail.trim() || resetLoading"
+          @click="sendReset">
+          {{ resetLoading ? 'Sending…' : 'Forgot your password?' }}
         </button>
       </form>
 
