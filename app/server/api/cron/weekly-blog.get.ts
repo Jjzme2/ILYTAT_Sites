@@ -7,7 +7,7 @@
  *
  * Reads the saved blog plan from adminConfig/blog-plan.
  * Falls back to a rotating default topic if no plan was saved.
- * Generates a draft blog post via Gemini, persists it, clears the plan,
+ * Generates a draft blog post, persists it, rolls the plan forward,
  * and sends a notification email.
  */
 
@@ -83,7 +83,7 @@ export default defineEventHandler(async (event) => {
       title: "This week's post was not generated",
       lines: [
         "The weekly job ran but found no usable AI key, so nothing was written.",
-        "Set OPENROUTER_API_KEY (or GEMINI_API_KEY) in Vercel, then trigger the job manually to catch up this week.",
+        "Set OPENROUTER_API_KEY in Vercel, then trigger the job manually to catch up this week.",
       ],
       action: { label: "Open admin", url: `${config.public.siteUrl}/admin` },
     });

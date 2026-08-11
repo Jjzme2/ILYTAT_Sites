@@ -123,9 +123,6 @@ export default defineNuxtConfig({
     // DeepSeek: roughly an order of magnitude cheaper than the Gemini/GPT tier
     // and strong at the structured-JSON work every call here does.
     openrouterModel: process.env.OPENROUTER_MODEL || "deepseek/deepseek-chat",
-    // Optional fallback.
-    geminiApiKey: process.env.GEMINI_API_KEY || "",
-    geminiModel: process.env.GEMINI_MODEL || "gemini-2.5-flash",
     // ⚠️ NAMING NOTE — "opencloud" is a misnomer.
     //
     // These were the original env var names for what was always meant to be
@@ -141,10 +138,18 @@ export default defineNuxtConfig({
     opencloudApiKey: process.env.OPENCLOUD_API_KEY || "",
     // Daily spend guard for the public AI tools (requests/day, all IPs).
     aiDailyRequestCap: Number(process.env.AI_DAILY_REQUEST_CAP || 300),
-    // Response ceiling for blog generation. OpenRouter bills against the
-    // requested max_tokens, not the tokens actually used, so a large value
-    // fails with 402 on a small balance even when the post would be short.
-    aiBlogMaxTokens: Number(process.env.AI_BLOG_MAX_TOKENS || 2000),
+    // Response ceiling for blog generation.
+    //
+    // 2000 was too tight for the length the prompt actually asks for. A
+    // 1000-word post is ~1330 tokens of prose before HTML tags (~320), JSON
+    // escaping (~120) and the other fields (~140) — about 1940, leaving 60
+    // tokens of headroom. Posts at the top of the range were being truncated,
+    // and because JSON is emitted in field order the tail went first: exactly
+    // nextFocalPoint and nextFocalPointWhy.
+    //
+    // Note OpenRouter reserves credit against the requested ceiling rather than
+    // the tokens used, so this is a hold on the balance, not a per-post cost.
+    aiBlogMaxTokens: Number(process.env.AI_BLOG_MAX_TOKENS || 3500),
     resendApiKey: process.env.RESEND_API_KEY,
     resendFrom: process.env.RESEND_FROM || "ILYTAT Inquiries <noreply@ilytat.com>",
     resendInvoiceFrom: process.env.RESEND_INVOICE_FROM || "",
