@@ -33,7 +33,30 @@ import { firestoreRequest, toFirestoreFields } from './firebaseAdmin'
 import { notifyAdmin } from './notify'
 import { log } from './logger'
 
-export type AuthOutcome = 'granted' | 'denied' | 'totp' | 'invalid'
+export type AuthOutcome = 'granted' | 'denied' | 'totp' | 'invalid' | 'login_failed'
+
+/**
+ * Alerts triggered by unauthenticated callers, capped per day.
+ *
+ * `login_failed` is reported by the login page itself, so the endpoint behind it
+ * has to be public — the caller has not signed in yet, that is the whole point.
+ * A public endpoint that can send email is an inbox-flood vector, and the
+ * per-IP throttle below does not help against a flood spread across addresses.
+ * This is the backstop: past the cap, attempts are still recorded, just not
+ * emailed.
+ */
+const unauthAlerts = { day: '', count: 0 }
+const UNAUTH_ALERT_CAP = 20
+
+function withinUnauthCap(): boolean {
+  const today = new Date().toISOString().slice(0, 10)
+  if (unauthAlerts.day !== today) {
+    unauthAlerts.day = today
+    unauthAlerts.count = 0
+  }
+  unauthAlerts.count += 1
+  return unauthAlerts.count <= UNAUTH_ALERT_CAP
+}
 
 /** One alert per key per window, so a loop cannot fill the inbox. */
 const alerted = new Map<string, number>()
@@ -80,7 +103,16 @@ const LABEL: Record<AuthOutcome, string> = {
   denied: 'Someone tried to use the admin area',
   totp: 'Admin login blocked at the second factor',
   invalid: 'Rejected admin request',
+  login_failed: 'Failed sign-in at the admin login screen',
 }
+
+/**
+ * Failed passwords before an alert.
+ *
+ * One is a typo — the owner mistyping his own password should not page him.
+ * Three from one address inside the failure window is someone trying.
+ */
+const LOGIN_ALERT_AFTER = 3
 
 export async function recordAdminAccess(
   event: H3Event,
@@ -135,20 +167,28 @@ export async function recordAdminAccess(
 
   // A wrong token is routine; a *repeated* wrong token is someone trying.
   if (outcome === 'invalid' && streak < 5) return
+  if (outcome === 'login_failed' && streak < LOGIN_ALERT_AFTER) return
   if (!shouldAlert(`${outcome}:${ip}`, REPEAT_WINDOW_MS)) return
+  // Only this outcome originates from an unauthenticated endpoint, so only it
+  // needs the global backstop.
+  if (outcome === 'login_failed' && !withinUnauthCap()) return
 
   void notifyAdmin({
     level: 'error',
     subject: outcome === 'denied'
       ? 'Someone tried to reach your admin area'
-      : `Admin access blocked (${outcome})`,
+      : outcome === 'login_failed'
+        ? 'Repeated failed sign-ins to your admin area'
+        : `Admin access blocked (${outcome})`,
     title: LABEL[outcome],
     lines: [
       outcome === 'denied'
         ? 'A signed-in account that is not on the admin list requested an admin endpoint. They have a working login somewhere — it just is not yours.'
         : outcome === 'totp'
           ? 'The account and password were accepted but the second factor was not. If this was not you, the password is known to someone else.'
-          : `${streak} rejected admin requests from this address in the last hour.`,
+          : outcome === 'login_failed'
+            ? `${streak} failed sign-in attempts from this address in the last hour. The email below is what they typed, not a verified account.`
+            : `${streak} rejected admin requests from this address in the last hour.`,
       `Account: ${email || '(none supplied)'}`,
       `From: ${ip}`,
       `Endpoint: ${path}`,
