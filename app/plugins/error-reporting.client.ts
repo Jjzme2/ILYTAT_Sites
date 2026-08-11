@@ -34,6 +34,46 @@ const IGNORED = [
 /** At most this many reports per page load, ever. */
 const MAX_REPORTS = 5
 
+/**
+ * Best available description of a thrown value.
+ *
+ * Reports were arriving from iOS Safari with an empty stack, which made them
+ * unactionable — "TypeError: null is not an object (evaluating 'o.id')" with
+ * nowhere to look. Safari omits `.stack` on rejections that cross certain async
+ * boundaries, and a rejection reason is not required to be an Error at all.
+ *
+ * So: take the stack when there is one, and when there is not, record enough
+ * about the value to narrow it down — its constructor, any error code, and its
+ * own enumerable keys. A rejected fetch Response and a null dereference look
+ * nothing alike once you can see the shape.
+ */
+function describe(reason: unknown): string {
+  if (reason instanceof Error && reason.stack) return reason.stack
+  const parts: string[] = []
+  if (reason === null) parts.push('reason: null')
+  else if (reason === undefined) parts.push('reason: undefined')
+  else {
+    parts.push(`type: ${typeof reason}`)
+    const ctor = (reason as object)?.constructor?.name
+    if (ctor) parts.push(`constructor: ${ctor}`)
+    if (reason instanceof Error) {
+      parts.push(`name: ${reason.name}`)
+      const code = (reason as Error & { code?: string }).code
+      if (code) parts.push(`code: ${code}`)
+      parts.push('(no stack — Safari omits it across some async boundaries)')
+    }
+    else if (typeof reason === 'object') {
+      try {
+        parts.push(`keys: ${Object.keys(reason as object).slice(0, 10).join(', ')}`)
+        parts.push(`value: ${JSON.stringify(reason).slice(0, 300)}`)
+      }
+      catch { parts.push('value: (not serialisable)') }
+    }
+    else parts.push(`value: ${String(reason).slice(0, 200)}`)
+  }
+  return parts.join('\n')
+}
+
 export default defineNuxtPlugin((nuxtApp) => {
   const sent = new Set<string>()
   let count = 0
@@ -85,7 +125,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     report({
       message: err?.message ?? String(error),
       source: 'vue',
-      stack: err?.stack,
+      stack: describe(error),
       component: (instance as { $options?: { __name?: string } })?.$options?.__name ?? '',
     })
   })
@@ -94,16 +134,19 @@ export default defineNuxtPlugin((nuxtApp) => {
     report({
       message: e.message || String(e.error ?? 'Unknown error'),
       source: 'window',
-      stack: (e.error as Error | undefined)?.stack ?? `${e.filename}:${e.lineno}:${e.colno}`,
+      // Keep the file/line/col even when a stack exists — on a minified build
+      // that frame is often the only locatable thing in the report.
+      stack: [describe(e.error), `at ${e.filename}:${e.lineno}:${e.colno}`]
+        .filter(Boolean).join('\n'),
     })
   })
 
   window.addEventListener('unhandledrejection', (e) => {
-    const reason = e.reason as Error | string | undefined
+    const reason = e.reason as (Error & { code?: string }) | string | undefined
     report({
       message: reason instanceof Error ? reason.message : String(reason ?? 'Unhandled rejection'),
       source: 'promise',
-      stack: reason instanceof Error ? reason.stack : undefined,
+      stack: describe(reason),
     })
   })
 })

@@ -89,8 +89,17 @@ export default defineNitroPlugin((nitroApp) => {
     }
 
     if (isExpectedFailure(status)) {
-      // Recorded so patterns are visible in the digest (a sudden run of 429s
-      // means someone is hammering an endpoint) without crying wolf.
+      // Only the statuses that carry a signal reach Firestore. A sudden run of
+      // 429s means someone is hammering an endpoint, and a 401 means someone is
+      // calling a protected route with the wrong credentials — both worth
+      // keeping. A 404 or a 400 is a crawler or a typo, and writing one
+      // document per occurrence buried the useful lines under them while paying
+      // for the privilege.
+      const worthKeeping = status === 401 || status === 403 || status === 429
+      if (!worthKeeping) {
+        console.warn(`[${status}]`, path, (error as { statusMessage?: string }).statusMessage ?? '')
+        return
+      }
       await log('info', areaForPath(path), `${status} on ${path}`, {
         message: (error as { statusMessage?: string }).statusMessage,
       }, context)

@@ -22,6 +22,7 @@ import {
   doc,
   orderBy,
   query,
+  limit,
 } from 'firebase/firestore'
 
 definePageMeta({ layout: false })
@@ -803,7 +804,23 @@ interface AppLog {
   data:      string | null
   priority:  number
   createdAt: string
+  /**
+   * How many identical entries were collapsed into this one.
+   *
+   * The logger deduplicates so a failing dependency cannot write a document per
+   * request. That is right for cost, but it made the log lie: four hundred
+   * identical errors rendered as a single unremarkable row. Shown below so the
+   * count is part of what you read, not a field only the database knows.
+   */
+  repeats?:   number
+  requestId?: string
+  path?:      string
+  status?:    number
+  durationMs?: number
 }
+
+/** Matches the read limit below, so the UI can say what it is showing. */
+const LOGS_LIMIT = 200
 
 const appLogs       = ref<AppLog[]>([])
 const logsLoading   = ref(false)
@@ -826,8 +843,11 @@ const filteredLogs = computed(() =>
 async function loadLogs() {
   logsLoading.value = true
   try {
+    // Bounded. This fetched the entire collection on every tab open — with
+    // retention at 45 days that is thousands of documents, billed and parsed on
+    // a phone, to render a list nobody scrolls to the end of.
     const snap = await getDocs(
-      query(collection(db(), 'logs'), orderBy('createdAt', 'desc')),
+      query(collection(db(), 'logs'), orderBy('createdAt', 'desc'), limit(LOGS_LIMIT)),
     )
     appLogs.value = snap.docs.map(d => ({ id: d.id, ...d.data() } as AppLog))
   }
@@ -1461,7 +1481,10 @@ function onGlobalKeydown(e: KeyboardEvent) {
             >{{ lvl }}</button>
           </div>
         </div>
-        <p class="dash-hint">Structured log entries written by all server-side handlers. Sorted newest first.</p>
+        <p class="dash-hint">
+          Structured log entries written by all server-side handlers, newest first — most recent {{ LOGS_LIMIT }}.
+          A <strong>×N</strong> badge means identical entries were collapsed into that row; the count is what actually happened.
+        </p>
 
         <div v-if="logsLoading && !appLogs.length" style="color:var(--theme-text-body);font-size:13px;">Loading logs…</div>
 
@@ -1488,7 +1511,28 @@ function onGlobalKeydown(e: KeyboardEvent) {
             <!-- Message + data -->
             <div>
               <span style="color:var(--theme-fg);">{{ entry.message }}</span>
+              <!-- Suppressed duplicates. Without this the dedup makes a flood
+                   read as a single event, which understates what happened. -->
+              <span
+                v-if="entry.repeats"
+                :title="`${entry.repeats} identical entries were collapsed into this one`"
+                style="margin-left:8px;display:inline-block;padding:1px 7px;border-radius:10px;font-size:10px;font-weight:700;"
+                :style="{
+                  background: 'color-mix(in srgb, ' + LEVEL_COLOR[entry.level] + ' 18%, transparent)',
+                  color: LEVEL_COLOR[entry.level],
+                }"
+              >×{{ entry.repeats + 1 }}</span>
               <span v-if="entry.data" style="display:block;margin-top:3px;font-family:monospace;font-size:10px;color:var(--theme-text-muted);word-break:break-all;">{{ entry.data }}</span>
+              <!-- Request context, so an entry can be tied to one request -->
+              <span
+                v-if="entry.requestId || entry.path"
+                style="display:block;margin-top:3px;font-family:monospace;font-size:10px;color:var(--theme-text-ghost);word-break:break-all;"
+              >
+                <template v-if="entry.path">{{ entry.path }}</template>
+                <template v-if="entry.status"> · {{ entry.status }}</template>
+                <template v-if="entry.durationMs"> · {{ entry.durationMs }}ms</template>
+                <template v-if="entry.requestId"> · req:{{ entry.requestId }}</template>
+              </span>
             </div>
           </div>
         </div>

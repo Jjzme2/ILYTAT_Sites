@@ -97,6 +97,37 @@
           ],
           priceRange,
           serviceType: "Web Design",
+          // Town centroid, not a street address — this is a service-area
+          // business without a storefront, and claiming a precise building
+          // would be a fabrication Google can check against the Business
+          // Profile.
+          geo: { "@type": "GeoCoordinates", latitude: 41.2503, longitude: -87.8384 },
+          image: "https://media.ilytat.com/logo-144.webp",
+          logo: "https://media.ilytat.com/logo-144.webp",
+          // Links this site to the same business elsewhere — above all the
+          // Google Business Profile, which is where the reviews and local
+          // prominence live. Omitted entirely while empty: an empty sameAs is
+          // worse than none, since it asserts the business exists nowhere else.
+          ...(Object.values(siteConfig.profiles).filter(Boolean).length
+            ? { sameAs: Object.values(siteConfig.profiles).filter(Boolean) }
+            : {}),
+        }),
+      },
+      {
+        // The homepage has carried an FAQ section since it was built and never
+        // marked it up. FAQ rich results occupy several extra lines of a search
+        // listing, which for a local query is the difference between one line
+        // and owning the top of the fold — and the answers already exist, so
+        // this costs nothing but the markup.
+        type: "application/ld+json",
+        innerHTML: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          mainEntity: siteConfig.faqs.map((f) => ({
+            "@type": "Question",
+            name: f.q,
+            acceptedAnswer: { "@type": "Answer", text: f.a },
+          })),
         }),
       },
     ],

@@ -34,6 +34,15 @@ interface LogEntry {
   data: string | null;
   priority: number;
   createdAt: string;
+  /**
+   * Identical entries collapsed into this one by the logger's dedup.
+   *
+   * Without it the digest reads a four-hundred-occurrence outage as one line,
+   * which is the opposite of what a daily summary is for.
+   */
+  repeats?: number;
+  path?: string;
+  requestId?: string;
 }
 
 interface Order {
@@ -148,7 +157,7 @@ function buildEmail(opts: {
       <tr>
         <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;white-space:nowrap;font-size:12px;color:#9ca3af;">${ct(e.createdAt)}</td>
         <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;">${badge(e.level)} ${areaTag(e.area)}</td>
-        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;font-size:13px;color:#111827;">${e.message}${e.data ? `<br><span style="font-size:11px;color:#9ca3af;font-family:monospace;">${e.data}</span>` : ""}</td>
+        <td style="padding:8px 12px;border-bottom:1px solid #f3f4f6;vertical-align:top;font-size:13px;color:#111827;">${e.message}${e.repeats ? ` <strong style="font-size:11px;color:#b3261e;">×${e.repeats + 1}</strong>` : ""}${e.path ? `<br><span style="font-size:11px;color:#6b7280;font-family:monospace;">${e.path}${e.requestId ? ` · req:${e.requestId}` : ""}</span>` : ""}${e.data ? `<br><span style="font-size:11px;color:#9ca3af;font-family:monospace;">${e.data}</span>` : ""}</td>
       </tr>`,
       )
       .join("");
@@ -529,11 +538,28 @@ export default defineEventHandler(async (event) => {
   }
 
   // ── Stripe price drift ────────────────────────────────────────────────────
-  // The site now follows Stripe automatically, which is the point — but a price
-  // that changes on its own with nobody told is its own hazard. This reports
-  // any move since the last run, and shouts if a tier is stuck on the committed
-  // fallback (meaning the page and Stripe have silently diverged again).
-  try {
+  // The site follows Stripe automatically where it can — but a price that
+  // changes on its own with nobody told is its own hazard. This reports any
+  // move since the last run, and shouts if a tier is stuck on the committed
+  // fallback while the sync is supposed to be working.
+  //
+  // "Supposed to be" is the part this originally got wrong. With no key set,
+  // every tier legitimately falls back, so it mailed six identical "not
+  // following Stripe" lines every single night about a feature that was simply
+  // switched off. That is not a warning, it is a subscription to being ignored
+  // — and an alert nobody reads is worse than no alert, because it also
+  // devalues the ones that matter.
+  //
+  // Not configured is a choice: recorded, never mailed. Configured and failing
+  // is an incident: mailed.
+  if (!config.stripeRestrictedKey) {
+    // Recorded so the state is visible in the Logs tab, never mailed.
+    await log('info', 'api', 'Stripe price sync is off — no restricted key configured', {
+      effect: 'the site is showing the prices committed in site.config.ts',
+      toEnable: 'set STRIPE_RESTRICTED_KEY in Vercel (Products: Read, Prices: Read)',
+    })
+  }
+  else try {
     const pricing = await getPricing(true)
     const labels = tierLabels()
     const keys = Object.keys(labels) as Array<keyof typeof labels>

@@ -20,6 +20,35 @@ export const siteConfig = {
     priceRange: '$499–$5,000+', // Used dynamically in SEO schema
 
     /**
+     * Profiles that represent this same business elsewhere.
+     *
+     * Emitted as `sameAs` on the LocalBusiness entity, which is how Google is
+     * told "the site at this URL and that listing are one business". Without it
+     * the site and the Google Business Profile are two unconnected things, and
+     * the reviews and prominence attached to the listing do nothing for the
+     * site's own results.
+     *
+     * ⚠️ A Google *search* URL is not a profile URL. It points at a query, not
+     * an entity, and carries the searcher's own session parameters. The value
+     * needed here is one of:
+     *
+     *   https://maps.app.goo.gl/XXXXXXXX      (Maps → your business → Share)
+     *   https://www.google.com/maps/place/... (the address bar on Maps)
+     *   https://www.google.com/maps?cid=123…  (the numeric profile id)
+     *
+     * Blank entries are dropped, so adding one is: paste, commit, deploy.
+     * Nothing here is secret — every value is a public profile link.
+     */
+    profiles: {
+        // The `?g_st=ic` the iOS share sheet appends is dropped — it records
+        // which app the link was copied from, not which business it is.
+        googleBusiness: 'https://maps.app.goo.gl/b9vdykozVqrsRqzr8',
+        facebook: '',
+        linkedin: '',
+        instagram: '',
+    } as Record<string, string>,
+
+    /**
      * Hero visual. Drop a real image at /public and point heroImage at it
      * (e.g. '/hero.jpg') and the hero renders the photo. Until then the slot
      * falls back to the typographic panel below, so it never looks unfinished.
