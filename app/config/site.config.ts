@@ -40,7 +40,9 @@ export const siteConfig = {
      * Nothing here is secret — every value is a public profile link.
      */
     profiles: {
-        googleBusiness: '',
+        // The `?g_st=ic` the iOS share sheet appends is dropped — it records
+        // which app the link was copied from, not which business it is.
+        googleBusiness: 'https://maps.app.goo.gl/b9vdykozVqrsRqzr8',
         facebook: '',
         linkedin: '',
         instagram: '',
