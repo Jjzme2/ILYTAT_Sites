@@ -49,6 +49,95 @@ export const siteConfig = {
     } as Record<string, string>,
 
     /**
+     * Towns served, each with its own page at /web-design/{slug}.
+     *
+     * These exist because Google ranks pages, not intentions. `areaServed` in
+     * the structured data tells Google the towns are covered; it does not give
+     * anyone searching "web designer bourbonnais" a page to land on.
+     *
+     * ── The trap these are written to avoid ──────────────────────────────
+     *
+     * Five pages with the town name swapped are doorway pages, and Google
+     * demotes them — correctly, since they are the same page pretending to be
+     * five. So each entry below leads with a genuinely different *angle*, not
+     * different adjectives:
+     *
+     *   Manteno      home ground, and the in-person argument
+     *   Kankakee     the county seat, where the competition actually is
+     *   Bourbonnais  losing searches to the bigger neighbour next door
+     *   Bradley      the same problem, from the retail side
+     *   Peotone      a different county, routinely skipped by Kankakee firms
+     *
+     * Every claim here is either geography or something already true of the
+     * business. Nothing asserts a local statistic, employer or landmark,
+     * because a confident wrong detail on a sales page costs more than a
+     * missing one.
+     *
+     * ⚠️ `proof` is the one thing that cannot be written from here. One real
+     * sentence — a client, a job, a business you know by name — is what turns
+     * these from competent into convincing, and it is the single highest-value
+     * edit available on this page. Blank is handled: the section is omitted
+     * rather than rendering an empty promise.
+     */
+    locations: [
+        {
+            slug: 'manteno',
+            city: 'Manteno',
+            county: 'Kankakee County',
+            metaTitle: 'Web Design in Manteno, IL — ILYTAT',
+            metaDescription: 'Custom websites for Manteno businesses, built by someone who works here. Own your code, launch in weeks, hosting from $89/month.',
+            angle: 'This is home ground',
+            intro: 'ILYTAT works out of Manteno. That means the person designing your site can meet you at your counter rather than on a call, and can see the thing you are trying to sell before writing a word about it.',
+            emphasis: ['local-business-websites', 'restaurant-websites', 'contractor-websites'],
+            proof: '',
+        },
+        {
+            slug: 'kankakee',
+            city: 'Kankakee',
+            county: 'Kankakee County',
+            metaTitle: 'Web Design in Kankakee, IL — ILYTAT',
+            metaDescription: 'Websites for Kankakee businesses competing in the busiest search results in the county. Custom-built, fast, and yours to keep.',
+            angle: 'The most competitive search results in the county',
+            intro: 'Kankakee is the county seat and the biggest name in local search here, which cuts both ways: more people searching, and more businesses trying to be found. A template that loads slowly is the difference between page one and page two.',
+            emphasis: ['local-business-websites', 'restaurant-websites', 'custom-software'],
+            proof: '',
+        },
+        {
+            slug: 'bourbonnais',
+            city: 'Bourbonnais',
+            county: 'Kankakee County',
+            metaTitle: 'Web Design in Bourbonnais, IL — ILYTAT',
+            metaDescription: 'Websites for Bourbonnais businesses that keep getting found last. Built to rank for your own town, not just the one next door.',
+            angle: 'Getting found for your town, not the one next door',
+            intro: 'Businesses in Bourbonnais lose searches to Kankakee constantly — someone searches for a service, and the results fill with the larger neighbour. Being explicit about where you are, on your own site and your Google listing, is most of the fix.',
+            emphasis: ['local-business-websites', 'contractor-websites', 'event-websites'],
+            proof: '',
+        },
+        {
+            slug: 'bradley',
+            city: 'Bradley',
+            county: 'Kankakee County',
+            metaTitle: 'Web Design in Bradley, IL — ILYTAT',
+            metaDescription: 'Websites for Bradley shops and services. Fast on a phone, accurate on your hours, and built so customers can act without calling.',
+            angle: 'Built for people deciding on their phone',
+            intro: 'Most people looking for somewhere in Bradley are already out, already on a phone, and deciding in seconds. Are you open, what do you cost, and can I get there — a site that answers those three fast beats a prettier one that does not.',
+            emphasis: ['local-business-websites', 'restaurant-websites', 'event-websites'],
+            proof: '',
+        },
+        {
+            slug: 'peotone',
+            city: 'Peotone',
+            county: 'Will County',
+            metaTitle: 'Web Design in Peotone, IL — ILYTAT',
+            metaDescription: 'Websites for Peotone businesses in Will County. Local enough to meet in person, without being priced like a Chicago agency.',
+            angle: 'Close by, and not treated as an afterthought',
+            intro: 'Peotone sits in Will County, which means designers focused on Kankakee tend to skip it and Chicago agencies price it like a city job. It is a short drive from Manteno, so you get someone local without the city rate.',
+            emphasis: ['local-business-websites', 'contractor-websites', 'custom-software'],
+            proof: '',
+        },
+    ],
+
+    /**
      * Hero visual. Drop a real image at /public and point heroImage at it
      * (e.g. '/hero.jpg') and the hero renders the photo. Until then the slot
      * falls back to the typographic panel below, so it never looks unfinished.

@@ -26,6 +26,7 @@ export default defineEventHandler(async (event) => {
   const entries: Entry[] = [
     { loc: '/', changefreq: 'weekly', priority: '1.0' },
     { loc: '/services', changefreq: 'monthly', priority: '0.9' },
+    { loc: '/web-design', changefreq: 'monthly', priority: '0.9' },
     { loc: '/tools/website-audit', changefreq: 'monthly', priority: '0.8' },
     { loc: '/tools/review-response', changefreq: 'monthly', priority: '0.8' },
     { loc: '/tools/local-seo-checklist', changefreq: 'monthly', priority: '0.8' },
@@ -33,6 +34,12 @@ export default defineEventHandler(async (event) => {
     { loc: '/privacy', changefreq: 'yearly', priority: '0.3' },
     { loc: '/terms', changefreq: 'yearly', priority: '0.3' },
   ]
+
+  // Location pages carry the same weight as service pages: for a local search
+  // business they are the entry point for every "<service> <town>" query.
+  for (const area of siteConfig.locations) {
+    entries.push({ loc: `/web-design/${area.slug}`, changefreq: 'monthly', priority: '0.8' })
+  }
 
   for (const svc of siteConfig.services) {
     entries.push({ loc: `/services/${svc.slug}`, changefreq: 'monthly', priority: '0.8' })

@@ -55,6 +55,12 @@ onMounted(() => {
           <li>
             <NuxtLink to="/blog" class="text-[12.5px] no-underline transition-colors duration-200 text-(--theme-text-muted) hover:text-(--theme-text-hi)">Blog</NuxtLink>
           </li>
+          <li>
+            <!-- Sitewide link so the town pages are one click from every page.
+                 A page only the sitemap knows about gets crawled late and
+                 weighted lightly. -->
+            <NuxtLink to="/web-design" class="text-[12.5px] no-underline transition-colors duration-200 text-(--theme-text-muted) hover:text-(--theme-text-hi)">Service Areas</NuxtLink>
+          </li>
         </ul>
       </div>
       <div>
