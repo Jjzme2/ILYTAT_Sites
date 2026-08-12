@@ -3,15 +3,51 @@ import type { BlogPost } from '~/types'
 
 definePageMeta({ layout: 'blog' })
 
-useHead({
+const { data: posts, pending, error } = await useFetch<BlogPost[]>('/api/blog')
+
+const ORIGIN = 'https://sites.ilytat.com'
+const description = 'Plain answers for local businesses in Kankakee County building their online presence — websites, Google visibility and what actually brings customers in.'
+
+useHead(() => ({
   title: 'Blog — ILYTAT',
   meta: [
-    { name: 'description', content: 'Tips, guides, and stories for local businesses building their online presence.' },
+    { name: 'description', content: description },
     { property: 'og:title', content: 'Blog — ILYTAT' },
+    { property: 'og:description', content: description },
+    { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: `${ORIGIN}/blog` },
+    { name: 'twitter:card', content: 'summary_large_image' },
   ],
-})
-
-const { data: posts, pending, error } = await useFetch<BlogPost[]>('/api/blog')
+  // The listing had no canonical and no structured data. Blog schema with the
+  // posts enumerated tells Google this is a publication rather than a page that
+  // happens to have links on it, and gives each post a second path to discovery
+  // beyond the sitemap.
+  link: [{ rel: 'canonical', href: `${ORIGIN}/blog` }],
+  script: [
+    {
+      type: 'application/ld+json',
+      innerHTML: JSON.stringify({
+        '@context': 'https://schema.org',
+        '@type': 'Blog',
+        name: 'ILYTAT Blog',
+        description,
+        url: `${ORIGIN}/blog`,
+        publisher: {
+          '@type': 'Organization',
+          name: 'ILYTAT LLC',
+          url: ORIGIN,
+          logo: { '@type': 'ImageObject', url: 'https://media.ilytat.com/logo-144.webp' },
+        },
+        blogPost: (posts.value ?? []).slice(0, 20).map(p => ({
+          '@type': 'BlogPosting',
+          headline: p.title,
+          url: `${ORIGIN}/blog/${p.slug}`,
+          datePublished: p.publishedAt || undefined,
+        })),
+      }),
+    },
+  ],
+}))
 </script>
 
 <template>

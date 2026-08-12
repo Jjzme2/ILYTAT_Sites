@@ -284,6 +284,36 @@
 
       <LazySiteAbout />
 
+      <!-- ── Service areas ───────────────────────────────────────────────────
+           The town pages were reachable only from the footer. Google weights
+           links in main content well above footer links, and a visitor asking
+           "does he even cover my town?" should not have to scroll to the very
+           bottom to find out. -->
+      <section
+        id="areas"
+        class="max-w-[1200px] mx-auto px-4 pb-16 md:px-6 md:pb-20 lg:px-12 lg:pb-[100px]">
+        <header class="mb-10" data-reveal>
+          <p class="eyebrow">Where I Work</p>
+          <h2 class="font-display text-[clamp(28px,3.8vw,46px)] font-extrabold tracking-[-2px] text-(--theme-fg) leading-[1.05]">
+            Serving Kankakee County<br class="hidden md:block"> and the towns around it
+          </h2>
+          <p class="mt-5 text-[16px] leading-[1.7] text-(--theme-text-body) max-w-[560px]">
+            Based in Manteno — close enough to meet at your counter, priced for a local
+            business rather than a marketing budget.
+          </p>
+        </header>
+        <div class="flex flex-wrap gap-3" data-reveal>
+          <NuxtLink
+            v-for="area in siteConfig.locations"
+            :key="area.slug"
+            :to="`/web-design/${area.slug}`"
+            class="px-5 py-3 rounded-[var(--radius-sm)] border border-[var(--glass-card-border)] no-underline transition-colors hover:border-[color-mix(in_srgb,var(--theme-accent)_45%,transparent)] group">
+            <span class="block text-[15px] font-semibold text-(--theme-fg) group-hover:text-(--theme-accent) transition-colors">{{ area.city }}</span>
+            <span class="block font-mono text-[9px] tracking-[1.4px] uppercase text-(--theme-text-ghost) mt-0.5">{{ area.county }}</span>
+          </NuxtLink>
+        </div>
+      </section>
+
       <!-- Sits after About and before the FAQ: the founder section establishes
            who is doing the work, the posts are the evidence, and the FAQ then
            answers whatever is left. Renders nothing when no post is published. -->

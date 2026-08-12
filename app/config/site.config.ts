@@ -1,3 +1,5 @@
+import { businessConfig } from './business.config'
+
 /**
  * Site Configuration Module
  * * Intent: Centralizes all static content, pricing, and feature arrays used across the application.
@@ -19,34 +21,9 @@ export const siteConfig = {
     // a leftover from a retired tier that under-stated the real top end.
     priceRange: '$499–$5,000+', // Used dynamically in SEO schema
 
-    /**
-     * Profiles that represent this same business elsewhere.
-     *
-     * Emitted as `sameAs` on the LocalBusiness entity, which is how Google is
-     * told "the site at this URL and that listing are one business". Without it
-     * the site and the Google Business Profile are two unconnected things, and
-     * the reviews and prominence attached to the listing do nothing for the
-     * site's own results.
-     *
-     * ⚠️ A Google *search* URL is not a profile URL. It points at a query, not
-     * an entity, and carries the searcher's own session parameters. The value
-     * needed here is one of:
-     *
-     *   https://maps.app.goo.gl/XXXXXXXX      (Maps → your business → Share)
-     *   https://www.google.com/maps/place/... (the address bar on Maps)
-     *   https://www.google.com/maps?cid=123…  (the numeric profile id)
-     *
-     * Blank entries are dropped, so adding one is: paste, commit, deploy.
-     * Nothing here is secret — every value is a public profile link.
-     */
-    profiles: {
-        // The `?g_st=ic` the iOS share sheet appends is dropped — it records
-        // which app the link was copied from, not which business it is.
-        googleBusiness: 'https://maps.app.goo.gl/b9vdykozVqrsRqzr8',
-        facebook: '',
-        linkedin: '',
-        instagram: '',
-    } as Record<string, string>,
+    // Re-exported from business.config so components keep one import, while
+    // the values themselves have exactly one home.
+    profiles: businessConfig.profiles,
 
     /**
      * Towns served, each with its own page at /web-design/{slug}.
