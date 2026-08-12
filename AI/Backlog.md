@@ -1,12 +1,128 @@
 ---
 owner: JJ
-updated: 2026-08-02
+updated: 2026-08-12
 ---
 
 # Dev Backlog
 
 Outstanding work, roughly in priority order. Items are written so they can be
 picked up cold — each says what to do, where, and how to tell it worked.
+
+---
+
+## ⭐ JJ's list — things only you can do
+
+Nothing here needs a developer. Ranked by what actually moves the needle, and
+kept short on purpose: the first two are worth more than everything below them
+combined.
+
+### 1. Get reviews on the Google Business Profile
+
+The single biggest lever available. `sameAs` now connects the profile to the
+site, so reviews compound across both — they lift the listing in the local pack
+*and* the site in ordinary results. Ten genuine reviews would likely outrank
+every technical change made to this site.
+
+Ask the last five clients. A text with the direct review link converts far
+better than "leave us a review sometime".
+
+- [ ] Send review requests to recent clients
+
+### 2. Write five `proof` sentences
+
+`app/config/site.config.ts` → `locations` → each entry has an empty `proof`.
+
+One real sentence per town: a client, a job, a business known by name. This is
+the highest-value edit in the codebase and the one thing that cannot be written
+for you — inventing a client would be worse than leaving it blank, so the block
+simply does not render while empty.
+
+Example shape: *"The site for [shop] in Bradley went live in nine days."*
+
+- [ ] Manteno   - [ ] Kankakee   - [ ] Bourbonnais   - [ ] Bradley   - [ ] Peotone
+
+### 3. Publish the drafted blog posts
+
+Generated posts save as drafts by design. They are invisible until published —
+to visitors, to the homepage blog section, and to search. Admin → Blog.
+
+- [ ] Review and publish the pending drafts
+
+### 4. Google Business Profile housekeeping
+
+- [ ] List all five towns as service areas, matching `areaServed` in the schema
+- [ ] Add real photos — profiles with them get materially more engagement
+- [ ] Post weekly; the blog already supplies the content
+
+### 5. Environment and config
+
+- [ ] `STRIPE_RESTRICTED_KEY` in Vercel — Products: Read, Prices: Read, nothing
+      else. Worth doing now that the product names are verified: all six tiers
+      will sync. Prices are already correct either way.
+- [ ] Delete `GEMINI_API_KEY` — nothing reads it since Gemini was removed
+- [ ] Confirm nothing still sets `OPENCLOUD_*`, then those two lines in
+      `nuxt.config.ts` and their reads in `server/utils/ai.ts` can go
+- [ ] Add Facebook / LinkedIn URLs to `businessConfig.profiles` when accounts exist
+
+### 6. Two things to eyeball that could not be checked from a sandbox
+
+- [ ] The "Forgot your password?" link on `/admin` — `/admin` cannot render
+      without Firebase credentials, so it is verified in code and in the built
+      bundle but never seen
+- [ ] That the crons fire on Monday (15:00–15:59 UTC). Actions → Scheduled jobs
+      shows the run history
+
+### 7. Set the response-format preference globally
+
+Claude app → Settings → Personal preferences. Applies across every chat, which
+a repo file cannot:
+
+```
+End every response with a short summary, preceded by a horizontal rule
+(a line of --- on its own) so I can jump straight to it. Everything above
+the rule is detail; everything below is what I can act on.
+```
+
+- [ ] Paste into personal preferences
+
+---
+
+## 🔧 Open engineering items
+
+Things a developer can pick up, none blocking.
+
+### The iOS Safari `o.id` error
+
+`TypeError: null is not an object (evaluating 'o.id')` — an unhandled rejection
+on both `/` and `/admin`, iPhone Safari only, in the production bundle. Not
+reproducible: Playwright's WebKit build is not installed in the sandbox and that
+environment asks that `playwright install` not be run.
+
+Note that source maps would *not* solve this. They help when devtools is open or
+when an error service resolves them server-side; the `error.stack` string the
+reporter captures stays minified either way — and Safari supplies no stack at
+all for this one. The error reporter was widened instead, so the next occurrence
+carries the value's type, constructor and keys. Check Admin → Logs, area
+`client`.
+
+Best current hypothesis, unconfirmed: `/` and `/admin` share almost nothing
+except the Turnstile script injected into every page head, and `nuxt-turnstile`
+was observed throwing a structurally similar error in Chromium when
+`challenges.cloudflare.com` was unreachable.
+
+### Enforce the Content-Security-Policy
+
+Shipped as `Content-Security-Policy-Report-Only`. Watch Admin → Logs, area
+`security`, for a week or two of real traffic. When the only reports left are
+browser extensions, rename the header to `Content-Security-Policy` in
+`nuxt.config.ts`. Not before — a wrong CSP breaks the contact form silently.
+
+### Per-page `og:image`
+
+Every shared link uses the same generic card. Blog posts already use their cover
+image when one is set; town pages and service pages have nothing. Doing this
+properly needs an image-generation endpoint (Satori/resvg or similar), since
+social platforms will not accept SVG.
 
 ---
 
