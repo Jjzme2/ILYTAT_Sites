@@ -29,6 +29,21 @@ const IGNORED = [
   'chrome-extension://',
   'moz-extension://',
   'safari-extension://',
+  // Turnstile failing to load, in both engines' phrasing.
+  //
+  // nuxt-turnstile's plugin awaits a bootstrap promise that is `undefined` when
+  // challenges.cloudflare.com is blocked, so `await undefined` resolves and it
+  // dereferences a `window.turnstile` that never arrived. Chrome throws
+  // "undefined (reading 'render')", Safari "null is not an object
+  // (evaluating 'o.id')" — one bug, two spellings, and four entries in a
+  // nightly digest that had four alerts in it.
+  //
+  // Suppressed only because it is now *handled*: the review tool detects the
+  // missing token and tells the visitor what happened instead of leaving a dead
+  // button. The UI state is the signal now, so the log does not need to be —
+  // and leaving it in was drowning errors that are genuinely new.
+  "reading 'render'",
+  "evaluating 'o.id'",
 ]
 
 /** At most this many reports per page load, ever. */
