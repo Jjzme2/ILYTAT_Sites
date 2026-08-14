@@ -19,6 +19,23 @@
  */
 
 import { firestoreRequest, fromFirestoreFields } from '~/server/utils/firebaseAdmin'
+import { log } from '~/server/utils/logger'
+
+/**
+ * How long this endpoint will wait on Firestore before giving up.
+ *
+ * The homepage awaits this during SSR — deliberately, because the banner sits
+ * above the fold in normal flow and loading it lazily would shift the page as
+ * it popped in. The cost of that decision is that a slow Firestore read holds
+ * up the entire homepage render, which is what triggered the slow-response
+ * alert.
+ *
+ * A promotional banner is the most discardable thing on the page and there is
+ * already a committed fallback for it, so waiting is never worth it. Two and a
+ * half seconds is far above a healthy read (which is well under one) and far
+ * below anything a visitor would tolerate.
+ */
+const FIRESTORE_BUDGET_MS = 2500
 
 interface FirestoreDoc {
   name: string
@@ -35,8 +52,18 @@ interface Promotion {
 }
 
 export default defineEventHandler(async () => {
+  const startedAt = Date.now()
   try {
-    const res = await firestoreRequest('GET', 'promotions')
+    // Raced rather than passed a signal, because the slow part is often the
+    // OAuth token exchange that happens *before* the Firestore call — a signal
+    // on the data request alone would not bound it. The dangling request is
+    // acceptable: it is a read, and the instance is short-lived.
+    const res = await Promise.race([
+      firestoreRequest('GET', 'promotions'),
+      new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('promotion lookup exceeded its budget')), FIRESTORE_BUDGET_MS),
+      ),
+    ])
     const docs: FirestoreDoc[] = res.documents || []
     const now = new Date()
 
@@ -53,7 +80,17 @@ export default defineEventHandler(async () => {
 
     return active ?? null
   }
-  catch {
+  catch (err) {
+    // Returning null is the right behaviour — the homepage renders its
+    // committed fallback banner and the visitor sees nothing wrong. But it used
+    // to be a bare `catch { return null }`, so a permanently broken promotions
+    // read looked identical to "no promotion is running" and would never have
+    // been noticed.
+    await log('warn', 'api', 'Promotion lookup failed — serving the fallback banner', {
+      error: err instanceof Error ? err.message : String(err),
+      elapsedMs: Date.now() - startedAt,
+      budgetMs: FIRESTORE_BUDGET_MS,
+    })
     return null
   }
 })

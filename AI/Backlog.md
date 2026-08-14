@@ -91,24 +91,84 @@ the rule is detail; everything below is what I can act on.
 
 Things a developer can pick up, none blocking.
 
-### The iOS Safari `o.id` error
+### ⚠️ When www.ilytat.com becomes the ILYTAT brand
 
-`TypeError: null is not an object (evaluating 'o.id')` — an unhandled rejection
-on both `/` and `/admin`, iPhone Safari only, in the production bundle. Not
-reproducible: Playwright's WebKit build is not installed in the sandbox and that
-environment asks that `playwright install` not be run.
+Structure, for whoever picks this up cold:
 
-Note that source maps would *not* solve this. They help when devtools is open or
-when an error service resolves them server-side; the `error.stack` string the
-reporter captures stays minified either way — and Safari supplies no stack at
-all for this one. The error reporter was widened instead, so the next occurrence
-carries the value's type, constructor and keys. Check Admin → Logs, area
-`client`.
+- `ilytat.com` / `www.ilytat.com` — ILYTAT itself. **Not this app.**
+- `sites.ilytat.com` — this application. Canonical, permanently.
+- `games.ilytat.com` — a separate branch.
+- A hub tying them together is under consideration.
 
-Best current hypothesis, unconfirmed: `/` and `/admin` share almost nothing
-except the Turnstile script injected into every page head, and `nuxt-turnstile`
-was observed throwing a structurally similar error in Chromium when
-`challenges.cloudflare.com` was unreachable.
+Both hostnames currently serve this app, which is an accident of setup. The
+first item below exists only because of that and should be undone the moment it
+stops being true.
+
+#### Will break silently if missed
+
+- [ ] **Remove `www.ilytat.com` from `ALIASES`** in
+      `app/server/middleware/canonical-host.ts` **before** pointing that
+      hostname anywhere else. Otherwise the brand root 301s into one of its own
+      branches. Browsers cache 301s, so the breakage outlives the deploy that
+      caused it and visitors who hit it once stay broken.
+- [ ] **Update the website field on the Google Business Profile.** It currently
+      points at `sites.ilytat.com`. Decide deliberately whether the profile
+      should send people to the brand or to this product — see below — but
+      either way it must not point at a URL that redirects.
+- [ ] **Add the new hostname to Search Console as its own property.** Each
+      subdomain is separate there. Without it, the hub's coverage and query data
+      simply do not exist, which looks identical to the hub getting no traffic.
+
+#### Decisions worth making deliberately
+
+- [ ] **Which URL is ILYTAT the *organisation*.** Today the `LocalBusiness`
+      schema on this app claims `url: sites.ilytat.com` and carries the phone,
+      address, `areaServed` and the `sameAs` link to the Business Profile. With
+      a hub, the business plausibly lives at the root and this app becomes one
+      of its offerings. Getting it wrong splits entity signals across two URLs —
+      the same failure the www redirect was added to fix, one level up.
+- [ ] **Whether the Business Profile points at the brand or the product.** There
+      is only one profile, and its reviews and prominence attach to whatever it
+      links to. If most inbound work is web design, sending it here may stay
+      correct even after a hub exists.
+- [ ] **Cross-linking between branches.** A hub that links to sites and games,
+      and branches that link back, is how authority moves between them. Without
+      it each subdomain accumulates reputation alone.
+
+#### Cosmetic, but noticeable once a brand exists
+
+- [ ] Shared brand assets: `og:image`, favicon and logo currently live under
+      `media.ilytat.com` and are referenced per-app.
+- [ ] `RESEND_FROM` and `RESEND_INVOICE_FROM` send as `@ilytat.com` already, so
+      those stay correct — worth re-reading once the brand voice is settled.
+- [ ] Analytics and Speed Insights are per-Vercel-project, so each branch
+      reports separately. Fine, but there is no combined view without building
+      one.
+
+The canonical host for *this* app comes from `SITE_URL`. It exists so the value
+has one home, not because it is meant to be changed — pointing this app at www
+or the apex would hand a brand hostname to a single product.
+
+### ~~The iOS Safari `o.id` error~~ — solved
+
+Was: `TypeError: null is not an object (evaluating 'o.id')` on iPhone Safari,
+alongside `Cannot read properties of undefined (reading 'render')` on Chrome.
+
+**One bug, two engines.** Confirmed against the built bundle: nuxt-turnstile's
+plugin does `await this.loadTurnstile()` then `window.turnstile.render(...)`.
+`loadTurnstile()` awaits `window.loadTurnstile`, which the inline bootstrap only
+defines once Cloudflare's script has run — so when challenges.cloudflare.com is
+blocked, that value is undefined, `await undefined` resolves immediately, and it
+dereferences a `window.turnstile` that never arrived.
+
+The log line was the smaller half. The review tool's submit button is gated on
+the Turnstile token, so it stayed disabled forever with no explanation — the
+free tool was silently broken for anyone running a content blocker.
+
+Fixed: the tool now waits ten seconds and, if no token has arrived, explains
+what happened and offers a way through. Both messages are suppressed in the
+client error reporter **only because the condition is handled** — if that
+handling is ever removed, remove the suppression with it.
 
 ### Enforce the Content-Security-Policy
 

@@ -308,7 +308,12 @@ export default defineNuxtConfig({
       // API-level cache: Firestore not queried on every page SSR
       "/api/projects": { cache: { maxAge: 300, swr: true } }, // 5 min
       "/api/testimonials": { cache: { maxAge: 3600, swr: true } }, // 1 hr
-      "/api/promotion": { cache: { maxAge: 60, swr: true } }, // 1 min
+      // Raised from 60s. A promotional banner does not need minute-level
+      // freshness, and every expiry is a chance for the next visitor to pay for
+      // a cold origin hit on a request the homepage blocks on. SWR still serves
+      // the stale copy instantly and revalidates behind it, so a new promotion
+      // still appears within a few minutes of being switched on.
+      "/api/promotion": { cache: { maxAge: 600, swr: true } }, // 10 min
       // Prices change a few times a year at most. Cached hard at the edge so a
       // traffic spike cannot turn into a burst of Stripe requests; the server
       // memoises for 15 minutes on top of this.

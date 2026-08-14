@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 
 const { track } = useAnalytics()
 const isDev = import.meta.dev
@@ -20,6 +20,51 @@ const TONE_LABELS: Record<string, string> = {
   apologetic: 'Apologetic',
   brief:      'Short and professional',
 }
+
+/**
+ * Whether the Cloudflare verification widget failed to load.
+ *
+ * nuxt-turnstile's plugin does `await this.loadTurnstile()` then
+ * `window.turnstile.render(...)`. When challenges.cloudflare.com is unreachable
+ * — a corporate network, a privacy extension, some mobile carriers — the inline
+ * bootstrap never runs, so `window.loadTurnstile` is undefined, `await
+ * undefined` resolves immediately, and the render throws into an unhandled
+ * rejection. Chrome reports it as "undefined (reading 'render')" and Safari as
+ * "null is not an object"; both appeared in the nightly digest.
+ *
+ * The visible consequence was worse than the log line. `token` never arrives,
+ * the submit button stays disabled forever, and the visitor sees a working form
+ * with a dead button and no explanation. A free tool that exists to earn trust
+ * was silently broken for exactly the people most likely to be running a
+ * blocker.
+ *
+ * Submitting anyway is not an option — the server verifies the token — so the
+ * honest fix is to say what happened and offer a way through.
+ */
+const turnstileBlocked = ref(false)
+let turnstileTimer: ReturnType<typeof setTimeout> | undefined
+
+onMounted(() => {
+  if (isDev) return
+  // Generous: a slow connection should not be told it is blocked.
+  turnstileTimer = setTimeout(() => {
+    if (!token.value) turnstileBlocked.value = true
+  }, 10_000)
+})
+
+onUnmounted(() => clearTimeout(turnstileTimer))
+
+function reloadPage() {
+  window.location.reload()
+}
+
+// If it arrives late, take the warning back down.
+watch(token, (t) => {
+  if (t) {
+    turnstileBlocked.value = false
+    clearTimeout(turnstileTimer)
+  }
+})
 
 async function generate() {
   if (review.value.trim().length < 15 || pending.value) return
@@ -178,6 +223,31 @@ useHead({
               :disabled="pending || review.trim().length < 15 || (!isDev && !token)">
               {{ pending ? 'Writing…' : 'Write my replies' }}
             </button>
+          </div>
+
+          <!-- Turnstile could not load. Without this the button simply stays
+               grey and the visitor is left guessing, which is the worst of the
+               available outcomes. -->
+          <div
+            v-if="turnstileBlocked"
+            class="mt-5 glass-card rounded-[var(--radius)] p-6 max-w-[620px] border-l-[3px] border-l-[var(--status-warn)]"
+            role="status">
+            <p class="text-[15px] font-semibold text-(--theme-fg)">
+              The verification check could not load
+            </p>
+            <p class="mt-2 text-[14.5px] leading-[1.7] text-(--theme-text-body)">
+              It is served by Cloudflare, and something between here and there is blocking
+              it — usually a privacy extension, a work network, or a strict DNS filter.
+              Nothing is wrong with your review, and this tool cannot run without it.
+            </p>
+            <p class="mt-3 text-[14.5px] leading-[1.7] text-(--theme-text-body)">
+              Two ways round it: turn the blocker off for this page and reload, or send me
+              the review and I will write the replies myself — usually the same day.
+            </p>
+            <div class="mt-4 flex flex-wrap gap-3">
+              <NuxtLink to="/#contact" class="btn-primary">Send it to me instead</NuxtLink>
+              <button type="button" class="btn-ghost" @click="reloadPage">Reload the page</button>
+            </div>
           </div>
 
           <p class="mt-4 text-[13px] text-(--theme-text-muted)">
