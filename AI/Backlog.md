@@ -91,26 +91,63 @@ the rule is detail; everything below is what I can act on.
 
 Things a developer can pick up, none blocking.
 
-### ⚠️ Before www.ilytat.com becomes the ILYTAT hub
-
-`app/server/middleware/canonical-host.ts` currently 301s `www.ilytat.com` to
-`sites.ilytat.com`, because both serve this app today and the duplication was
-splitting every ranking signal between two domains.
-
-That redirect is correct now and wrong later. **Delete `www.ilytat.com` from
-`ALIASES` before pointing that hostname at the hub**, or the brand root will 301
-into one of its own branches — and browsers cache 301s, so the breakage would
-outlive the deploy that caused it.
+### ⚠️ When www.ilytat.com becomes the ILYTAT brand
 
 Structure, for whoever picks this up cold:
 
-- `ilytat.com` — the root of ILYTAT itself. Not this app. Never redirect it here.
+- `ilytat.com` / `www.ilytat.com` — ILYTAT itself. **Not this app.**
 - `sites.ilytat.com` — this application. Canonical, permanently.
 - `games.ilytat.com` — a separate branch.
 - A hub tying them together is under consideration.
 
-The canonical host comes from `SITE_URL`. It exists so the value has one home,
-not because it is meant to be changed.
+Both hostnames currently serve this app, which is an accident of setup. The
+first item below exists only because of that and should be undone the moment it
+stops being true.
+
+#### Will break silently if missed
+
+- [ ] **Remove `www.ilytat.com` from `ALIASES`** in
+      `app/server/middleware/canonical-host.ts` **before** pointing that
+      hostname anywhere else. Otherwise the brand root 301s into one of its own
+      branches. Browsers cache 301s, so the breakage outlives the deploy that
+      caused it and visitors who hit it once stay broken.
+- [ ] **Update the website field on the Google Business Profile.** It currently
+      points at `sites.ilytat.com`. Decide deliberately whether the profile
+      should send people to the brand or to this product — see below — but
+      either way it must not point at a URL that redirects.
+- [ ] **Add the new hostname to Search Console as its own property.** Each
+      subdomain is separate there. Without it, the hub's coverage and query data
+      simply do not exist, which looks identical to the hub getting no traffic.
+
+#### Decisions worth making deliberately
+
+- [ ] **Which URL is ILYTAT the *organisation*.** Today the `LocalBusiness`
+      schema on this app claims `url: sites.ilytat.com` and carries the phone,
+      address, `areaServed` and the `sameAs` link to the Business Profile. With
+      a hub, the business plausibly lives at the root and this app becomes one
+      of its offerings. Getting it wrong splits entity signals across two URLs —
+      the same failure the www redirect was added to fix, one level up.
+- [ ] **Whether the Business Profile points at the brand or the product.** There
+      is only one profile, and its reviews and prominence attach to whatever it
+      links to. If most inbound work is web design, sending it here may stay
+      correct even after a hub exists.
+- [ ] **Cross-linking between branches.** A hub that links to sites and games,
+      and branches that link back, is how authority moves between them. Without
+      it each subdomain accumulates reputation alone.
+
+#### Cosmetic, but noticeable once a brand exists
+
+- [ ] Shared brand assets: `og:image`, favicon and logo currently live under
+      `media.ilytat.com` and are referenced per-app.
+- [ ] `RESEND_FROM` and `RESEND_INVOICE_FROM` send as `@ilytat.com` already, so
+      those stay correct — worth re-reading once the brand voice is settled.
+- [ ] Analytics and Speed Insights are per-Vercel-project, so each branch
+      reports separately. Fine, but there is no combined view without building
+      one.
+
+The canonical host for *this* app comes from `SITE_URL`. It exists so the value
+has one home, not because it is meant to be changed — pointing this app at www
+or the apex would hand a brand hostname to a single product.
 
 ### ~~The iOS Safari `o.id` error~~ — solved
 
