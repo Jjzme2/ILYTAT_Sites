@@ -13,8 +13,16 @@
   // ============================================================================
   // 02. FETCH LIVE DATA
   // ============================================================================
-  // promotion is above-fold (PromoBanner) — await so it SSR's in the initial HTML
-  const { data: promotion } = await useFetch("/api/promotion");
+  // promotion is above-fold (PromoBanner) — await so it SSR's in the initial
+  // HTML. Loading it lazily would shift the page as the banner popped into
+  // normal flow above the nav, which is the bug this layout was built to avoid.
+  //
+  // Bounded, though. The endpoint has its own Firestore budget, but that starts
+  // only once the handler runs — it cannot cover a cold start before it. This
+  // caps what the homepage will wait in total. On timeout `data` stays null and
+  // the committed fallback banner below renders, so the visitor sees a complete
+  // page rather than a slow one.
+  const { data: promotion } = await useFetch("/api/promotion", { timeout: 3000 });
   // projects and testimonials are below-fold — lazy so they don't block SSR TTFB
   const { data: projects } = useFetch("/api/projects", { lazy: true });
   const { data: testimonials } = useFetch("/api/testimonials", { lazy: true });
