@@ -1,6 +1,26 @@
 /**
  * Sends alias hostnames to the canonical one, permanently.
  *
+ * ⚠️ THIS REDIRECT IS TEMPORARY. Read the brand note before extending it.
+ *
+ * ── Brand architecture ────────────────────────────────────────────────────
+ *
+ * `ilytat.com` is the root of ILYTAT itself, not of this application. This app
+ * is one branch — `sites` — alongside `games`, with a hub under consideration
+ * that would tie them together. So `sites.ilytat.com` is the correct canonical
+ * host for this codebase permanently, and no future change should point it at
+ * the apex or at www.
+ *
+ * `www.ilytat.com` currently serves this app, which is an accident of setup
+ * rather than a decision. That is the only reason it is redirected here.
+ *
+ * ⚠️ WHEN www.ilytat.com BECOMES THE ILYTAT HUB, DELETE IT FROM ALIASES FIRST.
+ * Leaving it would 301 the brand root into one of its own branches — the hub
+ * would be unreachable, and because 301s are cached by browsers the breakage
+ * would outlive the deploy that caused it.
+ *
+ * ── Why it exists in the meantime ─────────────────────────────────────────
+ *
  * `www.ilytat.com` and `sites.ilytat.com` both serve this application, which
  * means every page on the site exists at two addresses. To a search engine that
  * is two sites saying identical things: links, relevance and authority are
@@ -23,16 +43,24 @@
  * this app, and redirecting a domain that hosts something else would take that
  * other thing offline. Add it below only after checking.
  *
- * ── Changing which host is canonical ──────────────────────────────────────
+ * ── Do not flip the canonical ─────────────────────────────────────────────
  *
- * The target comes from SITE_URL, so flipping to www is an env change plus
- * moving `www.ilytat.com` out of ALIASES and `sites.ilytat.com` into it. If you
- * do that, also update the website field on the Google Business Profile, or the
- * profile will point at a URL that immediately redirects.
+ * The target comes from SITE_URL and should stay on sites.ilytat.com. Pointing
+ * this app at www or the apex would take a hostname that belongs to the brand
+ * and give it to one product — the opposite of the structure above. The knob
+ * exists so the value has one home, not because it is meant to be turned.
  */
 
-/** Hosts confirmed to serve this app that should not rank on their own. */
+/**
+ * Hosts confirmed to serve this app that should not rank on their own.
+ *
+ * Only add a host after confirming it actually serves this application. The
+ * apex `ilytat.com` is deliberately absent for two reasons: it was never
+ * confirmed, and it is reserved for ILYTAT itself — redirecting it here would
+ * hand the brand root to one branch of it.
+ */
 const ALIASES = new Set([
+  // Remove when this becomes the ILYTAT hub. See the warning above.
   'www.ilytat.com',
 ])
 

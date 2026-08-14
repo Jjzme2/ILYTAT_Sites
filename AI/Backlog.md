@@ -91,24 +91,47 @@ the rule is detail; everything below is what I can act on.
 
 Things a developer can pick up, none blocking.
 
-### The iOS Safari `o.id` error
+### ⚠️ Before www.ilytat.com becomes the ILYTAT hub
 
-`TypeError: null is not an object (evaluating 'o.id')` — an unhandled rejection
-on both `/` and `/admin`, iPhone Safari only, in the production bundle. Not
-reproducible: Playwright's WebKit build is not installed in the sandbox and that
-environment asks that `playwright install` not be run.
+`app/server/middleware/canonical-host.ts` currently 301s `www.ilytat.com` to
+`sites.ilytat.com`, because both serve this app today and the duplication was
+splitting every ranking signal between two domains.
 
-Note that source maps would *not* solve this. They help when devtools is open or
-when an error service resolves them server-side; the `error.stack` string the
-reporter captures stays minified either way — and Safari supplies no stack at
-all for this one. The error reporter was widened instead, so the next occurrence
-carries the value's type, constructor and keys. Check Admin → Logs, area
-`client`.
+That redirect is correct now and wrong later. **Delete `www.ilytat.com` from
+`ALIASES` before pointing that hostname at the hub**, or the brand root will 301
+into one of its own branches — and browsers cache 301s, so the breakage would
+outlive the deploy that caused it.
 
-Best current hypothesis, unconfirmed: `/` and `/admin` share almost nothing
-except the Turnstile script injected into every page head, and `nuxt-turnstile`
-was observed throwing a structurally similar error in Chromium when
-`challenges.cloudflare.com` was unreachable.
+Structure, for whoever picks this up cold:
+
+- `ilytat.com` — the root of ILYTAT itself. Not this app. Never redirect it here.
+- `sites.ilytat.com` — this application. Canonical, permanently.
+- `games.ilytat.com` — a separate branch.
+- A hub tying them together is under consideration.
+
+The canonical host comes from `SITE_URL`. It exists so the value has one home,
+not because it is meant to be changed.
+
+### ~~The iOS Safari `o.id` error~~ — solved
+
+Was: `TypeError: null is not an object (evaluating 'o.id')` on iPhone Safari,
+alongside `Cannot read properties of undefined (reading 'render')` on Chrome.
+
+**One bug, two engines.** Confirmed against the built bundle: nuxt-turnstile's
+plugin does `await this.loadTurnstile()` then `window.turnstile.render(...)`.
+`loadTurnstile()` awaits `window.loadTurnstile`, which the inline bootstrap only
+defines once Cloudflare's script has run — so when challenges.cloudflare.com is
+blocked, that value is undefined, `await undefined` resolves immediately, and it
+dereferences a `window.turnstile` that never arrived.
+
+The log line was the smaller half. The review tool's submit button is gated on
+the Turnstile token, so it stayed disabled forever with no explanation — the
+free tool was silently broken for anyone running a content blocker.
+
+Fixed: the tool now waits ten seconds and, if no token has arrived, explains
+what happened and offers a way through. Both messages are suppressed in the
+client error reporter **only because the condition is handled** — if that
+handling is ever removed, remove the suppression with it.
 
 ### Enforce the Content-Security-Policy
 
