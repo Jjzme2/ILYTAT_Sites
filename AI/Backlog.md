@@ -170,6 +170,32 @@ what happened and offers a way through. Both messages are suppressed in the
 client error reporter **only because the condition is handled** — if that
 handling is ever removed, remove the suppression with it.
 
+### Blog generation is close to the serverless ceiling
+
+Vercel's Hobby plan caps a function at sixty seconds. Weekly blog generation
+spends 50s of that on the model and the rest on the Firestore read before it and
+the write, sanitise and email after — so post length is bounded by the platform,
+not by editorial preference.
+
+That is why the prompt asks for 600–800 words rather than 700–1000. Raising
+`AI_BLOG_MAX_TOKENS` does not help: it is a ceiling, not a throttle, and raising
+it is what let the model produce the full thousand words that tipped generation
+past the deadline in the first place.
+
+Estimated at ~40 tokens/sec: 800 words is roughly 42s of generation, 1000 words
+roughly 48s. The margin is real but not large, and a slow day at the provider
+could still time out. If that starts happening, or if longer posts are wanted:
+
+- **Vercel Pro** raises `maxDuration` to 300s — the smallest change, and it also
+  removes the cold-start pressure on `/api/promotion`.
+- **A faster model** via `OPENROUTER_MODEL`.
+- **Generate out of band** — have the cron enqueue the work rather than do it,
+  so no single request has to finish inside sixty seconds. The most work, and
+  the only option that stops the ceiling mattering at all.
+
+The failure is loud either way: the job emails on failure and the GitHub Actions
+run goes red.
+
 ### Enforce the Content-Security-Policy
 
 Shipped as `Content-Security-Policy-Report-Only`. Watch Admin → Logs, area

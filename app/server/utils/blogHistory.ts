@@ -69,20 +69,26 @@ export async function recentTitles(limit = 20): Promise<string[]> {
 }
 
 /**
- * The themes covered most recently, as a deduplicated tag list.
+ * Titles and themes from a single read.
  *
- * Titles alone stop repetition of the exact question; tags catch the case where
- * the same subject returns wearing a different headline, which is the failure
- * mode that actually shows up on the blog listing.
+ * Calling recentTitles() and recentThemes() together fetched the whole
+ * blog_posts collection twice, in parallel, for the same data. Harmless in
+ * isolation, but this runs immediately before blog generation inside a
+ * serverless function with a hard sixty-second ceiling — every second spent
+ * here is a second the model does not get, and the weekly job was already
+ * timing out.
  */
-export async function recentThemes(limit = 8): Promise<string[]> {
+export async function recentContext(limit = 20, themeLimit = 8): Promise<{
+  titles: string[]
+  themes: string[]
+}> {
   const posts = await recentPosts(limit)
   const seen = new Set<string>()
-  for (const p of posts) {
+  for (const p of posts.slice(0, themeLimit)) {
     for (const t of p.tags) {
       const k = t.trim().toLowerCase()
       if (k) seen.add(k)
     }
   }
-  return [...seen]
+  return { titles: posts.map(p => p.title), themes: [...seen] }
 }

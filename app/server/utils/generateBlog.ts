@@ -11,7 +11,7 @@
 
 import { firestoreRequest, toFirestoreFields } from "~/server/utils/firebaseAdmin";
 import { callAI as callProvider, parseAiJson, fenceUserInput, BACKGROUND_TIMEOUT_MS } from "~/server/utils/ai";
-import { recentTitles, recentThemes } from "~/server/utils/blogHistory";
+import { recentContext } from "~/server/utils/blogHistory";
 import { sanitizePostHtml } from "~/server/utils/sanitizeHtml";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -71,7 +71,10 @@ JSON object — no markdown fences, no commentary outside the JSON:
 }
 
 Content requirements:
-- 700–1000 words inside the content field
+- 600–800 words inside the content field. This is a hard ceiling, not a target
+  to exceed: the whole post is generated inside a serverless function with a
+  sixty-second limit, and a longer post does not arrive late, it does not
+  arrive at all.
 - Open with a locally-relevant hook (Kankakee County or a specific city when natural)
 - At least two <h2> section headings
 - At least one <ul> or <ol> list
@@ -112,10 +115,22 @@ async function callAI(userMessage: string): Promise<string> {
     // Configurable: OpenRouter reserves against the requested ceiling, so this
     // has to fit the available balance, not the expected post length.
     maxTokens: useRuntimeConfig().aiBlogMaxTokens,
-    // A whole post is a few thousand tokens of generation and routinely takes
-    // longer than the interactive default, which is what aborted this call with
-    // "The operation was aborted due to timeout". Nobody is waiting on a spinner
-    // here — a cron is — so it gets the long budget.
+    // A whole post is a couple of thousand tokens of generation, far longer
+    // than the interactive default allows. Nobody is waiting on a spinner here
+    // — a cron is — so it gets the long budget.
+    //
+    // That budget is not generous, it is the most that fits. Vercel's Hobby
+    // plan caps a function at sixty seconds, so the ceiling is the platform's,
+    // not a preference: 50s for the model, the rest for the Firestore read
+    // before it and the write, sanitise and email after.
+    //
+    // Which is why the requested length came back down to 600–800 words. An
+    // earlier pass raised max_tokens from 2000 to 3500 to stop the tail of the
+    // JSON being truncated — correct in itself, but it also let the model
+    // actually produce the full thousand words it had been asked for, and that
+    // tipped generation past the deadline. Truncation was traded for a timeout.
+    // Fewer words is the only lever that helps here; max_tokens is a ceiling,
+    // not a throttle, and raising the deadline is not available on this plan.
     timeoutMs: BACKGROUND_TIMEOUT_MS,
   });
 }
@@ -137,7 +152,7 @@ export async function generateBlogPost(opts: {
   // What the blog already covers, so next week's suggestion is genuinely new.
   // Fenced because titles are model-authored and land back in a prompt — the
   // loop where output becomes input is exactly where an injection would persist.
-  const [titles, themes] = await Promise.all([recentTitles(20), recentThemes(8)]);
+  const { titles, themes } = await recentContext(20, 8);
 
   const history = titles.length
     ? [
