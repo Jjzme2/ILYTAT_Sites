@@ -71,6 +71,50 @@ async function savePost() {
   finally            { saving.value = false }
 }
 
+// ── Publish ─────────────────────────────────────────────────────────────────
+/**
+ * Publishes a draft straight from the list.
+ *
+ * This slot used to hold a "Preview" link pointing at /blog/preview/:id, which
+ * never worked. That page fetches an admin-only endpoint with no auth headers —
+ * the admin token lives in this SPA's memory, and the link opens a fresh tab —
+ * so requireAdmin rejected it and the page threw its own 404. A dead button
+ * where the useful action belongs.
+ *
+ * Nothing is lost by replacing it: the edit modal already has a working Live
+ * Preview toggle that renders the post with the real blog styling, and it does
+ * not need a round trip to see a draft it already has in memory.
+ *
+ * Publishing is a PUT with the status flipped. The endpoint stamps publishedAt
+ * itself on the first publish and preserves it afterwards, so a re-publish does
+ * not quietly re-date an older post.
+ */
+const publishingId = ref<string | null>(null)
+const confirmPublishId = ref<string | null>(null)
+
+async function publishPost(post: BlogPost) {
+  // Same two-step confirm as delete. Publishing is public and immediate — it
+  // reaches the blog listing, the homepage section and the sitemap — so a
+  // mis-tap should not be enough to do it.
+  if (confirmPublishId.value !== post.id) {
+    confirmPublishId.value = post.id
+    setTimeout(() => { if (confirmPublishId.value === post.id) confirmPublishId.value = null }, 3000)
+    return
+  }
+  publishingId.value = post.id
+  confirmPublishId.value = null
+  try {
+    await $fetch(`/api/admin/blog/${post.id}`, {
+      method: 'PUT',
+      headers: await getAdminHeaders(),
+      body: { ...post, status: 'published' },
+    })
+    await loadPosts()
+  }
+  catch (e: unknown) { showError(`Publish failed: ${apiErrorMessage(e)}`) }
+  finally            { publishingId.value = null }
+}
+
 // ── Delete ──────────────────────────────────────────────────────────────────
 const deletingId      = ref<string | null>(null)
 const confirmDeleteId = ref<string | null>(null)
@@ -408,12 +452,25 @@ function isAiPost(post: BlogPost) {
         </div>
         <div class="ba-item-actions">
           <button class="ba-action-btn" @click="openEdit(post)" title="Edit">Edit</button>
+          <!-- Published posts get a link to the real page. Drafts get the
+               action actually wanted here — the old Preview link pointed at a
+               page that could never authenticate. -->
           <a
-            :href="post.status === 'published' ? `/blog/${post.slug}` : `/blog/preview/${post.id}`"
+            v-if="post.status === 'published'"
+            :href="`/blog/${post.slug}`"
             target="_blank"
             class="ba-action-btn ba-action-view"
-            :title="post.status === 'published' ? 'View published post' : 'Preview draft'"
-          >{{ post.status === 'published' ? 'View' : 'Preview' }}</a>
+            title="View published post"
+          >View</a>
+          <button
+            v-else
+            :class="['ba-action-btn', 'ba-action-publish', confirmPublishId === post.id && 'ba-action-confirm']"
+            :disabled="publishingId === post.id"
+            :title="confirmPublishId === post.id ? 'Click again to publish' : 'Publish this draft'"
+            @click="publishPost(post)"
+          >
+            {{ publishingId === post.id ? '…' : (confirmPublishId === post.id ? 'Confirm?' : 'Publish') }}
+          </button>
           <button
             :class="['ba-action-btn', 'ba-action-delete', confirmDeleteId === post.id && 'ba-action-confirm']"
             :disabled="deletingId === post.id"
@@ -671,6 +728,9 @@ function isAiPost(post: BlogPost) {
   cursor: pointer; padding: 4px 8px; border-radius: 5px;
 }
 .ba-modal-close:hover { background: var(--glass-card-border); color: var(--theme-fg); }
+.ba-action-publish { border-color: color-mix(in srgb, var(--status-good) 45%, transparent); color: var(--status-good); }
+.ba-action-publish:hover { background: color-mix(in srgb, var(--status-good) 18%, transparent); border-color: var(--status-good); }
+
 .ba-preview-toggle {
   background: none; border: 1px solid var(--glass-card-border); border-radius: 5px;
   color: var(--theme-text-muted); font-size: 12px; padding: 5px 12px; cursor: pointer;
