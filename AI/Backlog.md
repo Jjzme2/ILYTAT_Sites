@@ -196,6 +196,21 @@ could still time out. If that starts happening, or if longer posts are wanted:
 The failure is loud either way: the job emails on failure and the GitHub Actions
 run goes red.
 
+### Standalone draft preview was removed, not broken-in-place
+
+`/blog/preview/:id` and its admin endpoint are gone. The page fetched an
+admin-only route with no auth headers, so it always 404'd — but the deeper
+reason it could not simply be patched is that `useAdminHeaders` reads the TOTP
+session from `sessionStorage`, which is per-tab. The link opened a new tab, so
+that session was never present. Any fix would have meant either moving the TOTP
+session to `localStorage` (persisting it across tabs and restarts, which is a
+real weakening for a second factor) or previewing in the same tab.
+
+Neither is worth it while the edit modal's Live Preview toggle renders the post
+with the real blog styling from data already in memory. If a full-page preview
+is ever wanted — to see a draft exactly as a reader will, at full width — the
+same-tab route is the one to take.
+
 ### Enforce the Content-Security-Policy
 
 Shipped as `Content-Security-Policy-Report-Only`. Watch Admin → Logs, area
