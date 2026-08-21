@@ -53,6 +53,60 @@ interface ViolationReport {
   'sourceFile'?: string
   'line-number'?: number
   'lineNumber'?: number
+  'disposition'?: string
+}
+
+/** A report plus the Reporting API `type` that carried it, if there was one. */
+interface Envelope {
+  type: string
+  report: ViolationReport
+}
+
+/**
+ * Pull the violation out of whichever wrapper the browser used.
+ *
+ * There are four, and the previous version handled two. It unwrapped the
+ * Reporting API's `body` only when the payload was an *array* of envelopes —
+ * but Chrome also posts a single bare envelope, and every one of those was
+ * logged as "CSP report in an unrecognised shape" with the real report sitting
+ * one level down, untouched, inside it. Eleven of them in one nightly digest,
+ * each carrying a violation nobody could read.
+ *
+ * That is the failure this endpoint's own comments warn about: a log entry that
+ * looks like data and is not. The parser must be as forgiving as the senders
+ * are inconsistent.
+ */
+function unwrap(v: unknown): Envelope[] {
+  if (Array.isArray(v)) return v.flatMap(unwrap)
+  if (!v || typeof v !== 'object') return []
+  const o = v as Record<string, unknown>
+
+  // report-uri: {"csp-report": {...}}. Checked first — a violation report never
+  // contains a key called `body`, but this wrapper could gain one.
+  const legacy = o['csp-report']
+  if (legacy && typeof legacy === 'object') {
+    return [{ type: 'csp-violation', report: legacy as ViolationReport }]
+  }
+
+  // Reporting API: {type, url, age, user_agent, body: {...}}, sent either bare
+  // or inside an array.
+  if (o.body && typeof o.body === 'object') {
+    return [{ type: String(o.type ?? 'csp-violation'), report: o.body as ViolationReport }]
+  }
+
+  // Already the report itself.
+  return [{ type: 'csp-violation', report: o as ViolationReport }]
+}
+
+/** Host only — the actionable part of a blocked URL when writing a policy. */
+function hostOf(url: string): string {
+  if (!url || !url.includes('://')) return url.slice(0, 60)
+  try {
+    return new URL(url).host
+  }
+  catch {
+    return url.slice(0, 60)
+  }
 }
 
 /** First non-empty value across the spellings of one field. */
@@ -95,13 +149,19 @@ export default defineEventHandler(async (event) => {
   }
   if (!body || typeof body !== 'object') return setResponseStatus(event, 204)
 
-  // Browsers send either the legacy `{"csp-report": {...}}` shape (report-uri)
-  // or an array of Reporting API envelopes (report-to). Accept both.
-  const reports: ViolationReport[] = Array.isArray(body)
-    ? (body as { body?: ViolationReport }[]).map(r => r?.body ?? {})
-    : [(body as { 'csp-report'?: ViolationReport })['csp-report'] ?? (body as ViolationReport)]
+  for (const { type, report: r } of unwrap(body).slice(0, 5)) {
+    // A Reporting-Endpoints endpoint can receive deprecation, intervention and
+    // crash reports as well as violations. Only `report-to csp` points here, so
+    // this should not fire — recorded at info rather than warn if it ever does,
+    // because a browser telling us about a deprecated API is worth reading and
+    // is not a security warning.
+    if (type !== 'csp-violation') {
+      await log('info', 'security', `Browser sent a ${type.slice(0, 40)} report`, {
+        sample: JSON.stringify(r).slice(0, 300),
+      }, { ip })
+      continue
+    }
 
-  for (const r of reports.slice(0, 5)) {
     const directive = (pick(r, 'effectiveDirective', 'effective-directive', 'violated-directive') || 'unknown').slice(0, 60)
     const blocked = pick(r, 'blockedURL', 'blocked-uri').slice(0, 200)
     const source = pick(r, 'sourceFile', 'source-file').slice(0, 200)
@@ -121,10 +181,18 @@ export default defineEventHandler(async (event) => {
 
     // The logger already collapses identical entries per window, so a violation
     // firing on every page load costs one document, not one per visitor.
-    await log('warn', 'security', `CSP would have blocked ${directive}`, {
+    //
+    // The blocked host is part of the *message*, not just the data, because the
+    // logger dedups on the message: without it every connect-src violation in a
+    // window collapses into one row and you learn that something was blocked
+    // but not what. One row per (directive, host) is the unit you actually act
+    // on when widening a policy.
+    const target = hostOf(blocked || source)
+    await log('warn', 'security', `CSP would have blocked ${directive}${target ? ` \u2192 ${target}` : ''}`, {
       directive,
       blocked,
       source,
+      disposition: r.disposition ?? '',
       line: r.lineNumber ?? r['line-number'] ?? null,
       page: pick(r, 'documentURL', 'document-uri').slice(0, 200),
     }, { ip })
