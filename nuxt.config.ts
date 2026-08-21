@@ -33,6 +33,91 @@ const cronJobs = [
   { path: "/api/cron/weekly-blog", schedule: "0 15 * * 1" },
 ];
 
+/**
+ * Content Security Policy — one definition, two audiences.
+ *
+ * The marketing site talks to Plausible, Turnstile and nothing else. The admin
+ * page additionally runs the Firebase web SDK, which contacts a handful of
+ * Google hosts the public pages never touch. Written as two hand-maintained
+ * header strings those would drift: a directive tightened on one and forgotten
+ * on the other is exactly the kind of divergence that only shows up as a
+ * blocked request months later. So there is one builder and one flag.
+ *
+ * Every Firebase host below came from the report stream, not from reading the
+ * SDK — the report-only policy did its job and named them:
+ *
+ *   connect-src      firestore.googleapis.com      (Firestore WebChannel)
+ *   connect-src      identitytoolkit.googleapis.com (sign-in, password reset)
+ *   script-src-elem  apis.google.com                (gapi, for signInWithPopup)
+ *
+ * securetoken (token refresh), firebasestorage and www.googleapis.com are
+ * included alongside them because they are the rest of the same SDK's traffic
+ * and would surface one at a time otherwise — a token refresh only fails an
+ * hour into a session, which is a miserable thing to discover under enforcement.
+ */
+const firebaseAuthDomain = (process.env.FIREBASE_AUTH_DOMAIN || "")
+  .replace(/^https?:\/\//, "")
+  .replace(/\/.*$/, "")
+  .trim();
+
+if (!firebaseAuthDomain) {
+  // Not fatal — the policy is report-only, and an unset authDomain breaks
+  // Firebase sign-in long before CSP gets a say. Said out loud anyway, because
+  // the failure it causes once the policy is enforced is a sign-in iframe that
+  // never loads, with nothing in the build log to connect it to this.
+  console.warn(
+    "[nuxt.config] FIREBASE_AUTH_DOMAIN is not set at build time — the admin CSP "
+    + "cannot allow the Firebase auth iframe.",
+  );
+}
+
+function contentSecurityPolicy(opts: { firebase: boolean }): string {
+  // 'unsafe-inline' is unavoidable today: the measured page carries 5 inline
+  // scripts (Nuxt's payload and the no-flash theme stamp) and 6 inline <style>
+  // blocks. Removing it needs per-request nonces threaded through Nitro, which
+  // is its own project — the policy is still worth having without it, since it
+  // closes off every source we do NOT expect.
+  const script = ["'self'", "'unsafe-inline'", "https://challenges.cloudflare.com", "https://plausible.io"];
+  const connect = ["'self'", "https://plausible.io"];
+  // Turnstile renders its challenge in an iframe.
+  const frame = ["https://challenges.cloudflare.com"];
+
+  if (opts.firebase) {
+    script.push("https://apis.google.com");
+    connect.push(
+      "https://identitytoolkit.googleapis.com",
+      "https://securetoken.googleapis.com",
+      "https://firestore.googleapis.com",
+      "https://firebasestorage.googleapis.com",
+      "https://www.googleapis.com",
+    );
+    // gapi's iframe, and the /__/auth/iframe handler Firebase serves from the
+    // project's own auth domain.
+    frame.push("https://apis.google.com");
+    if (firebaseAuthDomain) frame.push(`https://${firebaseAuthDomain}`);
+  }
+
+  return [
+    "default-src 'self'",
+    `script-src ${script.join(" ")}`,
+    // 93 inline style attributes across the admin and marketing pages.
+    "style-src 'self' 'unsafe-inline'",
+    // Blog cover images accept an arbitrary URL, so this stays open to https.
+    // Images are the lowest-risk source type and locking it to a host list
+    // would break a post the moment a cover is set.
+    "img-src 'self' data: blob: https:",
+    "font-src 'self' data:",
+    `connect-src ${connect.join(" ")}`,
+    `frame-src ${frame.join(" ")}`,
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "report-uri /api/csp-report",
+    "report-to csp",
+  ].join("; ");
+}
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   compatibilityDate: "2024-11-01",
@@ -265,32 +350,7 @@ export default defineNuxtConfig({
           // TO ENFORCE: watch the Logs tab (area `security`) for a week or two.
           // When the only reports left are browser extensions, rename this
           // header to `Content-Security-Policy`. Do not enforce sooner.
-          "Content-Security-Policy-Report-Only": [
-            "default-src 'self'",
-            // 'unsafe-inline' is unavoidable today: the measured page carries 5
-            // inline scripts (Nuxt's payload and the no-flash theme stamp) and
-            // 6 inline <style> blocks. Removing it needs per-request nonces
-            // threaded through Nitro, which is its own project — the policy is
-            // still worth having without it, since it closes off every source
-            // we do NOT expect.
-            "script-src 'self' 'unsafe-inline' https://challenges.cloudflare.com https://plausible.io",
-            // 93 inline style attributes across the admin and marketing pages.
-            "style-src 'self' 'unsafe-inline'",
-            // Blog cover images accept an arbitrary URL, so this stays open to
-            // https. Images are the lowest-risk source type and locking it to a
-            // host list would break a post the moment a cover is set.
-            "img-src 'self' data: blob: https:",
-            "font-src 'self' data:",
-            "connect-src 'self' https://plausible.io",
-            // Turnstile renders its challenge in an iframe.
-            "frame-src https://challenges.cloudflare.com",
-            "object-src 'none'",
-            "base-uri 'self'",
-            "form-action 'self'",
-            "frame-ancestors 'none'",
-            "report-uri /api/csp-report",
-            "report-to csp",
-          ].join("; "),
+          "Content-Security-Policy-Report-Only": contentSecurityPolicy({ firebase: false }),
           // report-uri is deprecated but still the only mechanism Safari and
           // older Firefox honour; report-to is the modern one. Both are sent so
           // reports arrive regardless of browser.
@@ -298,7 +358,16 @@ export default defineNuxtConfig({
         },
       },
       // Admin must never be cached by a proxy or archived by a crawler.
-      "/admin/**": { headers: { "X-Robots-Tag": "noindex, nofollow, noarchive", "Cache-Control": "no-store" } },
+      // `/admin/**` matches `/admin` itself as well as anything beneath it, and
+      // route rules merge most-specific-first, so this CSP replaces the public
+      // one for the admin page only.
+      "/admin/**": {
+        headers: {
+          "X-Robots-Tag": "noindex, nofollow, noarchive",
+          "Cache-Control": "no-store",
+          "Content-Security-Policy-Report-Only": contentSecurityPolicy({ firebase: true }),
+        },
+      },
       "/api/**": { headers: { "Cache-Control": "no-store" } },
       // Full-page HTML cache: homepage and blog listing are served from CDN edge
       // on repeat visits; most visitors never hit the Node server at all.

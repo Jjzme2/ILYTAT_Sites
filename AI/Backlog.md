@@ -211,12 +211,31 @@ with the real blog styling from data already in memory. If a full-page preview
 is ever wanted — to see a draft exactly as a reader will, at full width — the
 same-tab route is the one to take.
 
+Any `Rejected admin request /api/admin/blog/preview/...` warning dated before
+21 Aug 2026 is the old button being clicked, and is exactly the failure that was
+removed. The route no longer exists, so those stop on their own — nothing to
+chase.
+
 ### Enforce the Content-Security-Policy
 
 Shipped as `Content-Security-Policy-Report-Only`. Watch Admin → Logs, area
 `security`, for a week or two of real traffic. When the only reports left are
-browser extensions, rename the header to `Content-Security-Policy` in
+browser extensions, rename **both** headers to `Content-Security-Policy` in
 `nuxt.config.ts`. Not before — a wrong CSP breaks the contact form silently.
+
+There are two now, built by one function (`contentSecurityPolicy`): the public
+policy, and the admin one which additionally allows the Firebase web SDK. Adding
+a source means adding it to the builder, not to a header string — the whole
+reason it is a function is that two hand-maintained copies would drift.
+
+The clock on that week or two restarts from **21 Aug 2026**. The first fortnight
+of reports was wasted: the endpoint failed to unwrap a bare Reporting API
+envelope, so every violation was logged as "CSP report in an unrecognised
+shape" with the actual report one level down, unread. Fixed — and the reports
+that *were* legible immediately paid for themselves by naming three Google hosts
+the admin page needs and the policy did not allow. Enforcing before that fix
+would have logged out the admin and blocked Firestore, and the log would have
+said nothing about why.
 
 ### Per-page `og:image`
 
