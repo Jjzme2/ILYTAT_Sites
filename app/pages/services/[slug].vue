@@ -72,7 +72,6 @@ useHead({
   ],
 })
 
-useReveal()
 </script>
 
 <template>

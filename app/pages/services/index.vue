@@ -40,7 +40,6 @@ useHead({
   ],
 })
 
-useReveal()
 </script>
 
 <template>
