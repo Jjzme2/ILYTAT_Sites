@@ -12,6 +12,24 @@ const scrolled = computed(() => scrollY.value > 56)
 // Section links — the header previously offered no route to any of these.
 // Services points at the real page; the rest are homepage anchors. `to` marks
 // the ones that need NuxtLink so client-side routing works from any page.
+/**
+ * The real NuxtLink component, not its name.
+ *
+ * `<component :is="'NuxtLink'">` does not work here. Nuxt's component
+ * auto-import is a compile-time rewrite of the template: the compiler sees a
+ * literal `<NuxtLink>` tag and adds the import for it. A component name that
+ * only ever exists as a string is invisible to that rewrite, so nothing is
+ * imported, the name resolves to nothing, and Vue falls back to treating it as
+ * a native element — emitting a literal `<NuxtLink to="/services">` into the
+ * HTML.
+ *
+ * That tag is not an anchor. It has no href, it is not focusable, it is
+ * invisible to a crawler, and clicking it does nothing. It also looks entirely
+ * normal on the page, which is why this survived: the Services link in the
+ * header, desktop and mobile, was dead on every page of the site.
+ */
+const NuxtLinkComponent = resolveComponent('NuxtLink')
+
 const links = [
   { label: 'Services', href: '/services',  to: true  },
   { label: 'Pricing',  href: '/#pricing',  to: false },
@@ -80,7 +98,7 @@ onUnmounted(() => {
     <!-- ── Desktop links ──────────────────────────────────────────────────── -->
     <div class="hidden md:flex items-center gap-6">
       <component
-        :is="link.to ? 'NuxtLink' : 'a'"
+        :is="link.to ? NuxtLinkComponent : 'a'"
         v-for="link in links"
         :key="link.href"
         v-bind="link.to ? { to: link.href } : { href: link.href }"
@@ -155,7 +173,7 @@ onUnmounted(() => {
         id="mobile-menu"
         class="md:hidden fixed left-0 right-0 top-(--nav-h) bottom-0 z-[89] bg-[var(--theme-bg)] px-4 py-6 flex flex-col gap-1 overflow-y-auto">
         <component
-          :is="link.to ? 'NuxtLink' : 'a'"
+          :is="link.to ? NuxtLinkComponent : 'a'"
           v-for="link in links"
           :key="link.href"
           v-bind="link.to ? { to: link.href } : { href: link.href }"

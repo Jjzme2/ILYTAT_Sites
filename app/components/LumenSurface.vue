@@ -14,9 +14,52 @@
 defineOptions({ inheritAttrs: false })
 
 const props = withDefaults(defineProps<{
+  /** An HTML tag name, or the name of a component such as 'NuxtLink'. */
   as?: string
 }>(), {
   as: 'div',
+})
+
+/**
+ * Components that `as` may name, resolved here so `:is` never sees a bare name.
+ *
+ * Handing `:is` the string 'NuxtLink' does not work. Nuxt's component
+ * auto-import is a compile-time rewrite: it acts on a literal `<NuxtLink>` tag
+ * in a template, or on a literal `resolveComponent('NuxtLink')` call in script.
+ * A name that only exists as a runtime value reaches neither, so nothing is
+ * imported, the lookup finds nothing, and Vue treats the unresolved name as a
+ * native element — emitting `<NuxtLink to="...">` into the HTML.
+ *
+ * That tag looks fine and is not a link: no href, no focus, no navigation, and
+ * nothing for a crawler to follow. Every service card on the homepage was that
+ * tag, which left the five service pages with no working route in from the
+ * homepage at all, and the dead "Learn more" on each card was the visible edge
+ * of it.
+ *
+ * Hence the lookup table: the key is what a caller writes, and the value is a
+ * literal `resolveComponent` call that the build can actually see. Resolving
+ * centrally means no caller can reintroduce the bug, and an unrecognised name
+ * says so in dev rather than rendering a convincing non-link.
+ */
+const RESOLVABLE: Record<string, unknown> = {
+  NuxtLink: resolveComponent('NuxtLink'),
+}
+
+const resolvedTag = computed(() => {
+  // Tag names are lowercase; component names are not. Anything lowercase is a
+  // plain element and passes straight through.
+  if (!/^[A-Z]/.test(props.as)) return props.as
+
+  const component = RESOLVABLE[props.as]
+  if (component) return component
+
+  if (import.meta.dev) {
+    console.error(
+      `[LumenSurface] as="${props.as}" is not in RESOLVABLE, so it will render as `
+      + `an inert <${props.as}> element rather than a component. Add it to the table.`,
+    )
+  }
+  return props.as
 })
 
 const attrs = useAttrs()
@@ -24,7 +67,7 @@ const attrs = useAttrs()
 
 <template>
   <component
-    :is="props.as"
+    :is="resolvedTag"
     class="lumen-surface relative isolate overflow-hidden"
     v-bind="attrs">
 
