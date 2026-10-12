@@ -49,12 +49,25 @@ watch(() => props.prefilledService, (name) => {
           </li>
         </ul>
         <div class="mt-8 pt-6 border-t border-[var(--glass-card-border)]">
-          <p class="font-mono text-[9px] tracking-[2.5px] uppercase mb-3 text-(--theme-text-ghost)">Prefer to call or text?</p>
-          <a
-            :href="siteContent.contact.phoneHref"
-            class="text-[15px] font-semibold text-(--theme-fg) hover:text-(--theme-accent) transition-colors duration-200 no-underline">
-            {{ siteContent.contact.phone }}
-          </a>
+          <p class="font-mono text-[9px] tracking-[2.5px] uppercase mb-3 text-(--theme-text-ghost)">Prefer to call, text or email?</p>
+          <div class="flex flex-col gap-2">
+            <a
+              :href="siteContent.contact.phoneHref"
+              class="text-[15px] font-semibold text-(--theme-fg) hover:text-(--theme-accent) transition-colors duration-200 no-underline">
+              {{ siteContent.contact.phone }}
+            </a>
+            <!--
+              The form is the guided route and stays the primary one, but it was
+              the only written one. An address a prospect can save, forward to a
+              business partner, or send from their own mail client is a lower
+              bar than a form, and it is the one some people will take.
+            -->
+            <a
+              :href="siteContent.contact.emailHref"
+              class="text-[15px] font-semibold text-(--theme-fg) hover:text-(--theme-accent) transition-colors duration-200 no-underline break-all">
+              {{ siteContent.contact.email }}
+            </a>
+          </div>
         </div>
       </div>
 

@@ -44,6 +44,11 @@ onMounted(() => {
           class="mt-3 block text-[12.5px] text-(--theme-text-muted) hover:text-(--theme-text-hi) transition-colors duration-200 no-underline">
           {{ contact.phone }}
         </a>
+        <a
+          :href="contact.emailHref"
+          class="mt-1.5 block text-[12.5px] text-(--theme-text-muted) hover:text-(--theme-text-hi) transition-colors duration-200 no-underline break-all">
+          {{ contact.email }}
+        </a>
       </div>
       <div>
         <p class="font-mono text-[9px] tracking-[2.5px] uppercase mb-5 text-(--theme-text-ghost)">Navigate</p>
