@@ -702,6 +702,123 @@ interface Inquiry {
 
 const inquiries = ref<Inquiry[]>([])
 
+/** The same filter was written out in four places in the template. */
+const newInquiryCount = computed(() => inquiries.value.filter(i => i.status === 'new').length)
+
+/**
+ * Inquiry triage.
+ *
+ * Every submission landed in one undifferentiated list, so real leads sat
+ * between test entries with no way to separate them except reading each one.
+ * The only disposal was Delete, which is irreversible, so nothing ever got
+ * cleared and the list only grew — and the cost of that is a genuine inquiry
+ * going unnoticed in the noise.
+ *
+ * Four states, and the two new ones are both recoverable:
+ *   new       — needs a reply. The dashboard's count and highlight read this.
+ *   read      — handled.
+ *   spam      — junk or a test submission. Kept, not deleted, so a real lead
+ *               misfiled here can be put back.
+ *   archived  — dealt with and out of the way.
+ *
+ * Delete still exists and still asks, but it is no longer the only way to make
+ * the list shorter, which is the point.
+ */
+type InquiryFilter = 'open' | 'handled' | 'spam' | 'archived' | 'all'
+
+const inquiryFilter = ref<InquiryFilter>('open')
+const selectedInquiryIds = ref<string[]>([])
+const bulkWorking = ref(false)
+
+/** Anything that is not explicitly filed is still waiting to be dealt with. */
+function inquiryBucket(i: Inquiry): Exclude<InquiryFilter, 'all'> {
+  if (i.status === 'spam') return 'spam'
+  if (i.status === 'archived') return 'archived'
+  if (i.status === 'read') return 'handled'
+  return 'open'
+}
+
+const inquiryCounts = computed(() => {
+  const counts = { open: 0, handled: 0, spam: 0, archived: 0, all: inquiries.value.length }
+  for (const i of inquiries.value) counts[inquiryBucket(i)] += 1
+  return counts
+})
+
+const filteredInquiries = computed(() =>
+  inquiryFilter.value === 'all'
+    ? inquiries.value
+    : inquiries.value.filter(i => inquiryBucket(i) === inquiryFilter.value),
+)
+
+const allVisibleSelected = computed(() =>
+  filteredInquiries.value.length > 0
+  && filteredInquiries.value.every(i => selectedInquiryIds.value.includes(i.id)),
+)
+
+function toggleInquiry(id: string) {
+  const at = selectedInquiryIds.value.indexOf(id)
+  if (at === -1) selectedInquiryIds.value.push(id)
+  else selectedInquiryIds.value.splice(at, 1)
+}
+
+function toggleAllVisible() {
+  selectedInquiryIds.value = allVisibleSelected.value
+    ? []
+    : filteredInquiries.value.map(i => i.id)
+}
+
+// Switching filters clears the selection. Acting on rows that scrolled out of
+// view when the filter changed is the kind of surprise a bulk action must not
+// spring on anyone.
+watch(inquiryFilter, () => { selectedInquiryIds.value = [] })
+
+async function bulkSetInquiryStatus(status: 'new' | 'read' | 'spam' | 'archived') {
+  const ids = [...selectedInquiryIds.value]
+  if (!ids.length) return
+  bulkWorking.value = true
+  try {
+    await Promise.all(ids.map(id => updateDoc(doc(db(), 'inquiries', id), { status })))
+    selectedInquiryIds.value = []
+    await loadInquiries()
+  }
+  catch (e: unknown) {
+    showError(`Failed to update ${ids.length} ${ids.length === 1 ? 'inquiry' : 'inquiries'}: ${apiErrorMessage(e)}`)
+  }
+  finally {
+    bulkWorking.value = false
+  }
+}
+
+async function bulkDeleteInquiries() {
+  const ids = [...selectedInquiryIds.value]
+  if (!ids.length) return
+  // Named count and no default, because this is the one action with nothing
+  // behind it. Archive and spam are both reversible; this is not.
+  if (!confirm(`Permanently delete ${ids.length} ${ids.length === 1 ? 'inquiry' : 'inquiries'}? This cannot be undone. Archive keeps them out of the way without losing them.`)) return
+  bulkWorking.value = true
+  try {
+    await Promise.all(ids.map(id => deleteDoc(doc(db(), 'inquiries', id))))
+    selectedInquiryIds.value = []
+    await loadInquiries()
+  }
+  catch (e: unknown) {
+    showError(`Failed to delete: ${apiErrorMessage(e)}`)
+  }
+  finally {
+    bulkWorking.value = false
+  }
+}
+
+async function setInquiryStatus(id: string, status: 'new' | 'read' | 'spam' | 'archived') {
+  try {
+    await updateDoc(doc(db(), 'inquiries', id), { status })
+    await loadInquiries()
+  }
+  catch (e: unknown) {
+    showError(`Failed to update inquiry: ${apiErrorMessage(e)}`)
+  }
+}
+
 async function loadInquiries() {
   try {
     const snap = await getDocs(collection(db(), 'inquiries'))
@@ -736,8 +853,30 @@ async function markInquiryRead(id: string) {
 }
 
 // ── Load all on auth ──────────────────────────────────────────────────────────
+
+/**
+ * False until the first load of the dashboard collections has settled.
+ *
+ * The Overview cards count straight out of `inquiries`, `projects` and
+ * `testimonials`, all of which start as []. So for as long as the Firestore
+ * reads were in flight every card read 0 — and the "New inquiries" card is
+ * coloured by its own value, so it rendered a green 0 meaning "nothing needs a
+ * reply" before it had any idea whether that was true. A number nobody has
+ * fetched yet is not a measurement, and the one case where being wrong costs a
+ * lead is the case it got wrong.
+ */
+const dashboardLoaded = ref(false)
+
 async function loadAll() {
-  await Promise.all([loadProjects(), loadPromotions(), loadTestimonials(), loadInquiries()])
+  try {
+    await Promise.all([loadProjects(), loadPromotions(), loadTestimonials(), loadInquiries()])
+  }
+  finally {
+    // `finally`, not after the await: each loader already catches and surfaces
+    // its own failure, and a dashboard stuck on placeholders forever would be a
+    // worse outcome than one showing a count that failed to load.
+    dashboardLoaded.value = true
+  }
 }
 
 // ── Analytics ─────────────────────────────────────────────────────────────────
@@ -1192,30 +1331,38 @@ function onGlobalKeydown(e: KeyboardEvent) {
         <h2>Overview</h2>
         <p class="dash-hint">Here's a quick look at what's happening. New inquiries are highlighted — reply directly from here.</p>
 
-        <!-- Stats -->
+        <!-- Stats.
+             Each card shows a dash until the collections have actually been
+             read. Rendering 0 from an empty array states a fact nobody has
+             checked, and the cards are the first thing read on opening the
+             page. The dash occupies the same box, so nothing shifts when the
+             real number lands. -->
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;">
           <div class="record-card" style="text-align:center;padding:16px 12px;">
-            <p style="font-size:32px;font-weight:700;margin:0;" :style="{ color: inquiries.filter(i => i.status === 'new').length > 0 ? 'var(--theme-accent)' : 'var(--status-good)' }">
-              {{ inquiries.filter(i => i.status === 'new').length }}
+            <p
+              style="font-size:32px;font-weight:700;margin:0;"
+              :style="{ color: !dashboardLoaded ? 'var(--theme-text-ghost)' : (newInquiryCount > 0 ? 'var(--theme-accent)' : 'var(--status-good)') }"
+            >
+              {{ dashboardLoaded ? newInquiryCount : '—' }}
             </p>
             <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">New inquiries</p>
           </div>
           <div class="record-card" style="text-align:center;padding:16px 12px;">
-            <p style="font-size:32px;font-weight:700;margin:0;color:var(--theme-accent);">{{ inquiries.length }}</p>
+            <p style="font-size:32px;font-weight:700;margin:0;" :style="{ color: dashboardLoaded ? 'var(--theme-accent)' : 'var(--theme-text-ghost)' }">{{ dashboardLoaded ? inquiries.length : '—' }}</p>
             <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Total inquiries</p>
           </div>
           <div class="record-card" style="text-align:center;padding:16px 12px;">
-            <p style="font-size:32px;font-weight:700;margin:0;color:var(--theme-accent);">{{ projects.filter(p => p.visible).length }}</p>
+            <p style="font-size:32px;font-weight:700;margin:0;" :style="{ color: dashboardLoaded ? 'var(--theme-accent)' : 'var(--theme-text-ghost)' }">{{ dashboardLoaded ? projects.filter(p => p.visible).length : '—' }}</p>
             <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Live projects</p>
           </div>
           <div class="record-card" style="text-align:center;padding:16px 12px;">
-            <p style="font-size:32px;font-weight:700;margin:0;color:var(--theme-accent);">{{ testimonials.filter(t => t.visible).length }}</p>
+            <p style="font-size:32px;font-weight:700;margin:0;" :style="{ color: dashboardLoaded ? 'var(--theme-accent)' : 'var(--theme-text-ghost)' }">{{ dashboardLoaded ? testimonials.filter(t => t.visible).length : '—' }}</p>
             <p style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--theme-text-body);margin:4px 0 0;">Testimonials</p>
           </div>
         </div>
 
         <!-- New inquiries -->
-        <div v-if="inquiries.filter(i => i.status === 'new').length" class="record-card" style="margin-bottom:20px;">
+        <div v-if="newInquiryCount" class="record-card" style="margin-bottom:20px;">
           <p style="font-size:11px;font-weight:700;color:var(--theme-accent);margin:0 0 14px;text-transform:uppercase;letter-spacing:1px;">🔔 Needs a reply</p>
           <div style="display:flex;flex-direction:column;gap:0;">
             <div
@@ -1655,6 +1802,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
                   <div class="fgroup">
                     <label>Sort Order</label>
                     <input v-model.number="editProject.order" type="number" min="1">
+                    <p class="fgroup-hint">Lowest number shows first. New entries default to 99 so they land at the end — give each a distinct number, because items sharing one are not ordered predictably.</p>
                   </div>
                   <div class="fgroup fgroup--check">
                     <label class="check-label">
@@ -1739,6 +1887,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
             <div class="fgroup">
               <label>Sort Order</label>
               <input v-model.number="newProject.order" type="number" min="1">
+              <p class="fgroup-hint">Lowest number shows first. New entries default to 99 so they land at the end — give each a distinct number, because items sharing one are not ordered predictably.</p>
             </div>
             <div class="fgroup fgroup--check">
               <label class="check-label">
@@ -1873,6 +2022,7 @@ function onGlobalKeydown(e: KeyboardEvent) {
                   <div class="fgroup">
                     <label>Sort Order</label>
                     <input v-model.number="editTestimonial.order" type="number" min="1">
+                    <p class="fgroup-hint">Lowest number shows first. New entries default to 99 so they land at the end — give each a distinct number, because items sharing one are not ordered predictably.</p>
                   </div>
                   <div class="fgroup fgroup--check">
                     <label class="check-label">
@@ -1932,6 +2082,7 @@ v-model="newTestimonial.quote" rows="3"
             <div class="fgroup">
               <label>Sort Order</label>
               <input v-model.number="newTestimonial.order" type="number" min="1">
+              <p class="fgroup-hint">Lowest number shows first. New entries default to 99 so they land at the end — give each a distinct number, because items sharing one are not ordered predictably.</p>
             </div>
             <div class="fgroup fgroup--check">
               <label class="check-label">
@@ -2002,7 +2153,7 @@ v-model="newTestimonial.quote" rows="3"
       <!-- ── INQUIRIES tab ── -->
       <section v-if="activeTab === 'inquiries'" class="dash-section">
         <h2>Inquiries</h2>
-        <p class="dash-hint">All contact form submissions, newest first.</p>
+        <p class="dash-hint">Contact form submissions, newest first. Spam and archived entries are kept, not deleted, so anything filed by mistake can be reopened.</p>
 
         <!-- Onboarding form quick access -->
         <div class="onboarding-card">
@@ -2015,15 +2166,63 @@ v-model="newTestimonial.quote" rows="3"
           </a>
         </div>
 
+        <!-- Filters. Counts are always visible so switching away from Open
+             never looks like inquiries went missing. -->
+        <div class="inq-filters">
+          <button
+            v-for="f in ([
+              { key: 'open', label: 'Open' },
+              { key: 'handled', label: 'Handled' },
+              { key: 'spam', label: 'Spam / test' },
+              { key: 'archived', label: 'Archived' },
+              { key: 'all', label: 'All' },
+            ] as const)"
+            :key="f.key"
+            class="badge-btn"
+            :class="inquiryFilter === f.key ? 'badge-on' : 'badge-off'"
+            @click="inquiryFilter = f.key"
+          >
+            {{ f.label }} ({{ inquiryCounts[f.key] }})
+          </button>
+        </div>
+
+        <!-- Bulk bar. Only present when something is selected; an always-on bar
+             of destructive buttons invites a mis-click. -->
+        <div v-if="selectedInquiryIds.length" class="inq-bulkbar">
+          <span class="inq-bulkbar-count">{{ selectedInquiryIds.length }} selected</span>
+          <button class="badge-btn badge-off" :disabled="bulkWorking" @click="bulkSetInquiryStatus('read')">Mark handled</button>
+          <button class="badge-btn badge-off" :disabled="bulkWorking" @click="bulkSetInquiryStatus('spam')">Flag spam / test</button>
+          <button class="badge-btn badge-off" :disabled="bulkWorking" @click="bulkSetInquiryStatus('archived')">Archive</button>
+          <button class="badge-btn badge-off" :disabled="bulkWorking" @click="bulkSetInquiryStatus('new')">Reopen</button>
+          <button class="danger-btn" :disabled="bulkWorking" @click="bulkDeleteInquiries">Delete</button>
+          <button class="action-link" :disabled="bulkWorking" @click="selectedInquiryIds = []">Clear</button>
+        </div>
+
+        <label v-if="filteredInquiries.length" class="inq-selectall">
+          <input type="checkbox" :checked="allVisibleSelected" @change="toggleAllVisible">
+          Select all {{ filteredInquiries.length }} shown
+        </label>
+
         <div class="record-list">
           <div v-if="!inquiries.length" class="empty-state">No inquiries yet.</div>
+          <div v-else-if="!filteredInquiries.length" class="empty-state">
+            Nothing {{ inquiryFilter === 'open' ? 'open' : `in ${inquiryFilter}` }}.
+            <template v-if="inquiryCounts.all">
+              {{ inquiryCounts.all }} total — use the filters above.
+            </template>
+          </div>
           <div
-v-for="inq in inquiries" :key="inq.id" class="record-card"
-            :class="{ 'record-card--new': inq.status === 'new' }">
+            v-for="inq in filteredInquiries" :key="inq.id" class="record-card"
+            :class="{ 'record-card--new': inquiryBucket(inq) === 'open', 'record-card--muted': inquiryBucket(inq) === 'spam' || inquiryBucket(inq) === 'archived' }">
+            <label class="inq-check">
+              <input type="checkbox" :checked="selectedInquiryIds.includes(inq.id)" @change="toggleInquiry(inq.id)">
+            </label>
             <div class="record-main">
               <p class="record-title">
                 {{ inq.name }} — {{ inq.businessName }}
-                <span v-if="inq.status === 'new'" class="new-badge">NEW</span>
+                <span v-if="inquiryBucket(inq) === 'open'" class="new-badge">NEW</span>
+                <span v-else-if="inq.status === 'spam'" class="inq-tag">SPAM / TEST</span>
+                <span v-else-if="inq.status === 'archived'" class="inq-tag">ARCHIVED</span>
               </p>
               <p class="record-meta">
                 {{ inq.email }}
@@ -2035,7 +2234,10 @@ v-for="inq in inquiries" :key="inq.id" class="record-card"
             </div>
             <div class="record-actions">
               <a :href="`mailto:${inq.email}`" class="action-link">Reply →</a>
-              <button v-if="inq.status === 'new'" class="badge-btn badge-off" @click="markInquiryRead(inq.id)">Mark read</button>
+              <button v-if="inquiryBucket(inq) === 'open'" class="badge-btn badge-off" @click="markInquiryRead(inq.id)">Mark read</button>
+              <button v-if="inq.status !== 'spam'" class="badge-btn badge-off" @click="setInquiryStatus(inq.id, 'spam')">Spam</button>
+              <button v-if="inq.status !== 'archived'" class="badge-btn badge-off" @click="setInquiryStatus(inq.id, 'archived')">Archive</button>
+              <button v-if="inquiryBucket(inq) !== 'open'" class="badge-btn badge-off" @click="setInquiryStatus(inq.id, 'new')">Reopen</button>
               <button class="danger-btn" @click="deleteInquiry(inq.id)">Delete</button>
             </div>
           </div>
@@ -2566,6 +2768,13 @@ h3 {
   margin-bottom: 16px;
 }
 
+.fgroup-hint {
+  font-size: 11.5px;
+  color: var(--theme-text-muted);
+  line-height: 1.5;
+  margin: 5px 0 0;
+}
+
 .dash-hint {
   font-size: 13px;
   color: var(--theme-text-muted);
@@ -2588,6 +2797,66 @@ h3 {
 }
 
 .record-card--new { border-color: color-mix(in srgb, var(--theme-accent) 35%, transparent); }
+
+/* ── Inquiry triage ───────────────────────────────────────────────────────── */
+/* Filed entries stay legible — they are recoverable, not deleted, and someone
+   has to be able to read one to decide it was filed wrongly. */
+.record-card--muted { opacity: 0.62; }
+.record-card--muted:hover { opacity: 1; }
+
+.inq-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.inq-bulkbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  background: var(--theme-surface-alt);
+  border: 1px solid color-mix(in srgb, var(--theme-accent) 30%, transparent);
+  border-radius: 10px;
+}
+.inq-bulkbar-count {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--theme-fg);
+  margin-right: 4px;
+}
+.inq-bulkbar button[disabled] { opacity: 0.5; cursor: not-allowed; }
+
+.inq-selectall {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--theme-text-muted);
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.inq-check {
+  display: flex;
+  align-items: flex-start;
+  padding-top: 2px;
+  cursor: pointer;
+}
+
+.inq-tag {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--theme-surface-alt);
+  color: var(--theme-text-muted);
+  border: 1px solid var(--theme-surface-alt);
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.5px;
+}
 
 .record-card-inner {
   display: flex;
