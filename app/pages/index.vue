@@ -141,9 +141,6 @@
     ],
   });
 
-  // Attaches IntersectionObserver to all [data-reveal] elements, including
-  // those inside child components, since parent onMounted fires last.
-  useReveal();
 </script>
 
 <template>

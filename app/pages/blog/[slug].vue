@@ -8,6 +8,19 @@ const slug = computed(() => route.params.slug as string)
 
 const { data: post, error } = await useFetch<BlogPost>(() => `/api/blog/${slug.value}`)
 
+interface RelatedPost { title: string, slug: string, excerpt: string, publishedAt: string }
+
+/**
+ * Posts sharing a tag with this one. Server-rendered on purpose, not lazy: a
+ * link that only appears after hydration is a link a crawler never sees, and
+ * tying the posts together is half the point of having them on a site built
+ * for local search.
+ */
+const { data: related } = await useFetch<RelatedPost[]>(
+  () => `/api/blog/${slug.value}/related`,
+  { default: () => [] },
+)
+
 if (error.value) {
   throw createError({ statusCode: 404, statusMessage: 'Post not found', fatal: true })
 }
@@ -139,6 +152,21 @@ function formatDate(d: Date | string | null | undefined) {
         <NuxtLink to="/blog" class="back-link">← Back to Blog</NuxtLink>
       </footer>
 
+      <!-- Related posts. Renders only when something genuinely shares a tag —
+           a "latest three" list would show the same links under every post and
+           recommend this one to itself the week it is newest. -->
+      <aside v-if="related?.length" class="post-related">
+        <h2 class="post-related-title">Keep reading</h2>
+        <ul class="post-related-list">
+          <li v-for="item in related" :key="item.slug">
+            <NuxtLink :to="`/blog/${item.slug}`" class="post-related-link">
+              <span class="post-related-link-title">{{ item.title }}</span>
+              <span v-if="item.excerpt" class="post-related-link-excerpt">{{ item.excerpt }}</span>
+            </NuxtLink>
+          </li>
+        </ul>
+      </aside>
+
       <!-- End-of-post CTA. A reader who reached the bottom of an article is the
            warmest traffic the blog produces; previously the only exit was
            "Back to Blog". Offers the free tools first because they cost the
@@ -160,6 +188,32 @@ function formatDate(d: Date | string | null | undefined) {
 </template>
 
 <style scoped>
+/* ── Related posts ──────────────────────────────────────────────────────────── */
+.post-related {
+  margin-top: 48px;
+  padding-top: 28px;
+  border-top: 1px solid var(--glass-card-border);
+}
+.post-related-title {
+  font-family: var(--font-display), sans-serif;
+  font-size: 18px; font-weight: 800; letter-spacing: -0.01em;
+  color: var(--theme-fg); margin: 0 0 16px;
+}
+.post-related-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.post-related-link {
+  display: flex; flex-direction: column; gap: 4px;
+  padding: 14px 16px; margin: 0 -16px;
+  border-radius: var(--radius-sm, 8px);
+  text-decoration: none;
+  transition: background-color 0.2s ease;
+}
+.post-related-link:hover { background: var(--theme-surface-alt); }
+.post-related-link-title { font-size: 15.5px; font-weight: 650; color: var(--theme-fg); line-height: 1.4; }
+.post-related-link:hover .post-related-link-title { color: var(--accent, var(--theme-accent)); }
+.post-related-link-excerpt {
+  font-size: 13.5px; line-height: 1.6; color: var(--theme-text-muted);
+}
+
 /* ── End-of-post CTA ────────────────────────────────────────────────────────── */
 .post-cta {
   margin-top: 48px;

@@ -87,6 +87,73 @@ the rule is detail; everything below is what I can act on.
 
 ---
 
+## 📋 From the external site review (11 Oct 2026)
+
+A third-party review of the live site. Most of it was sound and two items were
+live bugs nobody had noticed. Some of it described things that already exist,
+and two items were mistaken — recorded here so they are not "fixed" later by
+someone reading the report without the code.
+
+### Done
+
+- **Dead service cards and a dead Services nav link.** `<component
+  :is="'NuxtLink'">` rendered a literal `<NuxtLink>` element: no href, no
+  focus, nothing for a crawler. Six inert tags on the homepage and zero working
+  links to any service page. Fixed centrally in LumenSurface and SiteNav.
+- **Town pages blank on click-through.** `/web-design/*` used `data-reveal`
+  without calling `useReveal()`, and `js-enabled` — which is what hides those
+  elements — is global and permanent. Direct load fine, arrival by click blank.
+  Reveal is now a plugin with a MutationObserver; pages no longer opt in.
+- Public email address, related posts by shared tags, dashboard loading states,
+  Sort Order helper text, and inquiry triage (spam/test + archived states, bulk
+  actions, filters with counts).
+
+### Not bugs — do not "fix" these
+
+- **"Cast your fortune" does not lead to the audit form.** It is the daily
+  fortune-cookie easter egg in the footer, deterministic per visitor per day.
+  The review suggested relabelling it "Cast your fortune — start your free
+  audit", which would be a false promise. If the label is unclear, say what it
+  actually does.
+- **Blog excerpts do not truncate mid-word.** There is no truncation code
+  anywhere; excerpts are stored whole and rendered whole. The only shortening
+  is a CSS ellipsis on one line of the admin list, which is conventional. The
+  review's suggested word-boundary truncation would be solving nothing.
+- **Testimonials are already wired end to end** — admin tab writes
+  `visible`/`order` straight to Firestore, `/api/testimonials` filters on
+  exactly those, the homepage section renders when non-empty. It is empty
+  because there are no records. That is the reviews task on JJ's list, not a
+  code task.
+- **Service detail pages already exist**, all five, with problem/solution
+  content and metadata. The review could not find them because the two routes
+  in were the dead links above.
+
+### Still open
+
+- **Image uploads to R2** (portfolio and blog covers). Both are URL-only
+  inputs today. `server/utils/r2.ts` is read-only — `listR2Docs` and
+  `getR2Doc` against one private bucket — so this needs a public bucket, an
+  upload endpoint and a shared picker component. The largest of the remaining
+  admin items and the one that removes real daily friction.
+- **Blog first-click rendering.** Could not be reproduced: no Firestore
+  credentials in the sandbox means no posts to click. The two bugs fixed above
+  produce exactly the reported symptom but neither touches blog pages, so
+  either the reviewer misattributed the page or there is a third cause.
+  Re-test on production with real posts before spending anything on it. If it
+  is real, the first suspect is `experimental.viewTransition` and the CSS
+  `pageTransition` both being enabled, which has not been ruled out.
+- **Internal Documents has no upload flow** — it lists HTML files from R2
+  `docs/` and nothing writes there. Either give it the upload path above or
+  hide the tab until it has one.
+- **Admin-editable homepage copy.** A restrained named-field editor, not a
+  page builder. Routine positioning changes should not need a deploy.
+- **A fictional local-business demo** (bakery, barbershop) showing the actual
+  $499 scope, clearly labelled as a demo.
+- **Expand the About section** with JJ's name, background and working
+  philosophy. Needs JJ's words, not invented ones.
+
+---
+
 ## 🔧 Open engineering items
 
 Things a developer can pick up, none blocking.
