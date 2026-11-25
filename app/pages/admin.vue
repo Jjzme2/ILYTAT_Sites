@@ -932,6 +932,7 @@ watch(activeTab, (tab) => {
   if (tab === 'docs' && !internalDocs.value.length) loadDocs()
   if (tab === 'logs' && !appLogs.value.length) loadLogs()
   if (tab === 'security' && !spamAttempts.value.length) loadSpamAttempts()
+  if (tab === 'security' && !accessLoaded.value) loadAccessLog()
 })
 
 // ── App Logs ──────────────────────────────────────────────────────────────────
@@ -1022,6 +1023,115 @@ const SPAM_REASON_COLOR: Record<SpamAttempt['reason'], string> = {
   honeypot:  'var(--theme-text-muted)',
   turnstile: 'var(--status-bad)',
   gibberish: 'var(--status-warn)',
+}
+
+// ── Admin access log ──────────────────────────────────────────────────────────
+/**
+ * The security log the alert emails have always linked to and never had.
+ *
+ * `admin_access` has recorded every admin request for months with nothing
+ * reading it, so the question those alerts raise — "have I signed in from
+ * that address before?" — could only be answered in the Firebase console.
+ */
+interface AccessEvent {
+  id: string
+  outcome: string
+  email: string
+  ip: string
+  path: string
+  ua: string
+  reason: string | null
+  requestId: string
+  createdAt: string
+}
+interface AddressSummary {
+  ip: string
+  firstSeenAt: string
+  lastSeenAt: string
+  total: number
+  outcomes: Record<string, number>
+  ua: string
+  accounts: string[]
+}
+
+const accessEvents    = ref<AccessEvent[]>([])
+const accessAddresses = ref<AddressSummary[]>([])
+const accessTruncated = ref(false)
+const accessScanned   = ref(0)
+const accessLoading   = ref(false)
+const accessLoaded    = ref(false)
+const accessFilter    = ref<'all' | 'granted' | 'denied' | 'totp' | 'invalid' | 'login_failed'>('all')
+
+/** Outcomes that mean someone got in, versus someone was turned away. */
+const ACCESS_LABEL: Record<string, string> = {
+  granted: 'Signed in',
+  denied: 'Not on the admin list',
+  totp: 'Second factor failed',
+  invalid: 'No valid token',
+  login_failed: 'Wrong password',
+}
+const ACCESS_COLOR: Record<string, string> = {
+  granted: 'var(--status-good)',
+  denied: 'var(--status-bad)',
+  totp: 'var(--status-bad)',
+  invalid: 'var(--theme-text-muted)',
+  login_failed: 'var(--status-warn)',
+}
+
+const filteredAccessEvents = computed(() =>
+  accessFilter.value === 'all'
+    ? accessEvents.value
+    : accessEvents.value.filter(e => e.outcome === accessFilter.value),
+)
+
+/** A phone, a Mac, a bot — enough to recognise, without the full string. */
+function deviceOf(ua: string): string {
+  if (!ua) return 'unknown device'
+  if (/iPhone/i.test(ua)) {
+    // Read the captures off the match itself. RegExp.$1 is global mutable
+    // state that any other regex can overwrite between the test and the read.
+    const v = /OS (\d+)[._](\d+)/.exec(ua)
+    return v ? `iPhone · iOS ${v[1]}.${v[2]}` : 'iPhone'
+  }
+  if (/iPad/i.test(ua)) return 'iPad'
+  if (/Android/i.test(ua)) return 'Android'
+  if (/Macintosh/i.test(ua)) return 'Mac'
+  if (/Windows/i.test(ua)) return 'Windows'
+  if (/Linux/i.test(ua)) return 'Linux'
+  return ua.slice(0, 40)
+}
+
+function formatWhen(iso: string): string {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (!Number.isFinite(d.getTime())) return '—'
+  return d.toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit',
+  })
+}
+
+async function loadAccessLog() {
+  accessLoading.value = true
+  try {
+    const res = await $fetch<{
+      events: AccessEvent[]
+      addresses: AddressSummary[]
+      scanned: number
+      truncated: boolean
+    }>('/api/admin/access-log', { headers: await getAdminHeaders() })
+    accessEvents.value    = res.events
+    accessAddresses.value = res.addresses
+    accessScanned.value   = res.scanned
+    accessTruncated.value = res.truncated
+    accessLoaded.value    = true
+  }
+  catch (e: unknown) {
+    showError(`Failed to load the access log: ${apiErrorMessage(e)}`)
+  }
+  finally {
+    accessLoading.value = false
+  }
 }
 
 async function loadSpamAttempts() {
@@ -2251,8 +2361,87 @@ v-model="newTestimonial.quote" rows="3"
 
       <!-- ── SECURITY tab ── -->
       <section v-if="activeTab === 'security'" class="dash-section" style="max-width:1000px;">
+        <!-- ── Access log ───────────────────────────────────────────────────
+             The log the alert emails link to. Addresses come first because the
+             question an alert raises is "do I know this address?", and a list
+             of events does not answer it — a first-seen date does. -->
+        <h2>Admin access</h2>
+        <p class="dash-hint">
+          Every request to an admin endpoint, and whether it got in. An alert naming an address you
+          do not recognise is answered here: an address first seen months ago, with a history of
+          successful sign-ins, is one of yours.
+        </p>
+
+        <div v-if="accessLoading && !accessLoaded" class="dash-hint">Loading access history…</div>
+
+        <template v-else-if="accessLoaded">
+          <p v-if="accessTruncated" class="access-warn">
+            History is longer than this scan reached ({{ accessScanned }} records), so every
+            “first seen” below is the oldest record found, not necessarily the oldest that exists.
+            Treat the dates as “at least this old”.
+          </p>
+
+          <h3 class="access-subhead">Addresses</h3>
+          <div v-if="!accessAddresses.length" class="empty-state">No admin requests recorded yet.</div>
+          <div v-else class="access-addr-list">
+            <div v-for="a in accessAddresses" :key="a.ip" class="access-addr">
+              <div class="access-addr-main">
+                <p class="access-ip">{{ a.ip }}</p>
+                <p class="access-addr-meta">
+                  {{ deviceOf(a.ua) }} · {{ a.total }} {{ a.total === 1 ? 'request' : 'requests' }}
+                  <template v-if="a.accounts.length"> · {{ a.accounts.join(', ') }}</template>
+                </p>
+                <p class="access-addr-meta">
+                  First seen {{ formatWhen(a.firstSeenAt) }} · last {{ formatWhen(a.lastSeenAt) }}
+                </p>
+              </div>
+              <div class="access-addr-tags">
+                <span
+                  v-for="(count, outcome) in a.outcomes"
+                  :key="outcome"
+                  class="access-tag"
+                  :style="{ color: ACCESS_COLOR[outcome] || 'var(--theme-text-muted)' }"
+                >{{ ACCESS_LABEL[outcome] || outcome }} ×{{ count }}</span>
+              </div>
+            </div>
+          </div>
+
+          <h3 class="access-subhead">Recent events</h3>
+          <div class="inq-filters">
+            <button
+              v-for="f in ([
+                { key: 'all', label: 'All' },
+                { key: 'granted', label: 'Signed in' },
+                { key: 'totp', label: 'Second factor failed' },
+                { key: 'denied', label: 'Not on admin list' },
+                { key: 'login_failed', label: 'Wrong password' },
+                { key: 'invalid', label: 'No valid token' },
+              ] as const)"
+              :key="f.key"
+              class="badge-btn"
+              :class="accessFilter === f.key ? 'badge-on' : 'badge-off'"
+              @click="accessFilter = f.key"
+            >{{ f.label }}</button>
+            <button class="badge-btn badge-off" :disabled="accessLoading" @click="loadAccessLog">Refresh</button>
+          </div>
+
+          <div v-if="!filteredAccessEvents.length" class="empty-state">Nothing matching that filter.</div>
+          <div v-else class="access-event-list">
+            <div v-for="e in filteredAccessEvents" :key="e.id" class="access-event">
+              <span class="access-event-outcome" :style="{ color: ACCESS_COLOR[e.outcome] || 'var(--theme-text-muted)' }">
+                {{ ACCESS_LABEL[e.outcome] || e.outcome }}
+              </span>
+              <span class="access-event-when">{{ formatWhen(e.createdAt) }}</span>
+              <span class="access-event-ip">{{ e.ip }}</span>
+              <span class="access-event-dev">{{ deviceOf(e.ua) }}</span>
+              <span class="access-event-path">{{ e.path }}</span>
+              <span v-if="e.reason" class="access-event-reason">{{ e.reason }}</span>
+            </div>
+          </div>
+        </template>
+
         <!-- TOTP 2FA setup -->
-        <h2>Two-Factor Authentication</h2>
+        <h2 style="margin-top:40px;">Two-Factor Authentication</h2>
         <p class="dash-hint">Require a time-based one-time code (Google Authenticator, Authy, etc.) on every admin login.</p>
 
         <div class="record-card" style="margin-bottom:32px;flex-direction:column;gap:16px;">
@@ -2797,6 +2986,88 @@ h3 {
 }
 
 .record-card--new { border-color: color-mix(in srgb, var(--theme-accent) 35%, transparent); }
+
+/* ── Admin access log ─────────────────────────────────────────────────────── */
+.access-subhead {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--theme-text-muted);
+  margin: 26px 0 12px;
+}
+
+.access-warn {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--status-warn);
+  border: 1px solid color-mix(in srgb, var(--status-warn) 35%, transparent);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 8px;
+}
+
+.access-addr-list { display: flex; flex-direction: column; gap: 8px; }
+.access-addr {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--theme-surface);
+  border: 1px solid var(--theme-surface-alt);
+  border-radius: 10px;
+}
+.access-addr-main { min-width: 0; }
+.access-ip {
+  font-family: var(--font-mono, ui-monospace), monospace;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--theme-fg);
+  margin: 0;
+}
+.access-addr-meta { font-size: 11.5px; color: var(--theme-text-muted); margin: 3px 0 0; }
+.access-addr-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.access-tag {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  background: var(--theme-surface-alt);
+  border-radius: 4px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.access-event-list {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--theme-surface-alt);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.access-event {
+  display: grid;
+  grid-template-columns: 150px 170px 130px 110px 1fr;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 14px;
+  font-size: 11.5px;
+  color: var(--theme-text-muted);
+  border-bottom: 1px solid var(--theme-surface-alt);
+}
+.access-event:last-child { border-bottom: none; }
+.access-event-outcome { font-weight: 700; }
+.access-event-ip { font-family: var(--font-mono, ui-monospace), monospace; }
+.access-event-path,
+.access-event-reason { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.access-event-reason { color: var(--theme-text-ghost); }
+
+@media (max-width: 780px) {
+  /* The grid collapses rather than scrolls sideways: this gets read on a phone,
+     which is also where the alert email is opened. */
+  .access-event { grid-template-columns: 1fr; gap: 2px; padding: 10px 14px; }
+}
 
 /* ── Inquiry triage ───────────────────────────────────────────────────────── */
 /* Filed entries stay legible — they are recoverable, not deleted, and someone
