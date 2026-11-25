@@ -21,8 +21,11 @@
  *              the session expired, or someone has the password.
  *   invalid  — no or unusable token. Common and mostly benign (an expired tab,
  *              a crawler), so it is recorded and only emailed when it repeats.
- *   granted  — emailed once per email+IP per day, like a "new sign-in" notice.
- *              Every subsequent call that day is recorded silently.
+ *   granted  — emailed only the first time an account signs in from a given
+ *              address; every later sign-in from it is recorded silently. A
+ *              phone's address changes on its own, so a per-day notice fired
+ *              constantly and taught the reader to skim past it. See
+ *              adminDevices.ts.
  *
  * Everything is best-effort and non-blocking: auditing must never be the reason
  * a legitimate admin request fails, nor the reason an illegitimate one succeeds.
@@ -32,6 +35,7 @@ import type { H3Event } from 'h3'
 import { firestoreRequest, toFirestoreFields } from './firebaseAdmin'
 import { notifyAdmin } from './notify'
 import { log } from './logger'
+import { recordAddress } from './adminDevices'
 
 export type AuthOutcome = 'granted' | 'denied' | 'totp' | 'invalid' | 'login_failed'
 
@@ -146,19 +150,36 @@ export async function recordAdminAccess(
 
   // ── Alerting ──────────────────────────────────────────────────────────────
   if (outcome === 'granted') {
-    // A "new sign-in" notice, not a per-request one.
-    if (!shouldAlert(`granted:${email}:${ip}`, DAY_MS)) return
+    // Only a sign-in from an address never used before is worth an email.
+    //
+    // This replaces a once-per-email+IP-per-day notice. That fired constantly,
+    // because a phone changes address by itself, so the alert became routine —
+    // and an alert that is routine is one nobody reads closely enough to catch
+    // the day it is not. It is the *unfamiliar* address that is the signal.
+    const known = await recordAddress(email, ip, ua)
+
+    // Not reliable means the lookup failed, not that the address is new.
+    // Emailing on that would raise an intrusion warning over a Firestore
+    // hiccup, and the event is in the security log regardless.
+    if (!known.isNew || !known.reliable) return
+    // Still throttled: if the register itself is failing to persist, this is
+    // the backstop that stops a loop from filling the inbox.
+    if (!shouldAlert(`new-address:${email}:${ip}`, DAY_MS)) return
+
     void notifyAdmin({
-      level: 'info',
-      subject: 'Admin signed in',
-      title: 'Someone signed in to the admin area',
+      level: 'error',
+      subject: 'Admin signed in from a new address',
+      title: 'First sign-in from this address',
       lines: [
+        'The password and the authenticator code were both accepted, from an address that has not signed in before.',
         `Account: ${email || 'unknown'}`,
         `From: ${ip}`,
-        'If this was you, nothing to do — you will only get this once a day per device.',
-        'If it was not, change the account password and rotate ADMIN_EMAILS immediately.',
+        'If this was you — a new phone, a different network, or simply a new address from your provider — nothing to do. You will not be told about this address again.',
+        'If it was not you, someone has both your password and your second factor. Change the password, then re-enrol the authenticator: that regenerates the TOTP secret, which every session token is signed with, so it signs out whoever is already in.',
+        'Addresses already in use before this register existed each produce one notice like this, once.',
       ],
       detail: ua || undefined,
+      action: { label: 'Open the security log', url: 'https://sites.ilytat.com/admin' },
     })
     return
   }
